@@ -41,7 +41,7 @@
 <body>
   <div class="main-content">
     <h1>Texas Hold'em Championship Manager</h1>
-    <div class="game-info">Buy-in: £5 per stack | 1st: 80% | 2nd: 20% | House Fee: £5 (£10 if pot > £100)</div>
+    <div class="game-info">Buy-in: £5 per stack | 1st: 80% | 2nd: 20% | House Fee: £5 (£10 if pot &gt; £100)</div>
 
     <div class="player-setup">
       <h3>Add Players</h3>
@@ -73,12 +73,8 @@
 
   <div class="timer-panel">
     <div class="timer-header">ROUND TIMER</div>
-    <div id="roundInfo" class="round-info">
-      <div>Round 1</div>
-      <div class="blind-display">SB: 5 | BB: 10</div>
-      <div style="font-size:1.2rem;">Duration: 20 minutes</div>
-    </div>
-    <div id="timeRemaining" class="time-remaining">20:00</div>
+    <div id="roundInfo" class="round-info"></div>
+    <div id="timeRemaining" class="time-remaining"></div>
     <div class="timer-controls">
       <button id="timerStartBtn" onclick="startTimer()">START</button>
       <button id="timerPauseBtn" onclick="pauseTimer()" disabled>PAUSE</button>
@@ -92,15 +88,16 @@
       <div>1st Place: £<span id="firstPrize">0</span></div>
       <div>2nd Place: £<span id="secondPrize">0</span></div>
     </div>
-    <audio id="roundAlarm"><source src="alarm.mp3" type="audio/mp3"></audio>
+    <audio id="roundAlarm"><source src="alarm.mp3" type="audio/mp3" /></audio>
   </div>
 
   <script>
-    // Google Sheets & OAuth configuration
+    // Google Sheets & OAuth configuration – replace these:
     const CLIENT_ID = '341648594146-vljhd1s0mgblpafrkh7rsgjf70u6k43n.apps.googleusercontent.com';
-    const SCOPES = 'https://www.googleapis.com/auth/spreadsheets';
     const SPREADSHEET_ID = '1I6dwNCQfUWg6Xb4eMbnxgZbMD8GQ0rnJ-AquE08LIzc';
+    const SCOPES = 'https://www.googleapis.com/auth/spreadsheets';
 
+    // Load Google API client
     function handleClientLoad() {
       gapi.load('client:auth2', initClient);
     }
@@ -123,7 +120,7 @@
       });
     }
 
-    // New functions for Sheets integration:
+    // Sheets integration
     function updateSigninStatus(isSignedIn) {
       document.getElementById('exportBtn').disabled = !isSignedIn;
       document.getElementById('loadDashboardBtn').disabled = !isSignedIn;
@@ -133,12 +130,7 @@
     function collectCurrentTournamentData() {
       const date = new Date().toISOString().split('T')[0];
       const finalPlayers = players.filter(p => !p.eliminated).map(p => p.name);
-      return {
-        date,
-        results: finalPlayers,
-        first: finalPlayers[0] || '',
-        second: finalPlayers[1] || ''
-      };
+      return { date, results: finalPlayers, first: finalPlayers[0]||'', second: finalPlayers[1]||'' };
     }
 
     function exportTournamentData(data) {
@@ -155,47 +147,39 @@
       gapi.client.sheets.spreadsheets.values.get({
         spreadsheetId: SPREADSHEET_ID,
         range: 'RawResults!A:D'
-      }).then(res => buildDashboardFromRows(res.result.values || []));
+      }).then(res => buildDashboardFromRows(res.result.values||[]));
     }
 
     function buildDashboardFromRows(rows) {
       const stats = {};
       rows.forEach(r => {
-        const [date, names, first, second] = r;
-        const namesArr = names.split('|');
-        namesArr.forEach(name => {
-          if (!stats[name]) stats[name] = { played:0, wins:0, seconds:0, earnings:0 };
+        const [, names, first, second] = r;
+        names.split('|').forEach(name => {
+          stats[name] = stats[name] || { played:0, wins:0, seconds:0, earnings:0 };
           stats[name].played++;
         });
         const pool = parseFloat(document.getElementById('currentPrizePool').textContent);
-        stats[first].wins++; stats[first].earnings += pool * 0.8;
-        stats[second].seconds++; stats[second].earnings += pool * 0.2;
+        if (stats[first]) { stats[first].wins++; stats[first].earnings += pool * 0.8; }
+        if (stats[second]) { stats[second].seconds++; stats[second].earnings += pool * 0.2; }
       });
       const sec = document.getElementById('chartsSection');
       sec.innerHTML = '<h3>Annual Leaderboard</h3>';
       const tbl = document.createElement('table');
       tbl.innerHTML = '<thead><tr><th>Player</th><th>Played</th><th>Wins</th><th>2nds</th><th>Earnings</th></tr></thead>';
       const body = document.createElement('tbody');
-      Object.entries(stats).sort((a,b)=>b[1].earnings-a[1].earnings).forEach(([name,s])=>{
-        const tr=document.createElement('tr');
-        tr.innerHTML = `<td>${name}</td>
-                        <td>${s.played}</td>
-                        <td>${s.wins}</td>
-                        <td>${s.seconds}</td>
-                        <td>£${s.earnings.toFixed(2)}</td>`;
+      Object.entries(stats).sort((a,b)=>b[1].earnings - a[1].earnings).forEach(([name,s])=>{
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${name}</td><td>${s.played}</td><td>${s.wins}</td><td>${s.seconds}</td><td>£${s.earnings.toFixed(2)}</td>`;
         body.appendChild(tr);
       });
       tbl.appendChild(body);
       sec.appendChild(tbl);
     }
 
-    // Hook buttons
-    document.getElementById('exportBtn').onclick = () => {
-      exportTournamentData(collectCurrentTournamentData());
-    };
+    document.getElementById('exportBtn').onclick = () => exportTournamentData(collectCurrentTournamentData());
     document.getElementById('loadDashboardBtn').onclick = loadDashboard;
 
-    // Existing tournament & timer code:
+    // Tournament & timer logic
     const rounds = [
       { name: "Test Round", sb:0, bb:0, duration:0.083, isTest:true },
       { name:"Round 1", sb:5, bb:10, duration:20 },
@@ -210,63 +194,152 @@
       { name:"Round 9", sb:1000, bb:2000, duration:20 }
     ];
     let players = [];
-    let currentRound = 0, timer=null, timeLeft=rounds[0].duration*60;
-    let tournamentStarted=false, isBreak=false, isFinalStage=false;
+    let currentRound = 0, timer = null, timeLeft = 0;
+    let tournamentStarted = false, isBreak = false, isFinalStage = false;
 
+    function formatTime(sec) {
+      const m = Math.floor(sec/60), s = sec%60;
+      return String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+    }
+
+    function updateRoundDisplay() {
+      const r = rounds[currentRound];
+      const unit = r.isTest ? 'seconds' : 'minutes';
+      const dur = r.isTest ? Math.round(r.duration*60) : r.duration;
+      document.getElementById('roundInfo').innerHTML = `
+        <div>${r.name}</div>
+        <div class="blind-display">SB: ${r.sb} | BB: ${r.bb}</div>
+        <div style="font-size:1.2rem;">Duration: ${dur} ${unit}</div>
+      `;
+      timeLeft = r.isTest ? Math.round(r.duration*60) : r.duration*60;
+      document.getElementById('timeRemaining').textContent = formatTime(timeLeft);
+    }
+
+    function tick() {
+      if (timeLeft>0) {
+        timeLeft--; document.getElementById('timeRemaining').textContent = formatTime(timeLeft);
+      } else {
+        clearInterval(timer);
+        document.getElementById('roundAlarm').play();
+        nextRound();
+      }
+    }
+
+    function startTimer() {
+      if (!tournamentStarted) return;
+      document.getElementById('timerStartBtn').disabled = true;
+      document.getElementById('timerPauseBtn').disabled = false;
+      timer = setInterval(tick,1000);
+    }
+
+    function pauseTimer() {
+      clearInterval(timer);
+      document.getElementById('timerStartBtn').disabled = false;
+      document.getElementById('timerPauseBtn').disabled = true;
+    }
+
+    function resetTimer() {
+      clearInterval(timer);
+      updateRoundDisplay();
+      document.getElementById('timerStartBtn').disabled = false;
+      document.getElementById('timerPauseBtn').disabled = true;
+    }
+
+    function skipRound() {
+      clearInterval(timer);
+      nextRound();
+    }
+
+    function nextRound() {
+      currentRound = Math.min(currentRound+1, rounds.length-1);
+      const r = rounds[currentRound];
+      isBreak = !!r.isBreak;
+      isFinalStage = currentRound >= rounds.length-2;
+      document.getElementById('breakNotice').style.display = r.isBreak ? 'block':'none';
+      document.getElementById('finalStage').style.display = isFinalStage ? 'block':'none';
+      updateRoundDisplay();
+      document.getElementById('timerStartBtn').disabled = false;
+      document.getElementById('timerPauseBtn').disabled = true;
+    }
+
+    // Player & tournament functions
     function addPlayer() {
       const name = document.getElementById('playerNameInput').value.trim();
       if (!name || players.find(p=>p.name===name)) return;
       players.push({ name, stacks:1, totalPaid:5, eliminated:false, canRebuy:true });
       updatePlayerTable(); updatePrizeInfo();
     }
-    function clearPlayers() { players=[]; updatePlayerTable(); updatePrizeInfo(); }
-    function eliminatePlayer(i) { players[i].eliminated=true; updatePlayerTable(); }
-    function rebuyPlayer(i) {
-      if (!players[i].eliminated||isFinalStage) return;
-      players[i].eliminated=false; players[i].stacks++;
-      players[i].totalPaid+=5; updatePlayerTable(); updatePrizeInfo();
+
+    function clearPlayers() {
+      players=[]; tournamentStarted=false; currentRound=0; clearInterval(timer);
+      updatePlayerTable(); updatePrizeInfo(); updateRoundDisplay();
     }
-    function addonPlayer(i) {
-      if (!isBreak) return;
-      players[i].stacks++; players[i].totalPaid+=5;
-      updatePlayerTable(); updatePrizeInfo();
-    }
-    function updatePlayerTable() {
-      const tbody=document.getElementById('playerTableBody');
-      tbody.innerHTML='';
-      players.forEach((p,i)=>{
-        const tr=document.createElement('tr');
-        if (p.eliminated) tr.classList.add('eliminated');
-        let actions='';
-        if (!tournamentStarted) actions=`<button onclick="removePlayer(${i})">Remove</button>`;
-        else {
-          if (!p.eliminated) actions+=`<button onclick="eliminatePlayer(${i})">Eliminate</button>`;
-          if (p.eliminated && p.canRebuy && !isFinalStage)
-            actions+=`<button class="rebuy-btn" onclick="rebuyPlayer(${i})">Re-buy £5</button>`;
-          if (isBreak)
-            actions+=`<button class="addon-btn" onclick="addonPlayer(${i})">Add-on £5</button>`;
-        }
-        tr.innerHTML=`<td>${p.name}</td><td>${p.stacks}</td><td>£${p.totalPaid}</td>
-                      <td>${p.eliminated?'Eliminated':'Active'}</td><td>${actions}</td>`;
-        tbody.appendChild(tr);
-      });
-      const totalPaid=players.reduce((s,p)=>s+p.totalPaid,0);
-      const houseFee=totalPaid>100?10:5, prizePool=totalPaid-houseFee;
-      document.getElementById('playerCount').textContent=
-        `Players: ${players.length} | Prize Pot: £${prizePool} | House Fee: £${houseFee}`;
-      document.getElementById('currentPrizePool').textContent=prizePool;
-      document.getElementById('firstPrize').textContent=Math.round(prizePool*0.8);
-      document.getElementById('secondPrize').textContent=Math.round(prizePool*0.2);
-    }
+
     function startTournament() {
       if (players.length<2) return;
-      tournamentStarted=true; document.getElementById('startBtn').disabled=true;
+      tournamentStarted = true;
+      document.getElementById('startBtn').disabled = true;
       updatePlayerTable(); updateRoundDisplay();
     }
-    function calculatePrizes() { /* Omitted for brevity—use existing code */ }
-    // Timer functions: formatTime, updateRoundDisplay, startTimer, pauseTimer,
-    // resetTimer, skipRound, nextRound, declareWinner—use existing implementations.
 
+    function eliminatePlayer(i) {
+      if (!tournamentStarted) return;
+      players[i].eliminated = true;
+      updatePlayerTable();
+    }
+
+    function rebuyPlayer(i) {
+      if (players[i].eliminated && !isFinalStage) {
+        players[i].eliminated = false;
+        players[i].stacks++;
+        players[i].totalPaid += 5;
+        updatePlayerTable(); updatePrizeInfo();
+      }
+    }
+
+    function addonPlayer(i) {
+      if (isBreak) {
+        players[i].stacks++;
+        players[i].totalPaid += 5;
+        updatePlayerTable(); updatePrizeInfo();
+      }
+    }
+
+    function removePlayer(i) {
+      if (tournamentStarted) return;
+      players.splice(i,1);
+      updatePlayerTable(); updatePrizeInfo();
+    }
+
+    function updatePlayerTable() {
+      const tbody = document.getElementById('playerTableBody');
+      tbody.innerHTML = '';
+      players.forEach((p,i) => {
+        const tr = document.createElement('tr');
+        if (p.eliminated) tr.classList.add('eliminated');
+        let actions = '';
+        if (!tournamentStarted) {
+          actions = `<button onclick="removePlayer(${i})">Remove</button>`;
+        } else {
+          if (!p.eliminated) actions += `<button onclick="eliminatePlayer(${i})">Eliminate</button>`;
+          if (p.eliminated && p.canRebuy && !isFinalStage) actions += `<button class="rebuy-btn" onclick="rebuyPlayer(${i})">Re-buy £5</button>`;
+          if (isBreak) actions += `<button class="addon-btn" onclick="addonPlayer(${i})">Add-on £5</button>`;
+        }
+        tr.innerHTML = `<td>${p.name}</td><td>${p.stacks}</td><td>£${p.totalPaid}</td><td>${p.eliminated?'Eliminated':'Active'}</td><td>${actions}</td>`;
+        tbody.appendChild(tr);
+      });
+      const totalPaid = players.reduce((sum,p)=>sum+p.totalPaid,0);
+      const houseFee = totalPaid>100?10:5;
+      const prizePool = totalPaid - houseFee;
+      document.getElementById('playerCount').textContent = `Players: ${players.length} | Prize Pot: £${prizePool} | House Fee: £${houseFee}`;
+      document.getElementById('currentPrizePool').textContent = prizePool;
+      document.getElementById('firstPrize').textContent = Math.round(prizePool*0.8);
+      document.getElementById('secondPrize').textContent = Math.round(prizePool*0.2);
+    }
+
+    function updatePrizeInfo() {
+      // prize info updated in updatePlayerTable
+    }
   </script>
 </body>
 </html>
