@@ -102,6 +102,23 @@
     }
     window.onload = () => {
       handleClientLoad();
+
+  // Keep cursor in input and handle Enter
+  const nameInput = document.getElementById('playerNameInput');
+  nameInput.focus();
+  nameInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      addPlayer();
+      nameInput.value = '';
+      nameInput.focus();
+    }
+  });
+
+
+  updatePlayerTable();
+  updatePrizeInfo();
+  updateRoundDisplay();
+};
       document.getElementById('playerNameInput').focus();
       document.getElementById('playerNameInput').addEventListener('keydown', e => {
         if (e.key === 'Enter') {
