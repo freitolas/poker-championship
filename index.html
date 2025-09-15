@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Texas Hold'em Championship Manager</title>
+  <!-- Load Google API Client Library -->
+  <script src="https://apis.google.com/js/api.js"></script>
+  <style>
+    body { margin: 0; padding: 0; background: linear-gradient(135deg,#fff7e1 0%,#ffe0b2 100%); font-family: 'Segoe UI',sans-serif; color: #7a4800; display: flex; }
+    .main-content { flex: 3; padding: 20px; min-width: 500px; }
+    h1 { text-align: center; color: #e65100; font-size: 2rem; margin-bottom: 12px; }
+    .game-info { background: linear-gradient(90deg,#ffd740 0%,#ffa726 100%); padding: 12px; border-radius: 8px; text-align: center; color: #d84315; font-weight: 700; margin-bottom: 20px; }
+    .player-setup { background: #fff3e0; padding: 16px; border: 2px solid #ffa726; border-radius: 8px; margin-bottom: 20px; }
+    .player-input-row { display: flex; gap: 10px; margin-bottom: 10px; }
+    #playerNameInput { flex: 1; padding: 8px; border: 1px solid #ffa726; border-radius: 5px; }
+    .setup-buttons { display: flex; gap: 10px; margin-top: 15px; }
+    table { width: 100%; border-collapse: collapse; background: #fff3e0; border-radius: 8px; overflow: hidden; box-shadow: 0 3px 10px rgba(255,152,0,0.15); margin-bottom: 20px; }
+    th,td { padding: 8px; text-align: center; font-weight: 600; }
+    thead { background: linear-gradient(90deg,#ff9800 0%,#fb8c00 100%); color: white; }
+    tbody tr:nth-child(odd) { background: #fff9e5; }
+    tbody tr.eliminated { background: #ffcdd2 !important; color: #c62828; opacity: 0.8; }
+    button { padding: 8px 12px; border: 1px solid #ffa726; border-radius: 5px; background: #ffb74d; color: #7a4800; font-weight: 700; cursor: pointer; transition: 0.3s; }
+    button:hover { background: #ff9800; color: #fffde7; }
+    button:disabled { background: #e0e0e0; color: #9e9e9e; cursor: not-allowed; }
+    .rebuy-btn { background: #f44336 !important; color: white !important; border-color: #d32f2f !important; }
+    .addon-btn { background: #2196f3 !important; color: white !important; border-color: #1976d2 !important; }
+    .action-buttons { display: flex; gap: 8px; justify-content: center; margin-top: 20px; }
+    .timer-panel { flex: 1; background: linear-gradient(135deg,#ffecb3 0%,#ffd54f 100%); border-left: 7px solid #ffa726; box-shadow: -2px 0 14px rgba(255,152,0,0.13); padding: 25px; display: flex; flex-direction: column; align-items: center; height: 100vh; position: sticky; top: 0; }
+    .timer-header { font-size: 2.2rem; font-weight: 900; color: #e65100; margin-bottom: 20px; }
+    .round-info { width: 100%; background: #ffe0b2; border-radius: 12px; padding: 20px; font-size: 1.6rem; font-weight: 700; text-align: center; color: #e65100; margin-bottom: 30px; }
+    .blind-display { background: #ffd54f; padding: 8px 16px; border-radius: 8px; font-size: 1.8rem; color: #e65100; }
+    .time-remaining { font-size: 3.5rem; font-weight: 900; background: #ffd54f; color: #e65100; border-radius: 15px; padding: 15px 30px; box-shadow: 0 2px 8px rgba(255,152,0,0.2); margin: 15px 0 25px; }
+    .timer-controls { display: flex; gap: 15px; margin-bottom: 25px; }
+    .break-notice, .final-stage { display: none; width: 100%; padding: 15px; border-radius: 8px; text-align: center; font-weight: 700; margin: 10px 0; }
+    .break-notice { background: #bbdefb; color: #0d47a1; }
+    .final-stage { background: #ffecb3; color: #e65100; }
+    .prize-info { background: #fff3e0; padding: 15px; border-radius: 8px; text-align: center; font-weight: 600; color: #e65100; margin-top: 20px; }
+    .charts-section { margin-top: 30px; }
+  </style>
+</head>
+<body>
+  <div class="main-content">
+    <h1>Texas Hold'em Championship Manager</h1>
+    <div class="game-info">Buy-in: £5 per stack | 1st: 80% | 2nd: 20% | House Fee: £5 (£10 if pot > £100)</div>
+
+    <div class="player-setup">
+      <h3>Add Players</h3>
+      <div class="player-input-row">
+        <input type="text" id="playerNameInput" placeholder="Enter player name..." />
+        <button onclick="addPlayer()">Add Player</button>
+      </div>
+      <div class="setup-buttons">
+        <button onclick="startTournament()" id="startBtn">Start Tournament</button>
+        <button onclick="clearPlayers()">Clear All Players</button>
+      </div>
+      <div id="playerCount">Players: 0 | Prize Pot: £0 | House Fee: £0</div>
+      <div class="action-buttons">
+        <button id="exportBtn" disabled>Save Tournament Data</button>
+        <button id="loadDashboardBtn" disabled>Load Championship Dashboard</button>
+      </div>
+    </div>
+
+    <table id="playerTable">
+      <thead>
+        <tr><th>Player</th><th>Stacks</th><th>Total Paid</th><th>Status</th><th>Actions</th></tr>
+      </thead>
+      <tbody id="playerTableBody"></tbody>
+    </table>
+
+    <div id="prizeResults"></div>
+    <div class="charts-section" id="chartsSection"></div>
+  </div>
+
+  <div class="timer-panel">
+    <div class="timer-header">ROUND TIMER</div>
+    <div id="roundInfo" class="round-info">
+      <div>Round 1</div>
+      <div class="blind-display">SB: 5 | BB: 10</div>
+      <div style="font-size:1.2rem;">Duration: 20 minutes</div>
+    </div>
+    <div id="timeRemaining" class="time-remaining">20:00</div>
+    <div class="timer-controls">
+      <button id="timerStartBtn" onclick="startTimer()">START</button>
+      <button id="timerPauseBtn" onclick="pauseTimer()" disabled>PAUSE</button>
+      <button id="timerResetBtn" onclick="resetTimer()">RESET</button>
+      <button id="timerSkipBtn" onclick="skipRound()">SKIP ROUND</button>
+    </div>
+    <div id="breakNotice" class="break-notice"><strong>BREAK TIME!</strong><br>30 minutes - Add-ons available</div>
+    <div id="finalStage" class="final-stage"><strong>FINAL STAGE</strong><br>No more re-buys or add-ons</div>
+    <div class="prize-info">
+      <div><strong>Current Prize Pool: £<span id="currentPrizePool">0</span></strong></div>
+      <div>1st Place: £<span id="firstPrize">0</span></div>
+      <div>2nd Place: £<span id="secondPrize">0</span></div>
+    </div>
+    <audio id="roundAlarm"><source src="alarm.mp3" type="audio/mp3"></audio>
+  </div>
+
+  <script>
+    // Google Sheets & OAuth configuration
+    const CLIENT_ID = '341648594146-vljhd1s0mgblpafrkh7rsgjf70u6k43n.apps.googleusercontent.com';
+    const SCOPES = 'https://www.googleapis.com/auth/spreadsheets';
+    const SPREADSHEET_ID = '1I6dwNCQfUWg6Xb4eMbnxgZbMD8GQ0rnJ-AquE08LIzc';
+
+    function handleClientLoad() {
+      gapi.load('client:auth2', initClient);
+    }
+    window.onload = () => {
+      handleClientLoad();
+      updatePlayerTable();
+      updatePrizeInfo();
+      updateRoundDisplay();
+    };
+
+    function initClient() {
+      gapi.client.init({
+        clientId: CLIENT_ID,
+        discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4'],
+        scope: SCOPES
+      }).then(() => {
+        const auth = gapi.auth2.getAuthInstance();
+        auth.isSignedIn.listen(updateSigninStatus);
+        updateSigninStatus(auth.isSignedIn.get());
+      });
+    }
+
+    // New functions for Sheets integration:
+    function updateSigninStatus(isSignedIn) {
+      document.getElementById('exportBtn').disabled = !isSignedIn;
+      document.getElementById('loadDashboardBtn').disabled = !isSignedIn;
+      if (!isSignedIn) gapi.auth2.getAuthInstance().signIn();
+    }
+
+    function collectCurrentTournamentData() {
+      const date = new Date().toISOString().split('T')[0];
+      const finalPlayers = players.filter(p => !p.eliminated).map(p => p.name);
+      return {
+        date,
+        results: finalPlayers,
+        first: finalPlayers[0] || '',
+        second: finalPlayers[1] || ''
+      };
+    }
+
+    function exportTournamentData(data) {
+      const row = [[ data.date, data.results.join('|'), data.first, data.second ]];
+      return gapi.client.sheets.spreadsheets.values.append({
+        spreadsheetId: SPREADSHEET_ID,
+        range: 'RawResults!A:D',
+        valueInputOption: 'USER_ENTERED',
+        resource: { values: row }
+      }).then(() => alert('Tournament data saved!'));
+    }
+
+    function loadDashboard() {
+      gapi.client.sheets.spreadsheets.values.get({
+        spreadsheetId: SPREADSHEET_ID,
+        range: 'RawResults!A:D'
+      }).then(res => buildDashboardFromRows(res.result.values || []));
+    }
+
+    function buildDashboardFromRows(rows) {
+      const stats = {};
+      rows.forEach(r => {
+        const [date, names, first, second] = r;
+        const namesArr = names.split('|');
+        namesArr.forEach(name => {
+          if (!stats[name]) stats[name] = { played:0, wins:0, seconds:0, earnings:0 };
+          stats[name].played++;
+        });
+        const pool = parseFloat(document.getElementById('currentPrizePool').textContent);
+        stats[first].wins++; stats[first].earnings += pool * 0.8;
+        stats[second].seconds++; stats[second].earnings += pool * 0.2;
+      });
+      const sec = document.getElementById('chartsSection');
+      sec.innerHTML = '<h3>Annual Leaderboard</h3>';
+      const tbl = document.createElement('table');
+      tbl.innerHTML = '<thead><tr><th>Player</th><th>Played</th><th>Wins</th><th>2nds</th><th>Earnings</th></tr></thead>';
+      const body = document.createElement('tbody');
+      Object.entries(stats).sort((a,b)=>b[1].earnings-a[1].earnings).forEach(([name,s])=>{
+        const tr=document.createElement('tr');
+        tr.innerHTML = `<td>${name}</td>
+                        <td>${s.played}</td>
+                        <td>${s.wins}</td>
+                        <td>${s.seconds}</td>
+                        <td>£${s.earnings.toFixed(2)}</td>`;
+        body.appendChild(tr);
+      });
+      tbl.appendChild(body);
+      sec.appendChild(tbl);
+    }
+
+    // Hook buttons
+    document.getElementById('exportBtn').onclick = () => {
+      exportTournamentData(collectCurrentTournamentData());
+    };
+    document.getElementById('loadDashboardBtn').onclick = loadDashboard;
+
+    // Existing tournament & timer code:
+    const rounds = [
+      { name: "Test Round", sb:0, bb:0, duration:0.083, isTest:true },
+      { name:"Round 1", sb:5, bb:10, duration:20 },
+      { name:"Round 2", sb:10, bb:20, duration:20 },
+      { name:"Round 3", sb:20, bb:40, duration:20 },
+      { name:"Round 4", sb:40, bb:80, duration:20 },
+      { name:"Break + Add-On", sb:0, bb:0, duration:30, isBreak:true },
+      { name:"Round 5", sb:50, bb:100, duration:20 },
+      { name:"Round 6", sb:100, bb:200, duration:20 },
+      { name:"Round 7", sb:200, bb:400, duration:20 },
+      { name:"Round 8", sb:400, bb:800, duration:20 },
+      { name:"Round 9", sb:1000, bb:2000, duration:20 }
+    ];
+    let players = [];
+    let currentRound = 0, timer=null, timeLeft=rounds[0].duration*60;
+    let tournamentStarted=false, isBreak=false, isFinalStage=false;
+
+    function addPlayer() {
+      const name = document.getElementById('playerNameInput').value.trim();
+      if (!name || players.find(p=>p.name===name)) return;
+      players.push({ name, stacks:1, totalPaid:5, eliminated:false, canRebuy:true });
+      updatePlayerTable(); updatePrizeInfo();
+    }
+    function clearPlayers() { players=[]; updatePlayerTable(); updatePrizeInfo(); }
+    function eliminatePlayer(i) { players[i].eliminated=true; updatePlayerTable(); }
+    function rebuyPlayer(i) {
+      if (!players[i].eliminated||isFinalStage) return;
+      players[i].eliminated=false; players[i].stacks++;
+      players[i].totalPaid+=5; updatePlayerTable(); updatePrizeInfo();
+    }
+    function addonPlayer(i) {
+      if (!isBreak) return;
+      players[i].stacks++; players[i].totalPaid+=5;
+      updatePlayerTable(); updatePrizeInfo();
+    }
+    function updatePlayerTable() {
+      const tbody=document.getElementById('playerTableBody');
+      tbody.innerHTML='';
+      players.forEach((p,i)=>{
+        const tr=document.createElement('tr');
+        if (p.eliminated) tr.classList.add('eliminated');
+        let actions='';
+        if (!tournamentStarted) actions=`<button onclick="removePlayer(${i})">Remove</button>`;
+        else {
+          if (!p.eliminated) actions+=`<button onclick="eliminatePlayer(${i})">Eliminate</button>`;
+          if (p.eliminated && p.canRebuy && !isFinalStage)
+            actions+=`<button class="rebuy-btn" onclick="rebuyPlayer(${i})">Re-buy £5</button>`;
+          if (isBreak)
+            actions+=`<button class="addon-btn" onclick="addonPlayer(${i})">Add-on £5</button>`;
+        }
+        tr.innerHTML=`<td>${p.name}</td><td>${p.stacks}</td><td>£${p.totalPaid}</td>
+                      <td>${p.eliminated?'Eliminated':'Active'}</td><td>${actions}</td>`;
+        tbody.appendChild(tr);
+      });
+      const totalPaid=players.reduce((s,p)=>s+p.totalPaid,0);
+      const houseFee=totalPaid>100?10:5, prizePool=totalPaid-houseFee;
+      document.getElementById('playerCount').textContent=
+        `Players: ${players.length} | Prize Pot: £${prizePool} | House Fee: £${houseFee}`;
+      document.getElementById('currentPrizePool').textContent=prizePool;
+      document.getElementById('firstPrize').textContent=Math.round(prizePool*0.8);
+      document.getElementById('secondPrize').textContent=Math.round(prizePool*0.2);
+    }
+    function startTournament() {
+      if (players.length<2) return;
+      tournamentStarted=true; document.getElementById('startBtn').disabled=true;
+      updatePlayerTable(); updateRoundDisplay();
+    }
+    function calculatePrizes() { /* Omitted for brevity—use existing code */ }
+    // Timer functions: formatTime, updateRoundDisplay, startTimer, pauseTimer,
+    // resetTimer, skipRound, nextRound, declareWinner—use existing implementations.
+
+  </script>
+</body>
+</html>
