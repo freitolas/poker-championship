@@ -1009,7 +1009,8 @@
         stacks: 1,
         totalPaid: 5,
         eliminated: false,
-        hasAddon: false // Track if player has used their one add-on
+        hasAddon: false, // Track if player has used their one add-on
+        eliminationOrder: null // Track when they were eliminated
       });
       
       input.value = '';
@@ -1034,14 +1035,27 @@
       if (!tournamentStarted || tournamentEnded) return;
       
       const player = players[index];
+      
+      // Track elimination order
+      const currentlyActive = players.filter(p => !p.eliminated).length;
+      player.eliminationOrder = currentlyActive; // This will be their finishing position
+      
       recordAction('eliminate', {
         name: player.name,
-        previousEliminated: player.eliminated
+        previousEliminated: player.eliminated,
+        previousEliminationOrder: player.eliminationOrder
       });
       
       player.eliminated = true;
       updatePlayerTable();
-      showMessage(`${player.name} eliminated from tournament`);
+      showMessage(`${player.name} eliminated from tournament (${currentlyActive}${getSuffix(currentlyActive)} place)`);
+    }
+
+    function getSuffix(num) {
+      if (num % 10 === 1 && num % 100 !== 11) return 'st';
+      if (num % 10 === 2 && num % 100 !== 12) return 'nd';
+      if (num % 10 === 3 && num % 100 !== 13) return 'rd';
+      return 'th';
     }
 
     function rebuyPlayer(index) {
@@ -1171,29 +1185,42 @@
       const firstPrize = Math.round(prizePool * 0.8);
       const secondPrize = Math.round(prizePool * 0.2);
       
-      let resultsHTML = '<div class="prize-info"><h3>🏆 Final Results 🏆</h3>';
+      // Sort all players by elimination order to find proper ranking
+      const allPlayersSorted = [...players].sort((a, b) => {
+        if (!a.eliminated && !b.eliminated) return 0; // Both winners
+        if (!a.eliminated) return -1; // a is winner
+        if (!b.eliminated) return 1; // b is winner
+        return (b.eliminationOrder || 0) - (a.eliminationOrder || 0); // Higher elimination order = better finish
+      });
       
-      if (finalists.length >= 1) {
+      let resultsHTML = '<div class="prize-info"><h3>Final Results</h3>';
+      
+      // 1st Place (last active player)
+      const winner = allPlayersSorted[0];
+      if (winner) {
         resultsHTML += `<div style="font-size: 1.4rem; color: #d84315; margin: 10px 0;">
-          🥇 <strong>1st Place: ${finalists[0].name}</strong> - £${firstPrize}
+          🥇 <strong>1st Place: ${winner.name}</strong> - £${firstPrize}
         </div>`;
       }
       
-      if (finalists.length >= 2) {
+      // 2nd Place (last player eliminated)
+      const secondPlace = allPlayersSorted[1];
+      if (secondPlace && secondPlace.eliminated) {
         resultsHTML += `<div style="font-size: 1.2rem; color: #d84315; margin: 10px 0;">
-          🥈 <strong>2nd Place: ${finalists[1].name}</strong> - £${secondPrize}
+          🥈 <strong>2nd Place: ${secondPlace.name}</strong> - £${secondPrize}
         </div>`;
-      } else if (finalists.length === 1) {
-        // If only one finalist, show that 2nd place gets nothing
+      } else {
         resultsHTML += `<div style="font-size: 1.2rem; color: #666; margin: 10px 0;">
           🥈 <strong>2nd Place:</strong> No qualifying player - £0
         </div>`;
       }
       
-      if (finalists.length > 2) {
+      // Other finalists
+      if (allPlayersSorted.length > 2) {
         resultsHTML += '<div style="margin-top: 15px;"><strong>Other Finalists:</strong><br>';
-        for (let i = 2; i < finalists.length; i++) {
-          resultsHTML += `${i + 1}. ${finalists[i].name}<br>`;
+        for (let i = 2; i < allPlayersSorted.length; i++) {
+          const player = allPlayersSorted[i];
+          resultsHTML += `${i + 1}. ${player.name}<br>`;
         }
         resultsHTML += '</div>';
       }
