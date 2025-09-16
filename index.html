@@ -387,6 +387,7 @@
         <button onclick="startTournament()" id="startBtn">Start Tournament</button>
         <button onclick="endTournament()" id="endBtn" disabled>End Tournament</button>
         <button onclick="clearPlayers()">Clear All Players</button>
+        <button onclick="undoLastAction()" id="undoBtn" disabled>Undo</button>
       </div>
       
       <div id="playerCount">Players: 0 | Prize Pot: £0 | House Fee: £5</div>
@@ -482,9 +483,77 @@
     let isFinalStage = false;
     let timerRunning = false;
     let googleApiReady = false;
+    let actionHistory = []; // For undo functionality
 
     console.log('Global state initialized');
 
+    // Undo functionality
+    function recordAction(action, data) {
+      actionHistory.push({
+        type: action,
+        data: data,
+        timestamp: Date.now()
+      });
+      // Keep only last 10 actions
+      if (actionHistory.length > 10) {
+        actionHistory.shift();
+      }
+      updateUndoButton();
+    }
+
+    function undoLastAction() {
+      if (actionHistory.length === 0) {
+        showMessage('Nothing to undo', true);
+        return;
+      }
+
+      const lastAction = actionHistory.pop();
+      
+      switch (lastAction.type) {
+        case 'eliminate':
+          const eliminatedPlayer = players.find(p => p.name === lastAction.data.name);
+          if (eliminatedPlayer) {
+            eliminatedPlayer.eliminated = false;
+            showMessage(`Undid elimination of ${lastAction.data.name}`);
+          }
+          break;
+          
+        case 'rebuy':
+          const rebuyPlayer = players.find(p => p.name === lastAction.data.name);
+          if (rebuyPlayer) {
+            rebuyPlayer.eliminated = true;
+            rebuyPlayer.stacks = lastAction.data.previousStacks;
+            rebuyPlayer.totalPaid = lastAction.data.previousPaid;
+            showMessage(`Undid rebuy for ${lastAction.data.name}`);
+          }
+          break;
+          
+        case 'addon':
+          const addonPlayer = players.find(p => p.name === lastAction.data.name);
+          if (addonPlayer) {
+            addonPlayer.stacks = lastAction.data.previousStacks;
+            addonPlayer.totalPaid = lastAction.data.previousPaid;
+            showMessage(`Undid add-on for ${lastAction.data.name}`);
+          }
+          break;
+      }
+      
+      updatePlayerTable();
+      updateUndoButton();
+    }
+
+    function updateUndoButton() {
+      const undoBtn = document.getElementById('undoBtn');
+      if (undoBtn) {
+        undoBtn.disabled = actionHistory.length === 0;
+        if (actionHistory.length > 0) {
+          const lastAction = actionHistory[actionHistory.length - 1];
+          undoBtn.textContent = `Undo ${lastAction.type}`;
+        } else {
+          undoBtn.textContent = 'Undo';
+        }
+      }
+    }
     // Make functions globally accessible
     window.addPlayer = addPlayer;
     window.removePlayer = removePlayer;
@@ -500,6 +569,7 @@
     window.skipRound = skipRound;
     window.signInAndExport = signInAndExport;
     window.signInAndLoadDashboard = signInAndLoadDashboard;
+    window.undoLastAction = undoLastAction;
 
     console.log('Functions attached to window object');
 
@@ -531,28 +601,38 @@
     }
 
     function playAlarm() {
+      console.log('Playing alarm...');
       const audio = document.getElementById('roundAlarm');
       // Create a simple beep sound if audio file isn't available
       try {
         audio.play().catch(() => {
+          console.log('Audio file not available, creating beep sound');
           // Fallback beep using Web Audio API
-          const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-          const oscillator = audioContext.createOscillator();
-          const gainNode = audioContext.createGain();
-          
-          oscillator.connect(gainNode);
-          gainNode.connect(audioContext.destination);
-          
-          oscillator.frequency.value = 800;
-          oscillator.type = 'square';
-          gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-          gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 1);
-          
-          oscillator.start(audioContext.currentTime);
-          oscillator.stop(audioContext.currentTime + 1);
+          try {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.value = 800;
+            oscillator.type = 'square';
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 1);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 1);
+            
+            console.log('Beep sound played');
+          } catch (e) {
+            console.log('Web Audio not available, trying alert sound');
+            // Final fallback - system beep
+            window.navigator.vibrate && window.navigator.vibrate(200);
+          }
         });
       } catch (e) {
-        console.log('Audio not available');
+        console.error('Audio playback failed:', e);
       }
     }
 
@@ -781,10 +861,12 @@
             actions += `<button onclick="eliminatePlayer(${index})">Eliminate</button>`;
           }
           
-          if (player.eliminated && isBreak) {
+          // Re-buy available for eliminated players BEFORE final stage (including during breaks)
+          if (player.eliminated && !isFinalStage) {
             actions += `<button class="rebuy-btn" onclick="rebuyPlayer(${index})">Re-buy £5</button>`;
           }
           
+          // Add-on available for ALL players ONLY during breaks (before final stage)
           if (isBreak && !isFinalStage) {
             actions += `<button class="addon-btn" onclick="addonPlayer(${index})">Add-on £5</button>`;
           }
@@ -801,6 +883,16 @@
       });
       
       updatePrizeInfo();
+      checkForWinner();
+    }
+
+    function checkForWinner() {
+      if (!tournamentStarted || tournamentEnded) return;
+      
+      const activePlayers = players.filter(p => !p.eliminated);
+      if (activePlayers.length === 1) {
+        showMessage(`${activePlayers[0].name} is the last player standing! Click "End Tournament" to finish.`);
+      }
     }
 
     function updatePrizeInfo() {
@@ -862,15 +954,20 @@
     function eliminatePlayer(index) {
       if (!tournamentStarted || tournamentEnded) return;
       
-      const playerName = players[index].name;
-      players[index].eliminated = true;
+      const player = players[index];
+      recordAction('eliminate', {
+        name: player.name,
+        previousEliminated: player.eliminated
+      });
+      
+      player.eliminated = true;
       updatePlayerTable();
-      showMessage(`${playerName} eliminated from tournament`);
+      showMessage(`${player.name} eliminated from tournament`);
     }
 
     function rebuyPlayer(index) {
-      if (!isBreak || tournamentEnded || isFinalStage) {
-        showMessage('Re-buys only available during breaks', true);
+      if (tournamentEnded || isFinalStage) {
+        showMessage('Re-buys not available in final stage', true);
         return;
       }
       
@@ -879,6 +976,12 @@
         showMessage('Player must be eliminated to re-buy', true);
         return;
       }
+      
+      recordAction('rebuy', {
+        name: player.name,
+        previousStacks: player.stacks,
+        previousPaid: player.totalPaid
+      });
       
       player.eliminated = false;
       player.stacks++;
@@ -889,11 +992,18 @@
 
     function addonPlayer(index) {
       if (!isBreak || tournamentEnded || isFinalStage) {
-        showMessage('Add-ons only available during breaks', true);
+        showMessage('Add-ons only available during breaks before final stage', true);
         return;
       }
       
       const player = players[index];
+      
+      recordAction('addon', {
+        name: player.name,
+        previousStacks: player.stacks,
+        previousPaid: player.totalPaid
+      });
+      
       player.stacks++;
       player.totalPaid += 5;
       updatePlayerTable();
