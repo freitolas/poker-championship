@@ -2,279 +2,1148 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Texas Hold'em Championship Manager</title>
   <script src="https://apis.google.com/js/api.js"></script>
   <style>
-    body{margin:0;padding:0;background:linear-gradient(135deg,#fff7e1 0%,#ffe0b2 100%);font-family:'Segoe UI',sans-serif;color:#7a4800;display:flex}
-    .main-content{flex:3;padding:20px;min-width:500px}
-    h1{text-align:center;color:#e65100;font-size:2rem;margin-bottom:12px}
-    .game-info{background:linear-gradient(90deg,#ffd740 0%,#ffa726 100%);padding:12px;border-radius:8px;text-align:center;color:#d84315;font-weight:700;margin-bottom:20px}
-    .player-setup{background:#fff3e0;padding:16px;border:2px solid #ffa726;border-radius:8px;margin-bottom:20px}
-    .player-input-row{display:flex;gap:10px;margin-bottom:10px}
-    #playerNameInput{flex:1;padding:8px;border:1px solid #ffa726;border-radius:5px}
-    .setup-buttons{display:flex;gap:10px;margin-top:15px}
-    table{width:100%;border-collapse:collapse;background:#fff3e0;border-radius:8px;overflow:hidden;box-shadow:0 3px 10px rgba(255,152,0,0.15);margin-bottom:20px}
-    th,td{padding:8px;text-align:center;font-weight:600}
-    thead{background:linear-gradient(90deg,#ff9800 0%,#fb8c00 100%);color:white}
-    tbody tr:nth-child(odd){background:#fff9e5}
-    tbody tr.eliminated{background:#ffcdd2!important;color:#c62828;opacity:0.8}
-    button{padding:8px 12px;border:1px solid #ffa726;border-radius:5px;background:#ffb74d;color:#7a4800;font-weight:700;cursor:pointer;transition:0.3s}
-    button:hover{background:#ff9800;color:#fffde7}
-    button:disabled{background:#e0e0e0;color:#9e9e9e;cursor:not-allowed}
-    .rebuy-btn{background:#f44336!important;color:white!important;border-color:#d32f2f!important}
-    .addon-btn{background:#2196f3!important;color:white!important;border-color:#1976d2!important}
-    .action-buttons{display:flex;gap:8px;justify-content:center;margin-top:20px}
-    .timer-panel{flex:1;background:linear-gradient(135deg,#ffecb3 0%,#ffd54f 100%);border-left:7px solid #ffa726;box-shadow:-2px 0 14px rgba(255,152,0,0.13);padding:25px;display:flex;flex-direction:column;align-items:center;height:100vh;position:sticky;top:0}
-    .timer-header{font-size:2.2rem;font-weight:900;color:#e65100;margin-bottom:20px}
-    .round-info{width:100%;background:#ffe0b2;border-radius:12px;padding:20px;font-size:1.6rem;font-weight:700;text-align:center;color:#e65100;margin-bottom:30px}
-    .blind-display{background:#ffd54f;padding:8px 16px;border-radius:8px;font-size:1.8rem;color:#e65100}
-    .time-remaining{font-size:3.5rem;font-weight:900;background:#ffd54f;color:#e65100;border-radius:15px;padding:15px 30px;box-shadow:0 2px 8px rgba(255,152,0,0.2);margin:15px 0 25px}
-    .timer-controls{display:flex;gap:15px;margin-bottom:25px}
-    .break-notice,.final-stage{display:none;width:100%;padding:15px;border-radius:8px;text-align:center;font-weight:700;margin:10px 0}
-    .break-notice{background:#bbdefb;color:#0d47a1}
-    .final-stage{background:#ffecb3;color:#e65100}
-    .prize-info{background:#fff3e0;padding:15px;border-radius:8px;text-align:center;font-weight:600;color:#e65100;margin-top:20px}
-    .charts-section{margin-top:30px}
+    * {
+      box-sizing: border-box;
+    }
+    
+    body {
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(135deg, #fff7e1 0%, #ffe0b2 100%);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      color: #7a4800;
+      display: flex;
+      min-height: 100vh;
+    }
+    
+    .main-content {
+      flex: 3;
+      padding: 20px;
+      min-width: 500px;
+      overflow-y: auto;
+    }
+    
+    h1 {
+      text-align: center;
+      color: #e65100;
+      font-size: 2.2rem;
+      margin-bottom: 15px;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .game-info {
+      background: linear-gradient(90deg, #ffd740 0%, #ffa726 100%);
+      padding: 15px;
+      border-radius: 10px;
+      text-align: center;
+      color: #d84315;
+      font-weight: 700;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 8px rgba(255, 152, 0, 0.2);
+    }
+    
+    .player-setup {
+      background: #fff3e0;
+      padding: 20px;
+      border: 2px solid #ffa726;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 8px rgba(255, 152, 0, 0.1);
+    }
+    
+    .player-setup h3 {
+      margin-top: 0;
+      color: #e65100;
+      font-size: 1.4rem;
+    }
+    
+    .player-input-row {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 15px;
+      align-items: center;
+    }
+    
+    #playerNameInput {
+      flex: 1;
+      padding: 10px;
+      border: 2px solid #ffa726;
+      border-radius: 6px;
+      font-size: 16px;
+      outline: none;
+      transition: border-color 0.3s;
+    }
+    
+    #playerNameInput:focus {
+      border-color: #ff9800;
+      box-shadow: 0 0 0 3px rgba(255, 152, 0, 0.2);
+    }
+    
+    .setup-buttons {
+      display: flex;
+      gap: 12px;
+      margin: 15px 0;
+      flex-wrap: wrap;
+    }
+    
+    button {
+      padding: 10px 16px;
+      border: 2px solid #ffa726;
+      border-radius: 6px;
+      background: #ffb74d;
+      color: #7a4800;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 14px;
+    }
+    
+    button:hover:not(:disabled) {
+      background: #ff9800;
+      color: #fff;
+      transform: translateY(-1px);
+      box-shadow: 0 3px 8px rgba(255, 152, 0, 0.3);
+    }
+    
+    button:disabled {
+      background: #e0e0e0;
+      color: #9e9e9e;
+      cursor: not-allowed;
+      border-color: #bdbdbd;
+      transform: none;
+      box-shadow: none;
+    }
+    
+    .rebuy-btn {
+      background: #f44336 !important;
+      color: white !important;
+      border-color: #d32f2f !important;
+    }
+    
+    .rebuy-btn:hover:not(:disabled) {
+      background: #d32f2f !important;
+    }
+    
+    .addon-btn {
+      background: #2196f3 !important;
+      color: white !important;
+      border-color: #1976d2 !important;
+    }
+    
+    .addon-btn:hover:not(:disabled) {
+      background: #1976d2 !important;
+    }
+    
+    .action-buttons {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      margin-top: 15px;
+      flex-wrap: wrap;
+    }
+    
+    #playerCount {
+      text-align: center;
+      font-weight: 600;
+      color: #e65100;
+      margin: 10px 0;
+      font-size: 1.1rem;
+    }
+    
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff3e0;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(255, 152, 0, 0.15);
+      margin-bottom: 20px;
+    }
+    
+    th, td {
+      padding: 12px 8px;
+      text-align: center;
+      font-weight: 600;
+    }
+    
+    thead {
+      background: linear-gradient(90deg, #ff9800 0%, #fb8c00 100%);
+      color: white;
+    }
+    
+    tbody tr:nth-child(odd) {
+      background: #fff9e5;
+    }
+    
+    tbody tr:nth-child(even) {
+      background: #fff3e0;
+    }
+    
+    tbody tr.eliminated {
+      background: #ffcdd2 !important;
+      color: #c62828;
+      opacity: 0.8;
+    }
+    
+    .timer-panel {
+      flex: 1;
+      background: linear-gradient(135deg, #ffecb3 0%, #ffd54f 100%);
+      border-left: 7px solid #ffa726;
+      box-shadow: -2px 0 14px rgba(255, 152, 0, 0.13);
+      padding: 25px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      height: 100vh;
+      position: sticky;
+      top: 0;
+      overflow-y: auto;
+    }
+    
+    .timer-header {
+      font-size: 2.4rem;
+      font-weight: 900;
+      color: #e65100;
+      margin-bottom: 20px;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .round-info {
+      width: 100%;
+      background: #ffe0b2;
+      border-radius: 12px;
+      padding: 20px;
+      font-size: 1.4rem;
+      font-weight: 700;
+      text-align: center;
+      color: #e65100;
+      margin-bottom: 25px;
+      box-shadow: 0 2px 8px rgba(255, 152, 0, 0.2);
+    }
+    
+    .blind-display {
+      background: #ffd54f;
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-size: 1.6rem;
+      color: #e65100;
+      margin: 10px 0;
+      font-weight: 800;
+    }
+    
+    .time-remaining {
+      font-size: 3.8rem;
+      font-weight: 900;
+      background: #ffd54f;
+      color: #e65100;
+      border-radius: 15px;
+      padding: 20px 35px;
+      box-shadow: 0 4px 12px rgba(255, 152, 0, 0.25);
+      margin: 20px 0 30px;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+      min-width: 200px;
+      text-align: center;
+    }
+    
+    .timer-controls {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 25px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    
+    .timer-controls button {
+      min-width: 80px;
+    }
+    
+    .break-notice, .final-stage {
+      display: none;
+      width: 100%;
+      padding: 15px;
+      border-radius: 10px;
+      text-align: center;
+      font-weight: 700;
+      margin: 15px 0;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .break-notice {
+      background: #bbdefb;
+      color: #0d47a1;
+      border: 2px solid #2196f3;
+    }
+    
+    .final-stage {
+      background: #ffecb3;
+      color: #e65100;
+      border: 2px solid #ffa726;
+    }
+    
+    .prize-info {
+      background: #fff3e0;
+      padding: 20px;
+      border-radius: 10px;
+      text-align: center;
+      font-weight: 600;
+      color: #e65100;
+      margin-top: 20px;
+      width: 100%;
+      box-shadow: 0 2px 8px rgba(255, 152, 0, 0.2);
+    }
+    
+    .prize-info div {
+      margin: 8px 0;
+      font-size: 1.1rem;
+    }
+    
+    .prize-info div:first-child {
+      font-size: 1.3rem;
+      font-weight: 800;
+    }
+    
+    .charts-section {
+      margin-top: 30px;
+    }
+    
+    .charts-section h3 {
+      color: #e65100;
+      font-size: 1.8rem;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    
+    .status-message {
+      background: #e8f5e8;
+      border: 2px solid #4caf50;
+      color: #2e7d32;
+      padding: 12px;
+      border-radius: 8px;
+      margin: 15px 0;
+      text-align: center;
+      font-weight: 600;
+      display: none;
+    }
+    
+    .error-message {
+      background: #ffebee;
+      border: 2px solid #f44336;
+      color: #c62828;
+      padding: 12px;
+      border-radius: 8px;
+      margin: 15px 0;
+      text-align: center;
+      font-weight: 600;
+      display: none;
+    }
+    
+    @media (max-width: 768px) {
+      body {
+        flex-direction: column;
+      }
+      
+      .main-content {
+        min-width: auto;
+      }
+      
+      .timer-panel {
+        height: auto;
+        position: relative;
+      }
+      
+      .timer-header {
+        font-size: 2rem;
+      }
+      
+      .time-remaining {
+        font-size: 3rem;
+      }
+    }
   </style>
 </head>
 <body>
   <div class="main-content">
     <h1>Texas Hold'em Championship Manager</h1>
-    <div class="game-info">Buy-in: £5 per stack | 1st: 80% | 2nd: 20% | House Fee: £5 (£10 if pot > £100)</div>
+    
+    <div class="game-info">
+      Buy-in: £5 per stack | 1st: 80% | 2nd: 20% | House Fee: £5 (£10 if pot &gt; £100)
+    </div>
+    
+    <div class="status-message" id="statusMessage"></div>
+    <div class="error-message" id="errorMessage"></div>
+    
     <div class="player-setup">
       <h3>Add Players</h3>
       <div class="player-input-row">
-        <input type="text" id="playerNameInput" placeholder="Enter player name..." />
+        <input type="text" id="playerNameInput" placeholder="Enter player name..." autocomplete="off" />
         <button onclick="addPlayer()">Add Player</button>
       </div>
+      
       <div class="setup-buttons">
         <button onclick="startTournament()" id="startBtn">Start Tournament</button>
         <button onclick="endTournament()" id="endBtn" disabled>End Tournament</button>
         <button onclick="clearPlayers()">Clear All Players</button>
       </div>
-      <div id="playerCount">Players: 0 | Prize Pot: £0 | House Fee: £0</div>
+      
+      <div id="playerCount">Players: 0 | Prize Pot: £0 | House Fee: £5</div>
+      
       <div class="action-buttons">
-        <button id="exportBtn" disabled>Save Tournament Data</button>
-        <button id="loadDashboardBtn" disabled>Load Championship Dashboard</button>
+        <button onclick="signInAndExport()" id="exportBtn" disabled>Save Tournament Data</button>
+        <button onclick="signInAndLoadDashboard()" id="loadDashboardBtn" disabled>Load Championship Dashboard</button>
       </div>
     </div>
+    
     <table id="playerTable">
-      <thead><tr><th>Player</th><th>Stacks</th><th>Total Paid</th><th>Status</th><th>Actions</th></tr></thead>
+      <thead>
+        <tr>
+          <th>Player</th>
+          <th>Stacks</th>
+          <th>Total Paid</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
       <tbody id="playerTableBody"></tbody>
     </table>
+    
     <div id="prizeResults"></div>
     <div class="charts-section" id="chartsSection"></div>
   </div>
+  
   <div class="timer-panel">
     <div class="timer-header">ROUND TIMER</div>
     <div id="roundInfo" class="round-info"></div>
-    <div id="timeRemaining" class="time-remaining"></div>
+    <div id="timeRemaining" class="time-remaining">20:00</div>
+    
     <div class="timer-controls">
       <button id="timerStartBtn" onclick="startTimer()">START</button>
       <button id="timerPauseBtn" onclick="pauseTimer()" disabled>PAUSE</button>
       <button id="timerResetBtn" onclick="resetTimer()">RESET</button>
       <button id="timerSkipBtn" onclick="skipRound()">SKIP ROUND</button>
     </div>
-    <div id="breakNotice" class="break-notice"><strong>BREAK TIME!</strong><br>30 minutes - Add-ons available</div>
-    <div id="finalStage" class="final-stage"><strong>FINAL STAGE</strong><br>No more re-buys or add-ons</div>
+    
+    <div id="breakNotice" class="break-notice">
+      <strong>BREAK TIME!</strong><br>30 minutes - Add-ons available
+    </div>
+    
+    <div id="finalStage" class="final-stage">
+      <strong>FINAL STAGE</strong><br>No more re-buys or add-ons
+    </div>
+    
     <div class="prize-info">
       <div><strong>Current Prize Pool: £<span id="currentPrizePool">0</span></strong></div>
       <div>1st Place: £<span id="firstPrize">0</span></div>
       <div>2nd Place: £<span id="secondPrize">0</span></div>
     </div>
-    <audio id="roundAlarm"><source src="alarm.mp3" type="audio/mp3" /></audio>
+    
+    <audio id="roundAlarm">
+      <source src="data:audio/mpeg;base64,SUQzBAAAAAABEVRYWFgAAAAtAAADY29tbWVudABCaWdTb3VuZEJhbmsuY29tIC8gTGFTb25vdGhlcXVlLm9yZwBURU5DAAAAHQAAAG1wM1BST0R1Y2VkIGJ5IDAxLjAxLjAwAElTUkMAAAASAAAAVVNSQzE3MDc2ODI0MjEwMjkAAAAA//OEAAAAAAAAAAAAAAAAAAAAAAAASW5mbwAAAA8AAAAEAAABIADAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDV1dXV1dXV1dXV1dXV1dXV1dXV1dXV1dXV6urq6urq6urq6urq6urq6urq6urq6urq6v////////////////////////////////8AAAAATGF2YzU2LjAx" type="audio/mpeg">
+    </audio>
   </div>
 
   <script>
+    // Configuration - REPLACE WITH YOUR ACTUAL VALUES
     const CLIENT_ID = '341648594146-vljhd1s0mgblpafrkh7rsgjf70u6k43n.apps.googleusercontent.com
 ';
-    const SPREADSHEET_ID = '1I6dwNCQfUWg6Xb4eMbnxgZbMD8GQ0rnJ-AquE08LIzc';
+    const SPREADSHEET_ID = '1I6dwNCQfUWg6Xb4eMbnxgZbMD8GQ0rnJ-AquE08LIzc
+';
     const SCOPES = 'https://www.googleapis.com/auth/spreadsheets';
-    const rounds = [
-      { name:"Test Round", sb:0, bb:0, duration:0.083, isTest:true },
-      { name:"Round 1", sb:5, bb:10, duration:20 },
-      { name:"Round 2", sb:10, bb:20, duration:20 },
-      { name:"Round 3", sb:20, bb:40, duration:20 },
-      { name:"Round 4", sb:40, bb:80, duration:20 },
-      { name:"Break + Add-On", sb:0, bb:0, duration:30, isBreak:true },
-      { name:"Round 5", sb:50, bb:100, duration:20 },
-      { name:"Round 6", sb:100, bb:200, duration:20 },
-      { name:"Round 7", sb:200, bb:400, duration:20 },
-      { name:"Round 8", sb:400, bb:800, duration:20 },
-      { name:"Round 9", sb:1000, bb:2000, duration:20 }
-    ];
-    let players = [], currentRound = 0, timer = null, timeLeft = 0;
-    let tournamentStarted = false, tournamentEnded = false, isBreak = false, isFinalStage = false;
 
-    function formatTime(sec) {
-      const m = Math.floor(sec/60), s = sec%60;
-      return String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+    // Tournament structure
+    const rounds = [
+      { name: "Test Round", sb: 0, bb: 0, duration: 0.083, isTest: true },
+      { name: "Round 1", sb: 5, bb: 10, duration: 20 },
+      { name: "Round 2", sb: 10, bb: 20, duration: 20 },
+      { name: "Round 3", sb: 20, bb: 40, duration: 20 },
+      { name: "Round 4", sb: 40, bb: 80, duration: 20 },
+      { name: "Break + Add-On", sb: 0, bb: 0, duration: 30, isBreak: true },
+      { name: "Round 5", sb: 50, bb: 100, duration: 20 },
+      { name: "Round 6", sb: 100, bb: 200, duration: 20 },
+      { name: "Round 7", sb: 200, bb: 400, duration: 20 },
+      { name: "Round 8", sb: 400, bb: 800, duration: 20 },
+      { name: "Round 9", sb: 1000, bb: 2000, duration: 20 }
+    ];
+
+    // Global state
+    let players = [];
+    let currentRound = 0;
+    let timer = null;
+    let timeLeft = 0;
+    let tournamentStarted = false;
+    let tournamentEnded = false;
+    let isBreak = false;
+    let isFinalStage = false;
+    let timerRunning = false;
+    let googleApiReady = false;
+
+    // Utility functions
+    function formatTime(seconds) {
+      const m = Math.floor(seconds / 60);
+      const s = seconds % 60;
+      return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
     }
 
+    function showMessage(message, isError = false) {
+      const statusEl = document.getElementById('statusMessage');
+      const errorEl = document.getElementById('errorMessage');
+      
+      if (isError) {
+        errorEl.textContent = message;
+        errorEl.style.display = 'block';
+        statusEl.style.display = 'none';
+      } else {
+        statusEl.textContent = message;
+        statusEl.style.display = 'block';
+        errorEl.style.display = 'none';
+      }
+      
+      setTimeout(() => {
+        statusEl.style.display = 'none';
+        errorEl.style.display = 'none';
+      }, 5000);
+    }
+
+    function playAlarm() {
+      const audio = document.getElementById('roundAlarm');
+      // Create a simple beep sound if audio file isn't available
+      try {
+        audio.play().catch(() => {
+          // Fallback beep using Web Audio API
+          const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+          const oscillator = audioContext.createOscillator();
+          const gainNode = audioContext.createGain();
+          
+          oscillator.connect(gainNode);
+          gainNode.connect(audioContext.destination);
+          
+          oscillator.frequency.value = 800;
+          oscillator.type = 'square';
+          gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+          gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 1);
+          
+          oscillator.start(audioContext.currentTime);
+          oscillator.stop(audioContext.currentTime + 1);
+        });
+      } catch (e) {
+        console.log('Audio not available');
+      }
+    }
+
+    // Google Sheets Integration
     function handleClientLoad() {
       gapi.load('client:auth2', initClient);
     }
-    window.onload = () => {
-      handleClientLoad();
-      const inp = document.getElementById('playerNameInput');
-      inp.focus();
-      inp.addEventListener('keydown', e => {
-        if(e.key==='Enter'){ addPlayer(); inp.value=''; inp.focus(); }
-      });
-      updatePlayerTable(); updatePrizeInfo(); updateRoundDisplay();
-    };
 
     function initClient() {
-      gapi.client.init({clientId:CLIENT_ID,discoveryDocs:['https://sheets.googleapis.com/$discovery/rest?version=v4'],scope:SCOPES})
-        .then(() => {
-          const auth = gapi.auth2.getAuthInstance();
-          auth.isSignedIn.listen(is => updateSigninStatus(is));
-          updateSigninStatus(auth.isSignedIn.get());
-        });
+      return gapi.client.init({
+        clientId: CLIENT_ID,
+        discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4'],
+        scope: SCOPES
+      }).then(() => {
+        googleApiReady = true;
+        const authInstance = gapi.auth2.getAuthInstance();
+        updateSigninStatus(authInstance.isSignedIn.get());
+        authInstance.isSignedIn.listen(updateSigninStatus);
+      }).catch(error => {
+        console.error('Error initializing Google API:', error);
+        showMessage('Google Sheets integration not available. Check your configuration.', true);
+      });
     }
 
-    function updateSigninStatus(signedIn) {
-      document.getElementById('exportBtn').disabled = !tournamentEnded || !signedIn;
-      document.getElementById('loadDashboardBtn').disabled = !tournamentEnded || !signedIn;
+    function updateSigninStatus(isSignedIn) {
+      const exportBtn = document.getElementById('exportBtn');
+      const dashboardBtn = document.getElementById('loadDashboardBtn');
+      
+      if (tournamentEnded && googleApiReady) {
+        exportBtn.disabled = !isSignedIn;
+        dashboardBtn.disabled = !isSignedIn;
+        
+        if (isSignedIn) {
+          exportBtn.textContent = 'Save Tournament Data';
+          dashboardBtn.textContent = 'Load Championship Dashboard';
+        } else {
+          exportBtn.textContent = 'Sign in to Save';
+          dashboardBtn.textContent = 'Sign in to Load Dashboard';
+        }
+      } else {
+        exportBtn.disabled = true;
+        dashboardBtn.disabled = true;
+      }
+    }
+
+    function signInAndExport() {
+      if (!googleApiReady) {
+        showMessage('Google API not ready', true);
+        return;
+      }
+      
+      const authInstance = gapi.auth2.getAuthInstance();
+      if (authInstance.isSignedIn.get()) {
+        exportTournamentData();
+      } else {
+        authInstance.signIn().then(() => {
+          exportTournamentData();
+        }).catch(error => {
+          showMessage('Sign-in failed', true);
+          console.error('Sign-in error:', error);
+        });
+      }
+    }
+
+    function signInAndLoadDashboard() {
+      if (!googleApiReady) {
+        showMessage('Google API not ready', true);
+        return;
+      }
+      
+      const authInstance = gapi.auth2.getAuthInstance();
+      if (authInstance.isSignedIn.get()) {
+        loadDashboard();
+      } else {
+        authInstance.signIn().then(() => {
+          loadDashboard();
+        }).catch(error => {
+          showMessage('Sign-in failed', true);
+          console.error('Sign-in error:', error);
+        });
+      }
     }
 
     function collectCurrentTournamentData() {
       const date = new Date().toISOString().split('T')[0];
-      const finals = players.filter(p=>!p.eliminated).map(p=>p.name);
-      return {date,results:finals,first:finals[0]||'',second:finals[1]||''};
+      const activePlayers = players.filter(p => !p.eliminated);
+      const results = activePlayers.map(p => p.name);
+      
+      return {
+        date: date,
+        results: results,
+        first: results[0] || '',
+        second: results[1] || ''
+      };
     }
 
-    function exportTournamentData(data) {
-      return gapi.client.sheets.spreadsheets.values.append({
-        spreadsheetId:SPREADSHEET_ID,range:'RawResults!A:D',valueInputOption:'USER_ENTERED',
-        resource:{values:[[data.date,data.results.join('|'),data.first,data.second]]}
-      }).then(()=>alert('Tournament data saved!'));
+    function exportTournamentData() {
+      if (!tournamentEnded) {
+        showMessage('Tournament must be ended first', true);
+        return;
+      }
+
+      const data = collectCurrentTournamentData();
+      
+      gapi.client.sheets.spreadsheets.values.append({
+        spreadsheetId: SPREADSHEET_ID,
+        range: 'RawResults!A:D',
+        valueInputOption: 'USER_ENTERED',
+        resource: {
+          values: [[data.date, data.results.join('|'), data.first, data.second]]
+        }
+      }).then(response => {
+        showMessage('Tournament data saved successfully!');
+        console.log('Data saved:', response);
+      }).catch(error => {
+        showMessage('Failed to save tournament data', true);
+        console.error('Export error:', error);
+      });
     }
 
     function loadDashboard() {
-      return gapi.client.sheets.spreadsheets.values.get({
-        spreadsheetId:SPREADSHEET_ID,range:'RawResults!A:D'
-      }).then(res=>buildDashboardFromRows(res.result.values||[]));
+      gapi.client.sheets.spreadsheets.values.get({
+        spreadsheetId: SPREADSHEET_ID,
+        range: 'RawResults!A:D'
+      }).then(response => {
+        const rows = response.result.values || [];
+        buildDashboardFromRows(rows);
+        showMessage('Championship dashboard loaded!');
+      }).catch(error => {
+        showMessage('Failed to load dashboard data', true);
+        console.error('Dashboard load error:', error);
+      });
     }
 
     function buildDashboardFromRows(rows) {
-      const stats={};
-      rows.forEach(r=>{
-        const [,names,first,second]=r;
-        names.split('|').forEach(n=>{ stats[n]=stats[n]||{played:0,wins:0,seconds:0,earnings:0};stats[n].played++; });
-        const pool=parseFloat(document.getElementById('currentPrizePool').textContent);
-        if(stats[first]){stats[first].wins++;stats[first].earnings+=pool*0.8;}
-        if(stats[second]){stats[second].seconds++;stats[second].earnings+=pool*0.2;}
-      });
-      const sec=document.getElementById('chartsSection');sec.innerHTML='<h3>Annual Leaderboard</h3>';
-      const tbl=document.createElement('table');
-      tbl.innerHTML='<thead><tr><th>Player</th><th>Played</th><th>Wins</th><th>2nds</th><th>Earnings</th></tr></thead>';
-      const body=document.createElement('tbody');
-      Object.entries(stats).sort((a,b)=>b[1].earnings-a[1].earnings).forEach(([n,s])=>{
-        const tr=document.createElement('tr');
-        tr.innerHTML=`<td>${n}</td><td>${s.played}</td><td>${s.wins}</td><td>${s.seconds}</td><td>£${s.earnings.toFixed(2)}</td>`;
-        body.appendChild(tr);
-      });
-      tbl.appendChild(body);sec.appendChild(tbl);
-    }
-
-    document.getElementById('exportBtn').onclick = ()=>exportTournamentData(collectCurrentTournamentData());
-    document.getElementById('loadDashboardBtn').onclick = loadDashboard;
-
-    function updatePlayerTable() {
-      const tb=document.getElementById('playerTableBody');tb.innerHTML='';
-      players.forEach((p,i)=>{
-        const tr=document.createElement('tr');if(p.eliminated)tr.classList.add('eliminated');
-        let act='';
-        if(!tournamentStarted&&!tournamentEnded) act=`<button onclick="removePlayer(${i})">Remove</button>`;
-        else{
-          if(!p.eliminated&&tournamentStarted) act+=`<button onclick="eliminatePlayer(${i})">Eliminate</button>`;
-          if(p.eliminated&&isBreak&&!tournamentEnded) act+=`<button class="rebuy-btn" onclick="rebuyPlayer(${i})">Re-buy £5</button>`;
-          if(isBreak&&!tournamentEnded) act+=`<button class="addon-btn" onclick="addonPlayer(${i})">Add-on £5</button>`;
+      const stats = {};
+      
+      rows.forEach(row => {
+        if (row.length < 4) return;
+        
+        const [date, namesStr, first, second] = row;
+        const names = namesStr.split('|').filter(name => name.trim());
+        
+        names.forEach(name => {
+          name = name.trim();
+          if (!stats[name]) {
+            stats[name] = { played: 0, wins: 0, seconds: 0, earnings: 0 };
+          }
+          stats[name].played++;
+        });
+        
+        // Calculate prize pool based on players
+        const playerCount = names.length;
+        const totalPaid = playerCount * 5; // Base buy-in
+        const houseFee = totalPaid > 100 ? 10 : 5;
+        const prizePool = totalPaid - houseFee;
+        
+        if (first && stats[first]) {
+          stats[first].wins++;
+          stats[first].earnings += Math.round(prizePool * 0.8);
         }
-        tr.innerHTML=`<td>${p.name}</td><td>${p.stacks||1}</td><td>£${p.totalPaid||5}</td><td>${p.eliminated?'Eliminated':'Active'}</td><td>${act}</td>`;
-        tb.appendChild(tr);
+        
+        if (second && stats[second]) {
+          stats[second].seconds++;
+          stats[second].earnings += Math.round(prizePool * 0.2);
+        }
       });
-      const total=players.reduce((s,p)=>s+(p.totalPaid||5),0);
-      const fee=total>100?10:5, pool=total-fee;
-      document.getElementById('playerCount').textContent=`Players: ${players.length} | Prize Pot: £${pool} | House Fee: £${fee}`;
-      document.getElementById('currentPrizePool').textContent=pool;
-      document.getElementById('firstPrize').textContent=Math.round(pool*0.8);
-      document.getElementById('secondPrize').textContent=Math.round(pool*0.2);
+      
+      const section = document.getElementById('chartsSection');
+      section.innerHTML = '<h3>Annual Championship Leaderboard</h3>';
+      
+      const table = document.createElement('table');
+      table.innerHTML = `
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th>Player</th>
+            <th>Played</th>
+            <th>Wins</th>
+            <th>2nd Places</th>
+            <th>Total Earnings</th>
+            <th>Avg Earnings</th>
+          </tr>
+        </thead>
+      `;
+      
+      const tbody = document.createElement('tbody');
+      const sortedStats = Object.entries(stats)
+        .sort((a, b) => b[1].earnings - a[1].earnings);
+      
+      sortedStats.forEach(([name, s], index) => {
+        const tr = document.createElement('tr');
+        const avgEarnings = s.played > 0 ? (s.earnings / s.played).toFixed(2) : '0.00';
+        tr.innerHTML = `
+          <td>${index + 1}</td>
+          <td><strong>${name}</strong></td>
+          <td>${s.played}</td>
+          <td>${s.wins}</td>
+          <td>${s.seconds}</td>
+          <td>£${s.earnings.toFixed(2)}</td>
+          <td>£${avgEarnings}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+      
+      table.appendChild(tbody);
+      section.appendChild(table);
     }
 
-    function updatePrizeInfo(){}
+    // Player management
+    function updatePlayerTable() {
+      const tbody = document.getElementById('playerTableBody');
+      tbody.innerHTML = '';
+      
+      players.forEach((player, index) => {
+        const tr = document.createElement('tr');
+        if (player.eliminated) {
+          tr.classList.add('eliminated');
+        }
+        
+        let actions = '';
+        if (!tournamentStarted && !tournamentEnded) {
+          actions = `<button onclick="removePlayer(${index})">Remove</button>`;
+        } else if (tournamentStarted && !tournamentEnded) {
+          if (!player.eliminated) {
+            actions += `<button onclick="eliminatePlayer(${index})">Eliminate</button>`;
+          }
+          
+          if (player.eliminated && isBreak) {
+            actions += `<button class="rebuy-btn" onclick="rebuyPlayer(${index})">Re-buy £5</button>`;
+          }
+          
+          if (isBreak && !isFinalStage) {
+            actions += `<button class="addon-btn" onclick="addonPlayer(${index})">Add-on £5</button>`;
+          }
+        }
+        
+        tr.innerHTML = `
+          <td><strong>${player.name}</strong></td>
+          <td>${player.stacks}</td>
+          <td>£${player.totalPaid}</td>
+          <td>${player.eliminated ? 'Eliminated' : 'Active'}</td>
+          <td>${actions}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+      
+      updatePrizeInfo();
+    }
+
+    function updatePrizeInfo() {
+      const totalPaid = players.reduce((sum, p) => sum + p.totalPaid, 0);
+      const houseFee = totalPaid > 100 ? 10 : 5;
+      const prizePool = Math.max(0, totalPaid - houseFee);
+      
+      document.getElementById('playerCount').textContent = 
+        `Players: ${players.length} | Prize Pot: £${prizePool} | House Fee: £${houseFee}`;
+      document.getElementById('currentPrizePool').textContent = prizePool;
+      document.getElementById('firstPrize').textContent = Math.round(prizePool * 0.8);
+      document.getElementById('secondPrize').textContent = Math.round(prizePool * 0.2);
+    }
 
     function addPlayer() {
-      const v=document.getElementById('playerNameInput').value.trim();
-      if(!v)return;
-      players.push({name:v,stacks:1,totalPaid:5,eliminated:false});
-      document.getElementById('playerNameInput').value='';
-      updatePlayerTable();updatePrizeInfo();
-    }
-
-    function removePlayer(i){if(!tournamentStarted)players.splice(i,1);updatePlayerTable();}
-
-    function startTournament(){
-      if(players.length<2)return;
-      tournamentStarted=true;document.getElementById('startBtn').disabled=true;
-      document.getElementById('endBtn').disabled=false;
-      updatePlayerTable();updateRoundDisplay();
-    }
-
-    function endTournament(){
-      tournamentEnded=true;tournamentStarted=false;clearInterval(timer);
-      document.getElementById('endBtn').disabled=true;
-      document.getElementById('exportBtn').disabled=false;
-      document.getElementById('loadDashboardBtn').disabled=false;
+      const input = document.getElementById('playerNameInput');
+      const name = input.value.trim();
+      
+      if (!name) {
+        showMessage('Please enter a player name', true);
+        return;
+      }
+      
+      if (players.some(p => p.name.toLowerCase() === name.toLowerCase())) {
+        showMessage('Player already exists', true);
+        return;
+      }
+      
+      if (tournamentStarted) {
+        showMessage('Cannot add players after tournament has started', true);
+        return;
+      }
+      
+      players.push({
+        name: name,
+        stacks: 1,
+        totalPaid: 5,
+        eliminated: false
+      });
+      
+      input.value = '';
+      input.focus();
       updatePlayerTable();
+      showMessage(`${name} added to tournament`);
     }
 
-    function eliminatePlayer(i){if(tournamentStarted&&!tournamentEnded){players[i].eliminated=true;updatePlayerTable();}}
-
-    function rebuyPlayer(i){if(isBreak&&!tournamentEnded){players[i].eliminated=false;players[i].stacks++;players[i].totalPaid+=5;updatePlayerTable();}}
-
-    function addonPlayer(i){if(isBreak&&!tournamentEnded){players[i].stacks++;players[i].totalPaid+=5;updatePlayerTable();}}
-
-    function updateRoundDisplay(){
-      clearInterval(timer);
-      const r=rounds[currentRound];
-      document.getElementById('roundInfo').innerHTML=`<div>${r.name}</div>
-        <div class="blind-display">SB: ${r.sb} | BB: ${r.bb}</div>
-        <div style="font-size:1.2rem;">Duration: ${r.isTest?Math.round(r.duration*60):r.duration} ${r.isTest?'seconds':'minutes'}</div>`;
-      timeLeft=r.isTest?Math.round(r.duration*60):r.duration*60;
-      document.getElementById('timeRemaining').textContent=formatTime(timeLeft);
-      isBreak=!!r.isBreak;
-      isFinalStage=currentRound>=rounds.length-2;
+    function removePlayer(index) {
+      if (tournamentStarted) {
+        showMessage('Cannot remove players after tournament has started', true);
+        return;
+      }
+      
+      const playerName = players[index].name;
+      players.splice(index, 1);
+      updatePlayerTable();
+      showMessage(`${playerName} removed from tournament`);
     }
 
-    function tick(){
-      if(timeLeft>0){timeLeft--;document.getElementById('timeRemaining').textContent=formatTime(timeLeft);}
-      else{clearInterval(timer);document.getElementById('roundAlarm').play();nextRound();}
+    function eliminatePlayer(index) {
+      if (!tournamentStarted || tournamentEnded) return;
+      
+      const playerName = players[index].name;
+      players[index].eliminated = true;
+      updatePlayerTable();
+      showMessage(`${playerName} eliminated from tournament`);
     }
 
-    function startTimer(){
-      if(!tournamentStarted||tournamentEnded)return;
-      document.getElementById('timerStartBtn').disabled=true;
-      document.getElementById('timerPauseBtn').disabled=false;
-      timer=setInterval(tick,1000);
+    function rebuyPlayer(index) {
+      if (!isBreak || tournamentEnded || isFinalStage) {
+        showMessage('Re-buys only available during breaks', true);
+        return;
+      }
+      
+      const player = players[index];
+      if (!player.eliminated) {
+        showMessage('Player must be eliminated to re-buy', true);
+        return;
+      }
+      
+      player.eliminated = false;
+      player.stacks++;
+      player.totalPaid += 5;
+      updatePlayerTable();
+      showMessage(`${player.name} re-bought for £5`);
     }
 
-    function pauseTimer(){clearInterval(timer);document.getElementById('timerStartBtn').disabled=false;document.getElementById('timerPauseBtn').disabled=true;}
+    function addonPlayer(index) {
+      if (!isBreak || tournamentEnded || isFinalStage) {
+        showMessage('Add-ons only available during breaks', true);
+        return;
+      }
+      
+      const player = players[index];
+      player.stacks++;
+      player.totalPaid += 5;
+      updatePlayerTable();
+      showMessage(`${player.name} purchased add-on for £5`);
+    }
 
-    function resetTimer(){clearInterval(timer);updateRoundDisplay();document.getElementById('timerStartBtn').disabled=false;document.getElementById('timerPauseBtn').disabled=true;}
+    function clearPlayers() {
+      if (tournamentStarted && !tournamentEnded) {
+        if (!confirm('Tournament is in progress. Are you sure you want to clear all players?')) {
+          return;
+        }
+      }
+      
+      players = [];
+      tournamentStarted = false;
+      tournamentEnded = false;
+      resetTournament();
+      updatePlayerTable();
+      showMessage('All players cleared');
+    }
 
-    function skipRound(){clearInterval(timer);nextRound();}
-
-    function nextRound(){
-      clearInterval(timer);
-      currentRound=Math.min(currentRound+1,rounds.length-1);
-      const r=rounds[currentRound];
-      document.getElementById('breakNotice').style.display=r.isBreak?'block':'none';
-      document.getElementById('finalStage').style.display=isFinalStage?'block':'none';
+    // Tournament management
+    function startTournament() {
+      if (players.length < 2) {
+        showMessage('Need at least 2 players to start tournament', true);
+        return;
+      }
+      
+      tournamentStarted = true;
+      tournamentEnded = false;
+      
+      document.getElementById('startBtn').disabled = true;
+      document.getElementById('endBtn').disabled = false;
+      document.getElementById('exportBtn').disabled = true;
+      document.getElementById('loadDashboardBtn').disabled = true;
+      
+      // Start the timer automatically
+      currentRound = 0;
       updateRoundDisplay();
-      if(tournamentStarted&&!tournamentEnded){timer=setInterval(tick,1000);document.getElementById('timerStartBtn').disabled=true;document.getElementById('timerPauseBtn').disabled=false;}
+      startTimer();
+      
+      updatePlayerTable();
+      showMessage('Tournament started! Timer is running.');
     }
+
+    function endTournament() {
+      if (!confirm('Are you sure you want to end the tournament?')) {
+        return;
+      }
+      
+      tournamentEnded = true;
+      tournamentStarted = false;
+      clearInterval(timer);
+      timerRunning = false;
+      
+      document.getElementById('endBtn').disabled = true;
+      document.getElementById('timerStartBtn').disabled = true;
+      document.getElementById('timerPauseBtn').disabled = true;
+      document.getElementById('timerSkipBtn').disabled = true;
+      
+      const activePlayers = players.filter(p => !p.eliminated);
+      updateSigninStatus(googleApiReady && gapi.auth2.getAuthInstance().isSignedIn.get());
+      
+      updatePlayerTable();
+      displayFinalResults(activePlayers);
+      showMessage('Tournament ended! You can now save the results.');
+    }
+
+    function displayFinalResults(finalists) {
+      const resultsDiv = document.getElementById('prizeResults');
+      if (finalists.length === 0) {
+        resultsDiv.innerHTML = '<div class="prize-info"><h3>No finalists!</h3></div>';
+        return;
+      }
+      
+      const totalPaid = players.reduce((sum, p) => sum + p.totalPaid, 0);
+      const houseFee = totalPaid > 100 ? 10 : 5;
+      const prizePool = totalPaid - houseFee;
+      const firstPrize = Math.round(prizePool * 0.8);
+      const secondPrize = Math.round(prizePool * 0.2);
+      
+      let resultsHTML = '<div class="prize-info"><h3>🏆 Final Results 🏆</h3>';
+      
+      if (finalists.length >= 1) {
+        resultsHTML += `<div style="font-size: 1.4rem; color: #d84315; margin: 10px 0;">
+          🥇 <strong>1st Place: ${finalists[0].name}</strong> - £${firstPrize}
+        </div>`;
+      }
+      
+      if (finalists.length >= 2) {
+        resultsHTML += `<div style="font-size: 1.2rem; color: #d84315; margin: 10px 0;">
+          🥈 <strong>2nd Place: ${finalists[1].name}</strong> - £${secondPrize}
+        </div>`;
+      }
+      
+      if (finalists.length > 2) {
+        resultsHTML += '<div style="margin-top: 15px;"><strong>Other Finalists:</strong><br>';
+        for (let i = 2; i < finalists.length; i++) {
+          resultsHTML += `${finalists[i].name}<br>`;
+        }
+        resultsHTML += '</div>';
+      }
+      
+      resultsHTML += '</div>';
+      resultsDiv.innerHTML = resultsHTML;
+    }
+
+    function resetTournament() {
+      clearInterval(timer);
+      timerRunning = false;
+      currentRound = 0;
+      timeLeft = 0;
+      isBreak = false;
+      isFinalStage = false;
+      
+      document.getElementById('startBtn').disabled = false;
+      document.getElementById('endBtn').disabled = true;
+      document.getElementById('exportBtn').disabled = true;
+      document.getElementById('loadDashboardBtn').disabled = true;
+      document.getElementById('timerStartBtn').disabled = false;
+      document.getElementById('timerPauseBtn').disabled = true;
+      document.getElementById('timerSkipBtn').disabled = false;
+      
+      document.getElementById('prizeResults').innerHTML = '';
+      document.getElementById('chartsSection').innerHTML = '';
+      
+      updateRoundDisplay();
+    }
+
+    // Timer management
+    function updateRoundDisplay() {
+      const round = rounds[currentRound];
+      let roundInfoHTML = `<div style="font-size: 1.6rem; margin-bottom: 15px;">${round.name}</div>`;
+      
+      if (!round.isBreak && !round.isTest) {
+        roundInfoHTML += `
+          <div class="blind-display">SB: ${round.sb} | BB: ${round.bb}</div>
+          <div style="font-size: 1.1rem; margin-top: 10px;">Duration: ${round.duration} minutes</div>
+        `;
+      } else if (round.isBreak) {
+        roundInfoHTML += `
+          <div class="blind-display">BREAK TIME</div>
+          <div style="font-size: 1.1rem; margin-top: 10px;">Duration: ${round.duration} minutes</div>
+        `;
+      } else if (round.isTest) {
+        roundInfoHTML += `
+          <div class="blind-display">TEST ROUND</div>
+          <div style="font-size: 1.1rem; margin-top: 10px;">Duration: ${Math.round(round.duration * 60)} seconds</div>
+        `;
+      }
+      
+      document.getElementById('roundInfo').innerHTML = roundInfoHTML;
+      
+      // Set time left
+      timeLeft = round.isTest ? Math.round(round.duration * 60) : round.duration * 60;
+      document.getElementById('timeRemaining').textContent = formatTime(timeLeft);
+      
+      // Update break and final stage indicators
+      isBreak = !!round.isBreak;
+      isFinalStage = currentRound >= rounds.length - 2;
+      
+      document.getElementById('breakNotice').style.display = isBreak ? 'block' : 'none';
+      document.getElementById('finalStage').style.display = isFinalStage ? 'block' : 'none';
+      
+      // Update player table to reflect break/final stage
+      if (tournamentStarted) {
+        updatePlayerTable();
+      }
+    }
+
+    function tick() {
+      if (timeLeft > 0) {
+        timeLeft--;
+        document.getElementById('timeRemaining').textContent = formatTime(timeLeft);
+      } else {
+        // Time's up - auto advance to next round
+        clearInterval(timer);
+        timerRunning = false;
+        playAlarm();
+        nextRound();
+      }
+    }
+
+    function startTimer() {
+      if (!tournamentStarted || tournamentEnded || timerRunning) return;
+      
+      timerRunning = true;
+      document.getElementById('timerStartBtn').disabled = true;
+      document.getElementById('timerPauseBtn').disabled = false;
+      
+      timer = setInterval(tick, 1000);
+      showMessage('Timer started');
+    }
+
+    function pauseTimer() {
+      if (!timerRunning) return;
+      
+      clearInterval(timer);
+      timerRunning = false;
+      
+      document.getElementById('timerStartBtn').disabled = false;
+      document.getElementById('timerPauseBtn').disabled = true;
+      
+      showMessage('Timer paused');
+    }
+
+    function resetTimer() {
+      clearInterval(timer);
+      timerRunning = false;
+      
+      document.getElementById('timerStartBtn').disabled = false;
+      document.getElementById('timerPauseBtn').disabled = true;
+      
+      updateRoundDisplay();
+      showMessage('Timer reset');
+    }
+
+    function skipRound() {
+      if (!tournamentStarted || tournamentEnded) return;
+      
+      clearInterval(timer);
+      timerRunning = false;
+      nextRound();
+      showMessage('Round skipped');
+    }
+
+    function nextRound() {
+      if (currentRound < rounds.length - 1) {
+        currentRound++;
+        updateRoundDisplay();
+        
+        // Auto-start next round if tournament is still active
+        if (tournamentStarted && !tournamentEnded) {
+          setTimeout(() => {
+            startTimer();
+          }, 1000); // Small delay to allow players to see the round change
+        }
+      } else {
+        // Tournament structure complete
+        showMessage('All rounds complete! Consider ending the tournament.');
+      }
+    }
+
+    // Event handlers and initialization
+    function setupEventHandlers() {
+      const nameInput = document.getElementById('playerNameInput');
+      nameInput.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          addPlayer();
+        }
+      });
+      
+      // Focus on name input when page loads
+      nameInput.focus();
+    }
+
+    // Initialize application
+    function initializeApp() {
+      setupEventHandlers();
+      updatePlayerTable();
+      updateRoundDisplay();
+      
+      // Initialize Google API
+      if (typeof gapi !== 'undefined') {
+        handleClientLoad();
+      } else {
+        showMessage('Google Sheets integration not available', true);
+      }
+    }
+
+    // Run initialization when page loads
+    window.addEventListener('load', initializeApp);
   </script>
 </body>
 </html>
