@@ -898,11 +898,31 @@
       
       // For Google Identity Services approach
       if (window.tokenClient) {
-        window.tokenClient.requestAccessToken();
+        console.log('Requesting access token via GIS...');
+        // Set up the callback for this specific request
+        window.tokenClient.callback = (response) => {
+          console.log('Token response received:', response);
+          if (response.access_token) {
+            console.log('Access token received, setting up API client...');
+            gapi.client.setToken(response);
+            updateSigninStatus(true);
+            exportTournamentData();
+          } else {
+            console.error('No access token in response');
+            showMessage('Authentication failed', true);
+          }
+        };
+        
+        try {
+          window.tokenClient.requestAccessToken({ prompt: '' });
+        } catch (error) {
+          console.error('Error requesting access token:', error);
+          showMessage('Sign-in failed', true);
+        }
         return;
       }
       
-      // For legacy approach
+      // For legacy approach fallback
       const authInstance = gapi.auth2.getAuthInstance();
       if (authInstance && authInstance.isSignedIn.get()) {
         exportTournamentData();
@@ -914,6 +934,7 @@
           console.error('Sign-in error:', error);
         });
       } else {
+        console.log('No auth available, showing local summary');
         showTournamentSummary();
       }
     }
