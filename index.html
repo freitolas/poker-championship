@@ -445,8 +445,9 @@
       <div>2nd Place: £<span id="secondPrize">0</span></div>
     </div>
     
-    <audio id="roundAlarm">
-      <source src="data:audio/mpeg;base64,SUQzBAAAAAABEVRYWFgAAAAtAAADY29tbWVudABCaWdTb3VuZEJhbmsuY29tIC8gTGFTb25vdGhlcXVlLm9yZwBURU5DAAAAHQAAAG1wM1BST0R1Y2VkIGJ5IDAxLjAxLjAwAElTUkMAAAASAAAAVVNSQzE3MDc2ODI0MjEwMjkAAAAA//OEAAAAAAAAAAAAAAAAAAAAAAAASW5mbwAAAA8AAAAEAAABIADAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDV1dXV1dXV1dXV1dXV1dXV1dXV1dXV1dXV6urq6urq6urq6urq6urq6urq6urq6urq6v////////////////////////////////8AAAAATGF2YzU2LjAx" type="audio/mpeg">
+    <audio id="roundAlarm" preload="auto">
+      <source src="alarm.mp3" type="audio/mpeg">
+      <source src="alarm.mp3" type="audio/mp3">
     </audio>
   </div>
 
@@ -537,6 +538,7 @@
           if (addonPlayer) {
             addonPlayer.stacks = lastAction.data.previousStacks;
             addonPlayer.totalPaid = lastAction.data.previousPaid;
+            addonPlayer.hasAddon = lastAction.data.previousHasAddon || false;
             showMessage(`Undid add-on for ${lastAction.data.name}`);
           }
           break;
@@ -611,14 +613,44 @@
 
     function playAlarm() {
       console.log('Playing alarm...');
+      
+      // Primary method: Play your alarm.mp3 file
       const audio = document.getElementById('roundAlarm');
-      // Create a simple beep sound if audio file isn't available
+      if (audio) {
+        // Reset audio to beginning
+        audio.currentTime = 0;
+        
+        const playPromise = audio.play();
+        
+        if (playPromise !== undefined) {
+          playPromise.then(() => {
+            console.log('alarm.mp3 played successfully');
+          }).catch(error => {
+            console.log('alarm.mp3 playback failed:', error.message);
+            console.log('Trying fallback audio methods...');
+            playFallbackAlarm();
+          });
+        } else {
+          console.log('Audio play() returned undefined, trying fallback...');
+          playFallbackAlarm();
+        }
+      } else {
+        console.log('Audio element not found, trying fallback...');
+        playFallbackAlarm();
+      }
+      
+      // Always show visual indicators regardless of audio success
+      showVisualAlarm();
+    }
+
+    function playFallbackAlarm() {
+      // Web Audio API beep as backup
       try {
-        audio.play().catch(() => {
-          console.log('Audio file not available, creating beep sound');
-          // Fallback beep using Web Audio API
-          try {
-            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        
+        // Create 3 beeps
+        for (let i = 0; i < 3; i++) {
+          setTimeout(() => {
             const oscillator = audioContext.createOscillator();
             const gainNode = audioContext.createGain();
             
@@ -628,20 +660,56 @@
             oscillator.frequency.value = 800;
             oscillator.type = 'square';
             gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 1);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
             
             oscillator.start(audioContext.currentTime);
-            oscillator.stop(audioContext.currentTime + 1);
-            
-            console.log('Beep sound played');
-          } catch (e) {
-            console.log('Web Audio not available, trying alert sound');
-            // Final fallback - system beep
-            window.navigator.vibrate && window.navigator.vibrate(200);
-          }
-        });
+            oscillator.stop(audioContext.currentTime + 0.5);
+          }, i * 600);
+        }
+        
+        console.log('Fallback Web Audio beeps created');
       } catch (e) {
-        console.error('Audio playback failed:', e);
+        console.log('Fallback Web Audio failed:', e.message);
+      }
+    }
+
+    function showVisualAlarm() {
+      // Visual alarm (timer flashing)
+      const timerDisplay = document.getElementById('timeRemaining');
+      let flashCount = 0;
+      const flashInterval = setInterval(() => {
+        timerDisplay.style.background = flashCount % 2 === 0 ? '#f44336' : '#ffd54f';
+        timerDisplay.style.color = flashCount % 2 === 0 ? '#fff' : '#e65100';
+        flashCount++;
+        
+        if (flashCount >= 6) {
+          clearInterval(flashInterval);
+          timerDisplay.style.background = '#ffd54f';
+          timerDisplay.style.color = '#e65100';
+        }
+      }, 300);
+      
+      // Vibration on mobile
+      if (navigator.vibrate) {
+        navigator.vibrate([200, 100, 200, 100, 200]);
+        console.log('Vibration triggered');
+      }
+      
+      // Browser notification
+      if (Notification.permission === 'granted') {
+        new Notification('Poker Tournament', {
+          body: 'Round finished! Time to advance.',
+          icon: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiByeD0iMjAiIGZpbGw9IiNmZjk4MDAiLz4KPHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDJMMTMuMDkgOC4yNkwyMCA5TDEzLjA5IDE1Ljc0TDEyIDIyTDEwLjkxIDE1Ljc0TDQgOUwxMC45MSA4LjI2TDEyIDJaIiBmaWxsPSJ3aGl0ZSIvPgo8L3N2Zz4KPC9zdmc+'
+        });
+      }
+    }
+
+    // Request notification permission on app load
+    function requestNotificationPermission() {
+      if ('Notification' in window && Notification.permission === 'default') {
+        Notification.requestPermission().then(permission => {
+          console.log('Notification permission:', permission);
+        });
       }
     }
 
@@ -866,17 +934,18 @@
         if (!tournamentStarted && !tournamentEnded) {
           actions = `<button onclick="removePlayer(${index})">Remove</button>`;
         } else if (tournamentStarted && !tournamentEnded) {
-          if (!player.eliminated) {
+          // Only show eliminate button for active players, and not during breaks
+          if (!player.eliminated && !isBreak) {
             actions += `<button onclick="eliminatePlayer(${index})">Eliminate</button>`;
           }
           
-          // Re-buy available for eliminated players BEFORE final stage (including during breaks)
-          if (player.eliminated && !isFinalStage) {
+          // Re-buy available for eliminated players BEFORE final stage (but NOT after break starts)
+          if (player.eliminated && !isFinalStage && currentRound < 5) {
             actions += `<button class="rebuy-btn" onclick="rebuyPlayer(${index})">Re-buy £5</button>`;
           }
           
-          // Add-on available for ALL players ONLY during breaks (before final stage)
-          if (isBreak && !isFinalStage) {
+          // Add-on available for ALL players ONLY during breaks (before final stage) and only once per player
+          if (isBreak && !isFinalStage && !player.hasAddon) {
             actions += `<button class="addon-btn" onclick="addonPlayer(${index})">Add-on £5</button>`;
           }
         }
@@ -1008,14 +1077,21 @@
       
       const player = players[index];
       
+      if (player.hasAddon) {
+        showMessage('Player has already used their one add-on', true);
+        return;
+      }
+      
       recordAction('addon', {
         name: player.name,
         previousStacks: player.stacks,
-        previousPaid: player.totalPaid
+        previousPaid: player.totalPaid,
+        previousHasAddon: player.hasAddon
       });
       
       player.stacks++;
       player.totalPaid += 5;
+      player.hasAddon = true;
       updatePlayerTable();
       showMessage(`${player.name} purchased add-on for £5`);
     }
@@ -1107,12 +1183,17 @@
         resultsHTML += `<div style="font-size: 1.2rem; color: #d84315; margin: 10px 0;">
           🥈 <strong>2nd Place: ${finalists[1].name}</strong> - £${secondPrize}
         </div>`;
+      } else if (finalists.length === 1) {
+        // If only one finalist, show that 2nd place gets nothing
+        resultsHTML += `<div style="font-size: 1.2rem; color: #666; margin: 10px 0;">
+          🥈 <strong>2nd Place:</strong> No qualifying player - £0
+        </div>`;
       }
       
       if (finalists.length > 2) {
         resultsHTML += '<div style="margin-top: 15px;"><strong>Other Finalists:</strong><br>';
         for (let i = 2; i < finalists.length; i++) {
-          resultsHTML += `${finalists[i].name}<br>`;
+          resultsHTML += `${i + 1}. ${finalists[i].name}<br>`;
         }
         resultsHTML += '</div>';
       }
@@ -1190,10 +1271,19 @@
         document.getElementById('timeRemaining').textContent = formatTime(timeLeft);
       } else {
         // Time's up - auto advance to next round
+        console.log('Timer finished, playing alarm...');
         clearInterval(timer);
         timerRunning = false;
+        
+        // Play alarm immediately
         playAlarm();
-        nextRound();
+        
+        // Show message and auto-advance after 3 seconds
+        showMessage('⏰ ROUND FINISHED! Advancing to next round...');
+        
+        setTimeout(() => {
+          nextRound();
+        }, 3000);
       }
     }
 
@@ -1285,6 +1375,7 @@
       setupEventHandlers();
       updatePlayerTable();
       updateRoundDisplay();
+      requestNotificationPermission();
       
       // Initialize Google API
       if (typeof gapi !== 'undefined') {
