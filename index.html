@@ -719,24 +719,46 @@
     }
 
     function initClient() {
+      console.log('Attempting to initialize Google API with CLIENT_ID:', CLIENT_ID);
+      
+      if (CLIENT_ID === 'YOUR_CLIENT_ID.apps.googleusercontent.com') {
+        console.error('CLIENT_ID still has placeholder value!');
+        showMessage('Google credentials not configured', true);
+        return Promise.reject('Invalid CLIENT_ID');
+      }
+      
       return gapi.client.init({
         clientId: CLIENT_ID,
         discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4'],
         scope: SCOPES
       }).then(() => {
+        console.log('Google API initialized successfully');
         googleApiReady = true;
         const authInstance = gapi.auth2.getAuthInstance();
         updateSigninStatus(authInstance.isSignedIn.get());
         authInstance.isSignedIn.listen(updateSigninStatus);
       }).catch(error => {
         console.error('Error initializing Google API:', error);
-        showMessage('Google Sheets integration not available. Check your configuration.', true);
+        showMessage('Google Sheets integration failed to initialize', true);
+        
+        // Enable buttons anyway for testing, but show different text
+        const exportBtn = document.getElementById('exportBtn');
+        const dashboardBtn = document.getElementById('loadDashboardBtn');
+        
+        if (tournamentEnded) {
+          exportBtn.disabled = false;
+          dashboardBtn.disabled = false;
+          exportBtn.textContent = 'Show Results (No Save)';
+          dashboardBtn.textContent = 'Google API Failed';
+        }
       });
     }
 
     function updateSigninStatus(isSignedIn) {
       const exportBtn = document.getElementById('exportBtn');
       const dashboardBtn = document.getElementById('loadDashboardBtn');
+      
+      console.log('updateSigninStatus called:', { isSignedIn, tournamentEnded, googleApiReady });
       
       if (tournamentEnded && googleApiReady) {
         exportBtn.disabled = !isSignedIn;
@@ -752,12 +774,23 @@
       } else {
         exportBtn.disabled = true;
         dashboardBtn.disabled = true;
+        
+        if (!tournamentEnded) {
+          exportBtn.textContent = 'End Tournament First';
+          dashboardBtn.textContent = 'End Tournament First';
+        } else if (!googleApiReady) {
+          exportBtn.textContent = 'Google API Loading...';
+          dashboardBtn.textContent = 'Google API Loading...';
+        }
       }
     }
 
     function signInAndExport() {
+      console.log('signInAndExport called, googleApiReady:', googleApiReady);
+      
       if (!googleApiReady) {
-        showMessage('Google API not ready', true);
+        // Fallback: show results without saving to Google Sheets
+        showTournamentSummary();
         return;
       }
       
@@ -772,6 +805,23 @@
           console.error('Sign-in error:', error);
         });
       }
+    }
+
+    function showTournamentSummary() {
+      const data = collectCurrentTournamentData();
+      const summary = `
+Tournament Results Summary:
+Date: ${data.date}
+Winner: ${data.first}
+2nd Place: ${data.second}
+All Players: ${data.results.join(', ')}
+
+Note: Google Sheets integration not available - results not saved automatically.
+      `;
+      
+      alert(summary);
+      console.log('Tournament Data:', data);
+      showMessage('Tournament results displayed (Google Sheets not available)');
     }
 
     function signInAndLoadDashboard() {
@@ -934,8 +984,8 @@
         if (!tournamentStarted && !tournamentEnded) {
           actions = `<button onclick="removePlayer(${index})">Remove</button>`;
         } else if (tournamentStarted && !tournamentEnded) {
-          // Only show eliminate button for active players, and not during breaks
-          if (!player.eliminated && !isBreak) {
+          // Show eliminate button for active players (including during breaks)
+          if (!player.eliminated) {
             actions += `<button onclick="eliminatePlayer(${index})">Eliminate</button>`;
           }
           
@@ -1010,7 +1060,7 @@
         totalPaid: 5,
         eliminated: false,
         hasAddon: false, // Track if player has used their one add-on
-        eliminationOrder: null // Track when they were eliminated
+        eliminationTime: null // Track when they were eliminated
       });
       
       input.value = '';
@@ -1036,19 +1086,23 @@
       
       const player = players[index];
       
-      // Track elimination order
-      const currentlyActive = players.filter(p => !p.eliminated).length;
-      player.eliminationOrder = currentlyActive; // This will be their finishing position
+      // Get the current timestamp for elimination order
+      player.eliminationTime = Date.now();
       
       recordAction('eliminate', {
         name: player.name,
         previousEliminated: player.eliminated,
-        previousEliminationOrder: player.eliminationOrder
+        previousEliminationTime: player.eliminationTime
       });
       
       player.eliminated = true;
+      
+      // Calculate current position based on how many are left
+      const remainingPlayers = players.filter(p => !p.eliminated).length;
+      const position = remainingPlayers + 1; // +1 because this player just got eliminated
+      
       updatePlayerTable();
-      showMessage(`${player.name} eliminated from tournament (${currentlyActive}${getSuffix(currentlyActive)} place)`);
+      showMessage(`${player.name} eliminated from tournament (${position}${getSuffix(position)} place)`);
     }
 
     function getSuffix(num) {
@@ -1185,27 +1239,32 @@
       const firstPrize = Math.round(prizePool * 0.8);
       const secondPrize = Math.round(prizePool * 0.2);
       
-      // Sort all players by elimination order to find proper ranking
+      // Sort players by elimination time (most recent elimination = highest finish)
+      // Active players (not eliminated) come first
       const allPlayersSorted = [...players].sort((a, b) => {
-        if (!a.eliminated && !b.eliminated) return 0; // Both winners
-        if (!a.eliminated) return -1; // a is winner
-        if (!b.eliminated) return 1; // b is winner
-        return (b.eliminationOrder || 0) - (a.eliminationOrder || 0); // Higher elimination order = better finish
+        if (!a.eliminated && !b.eliminated) return 0; // Both active - doesn't matter
+        if (!a.eliminated) return -1; // a is active (winner)
+        if (!b.eliminated) return 1; // b is active (winner)
+        
+        // Both eliminated - most recent elimination time = better finish (2nd place)
+        return (b.eliminationTime || 0) - (a.eliminationTime || 0);
       });
+      
+      console.log('Final ranking:', allPlayersSorted.map(p => `${p.name}: ${p.eliminated ? 'eliminated at ' + new Date(p.eliminationTime).toLocaleTimeString() : 'active'}`));
       
       let resultsHTML = '<div class="prize-info"><h3>Final Results</h3>';
       
-      // 1st Place (last active player)
-      const winner = allPlayersSorted[0];
+      // 1st Place (active player)
+      const winner = allPlayersSorted.find(p => !p.eliminated);
       if (winner) {
         resultsHTML += `<div style="font-size: 1.4rem; color: #d84315; margin: 10px 0;">
           🥇 <strong>1st Place: ${winner.name}</strong> - £${firstPrize}
         </div>`;
       }
       
-      // 2nd Place (last player eliminated)
-      const secondPlace = allPlayersSorted[1];
-      if (secondPlace && secondPlace.eliminated) {
+      // 2nd Place (most recently eliminated player)
+      const secondPlace = allPlayersSorted.find(p => p.eliminated);
+      if (secondPlace) {
         resultsHTML += `<div style="font-size: 1.2rem; color: #d84315; margin: 10px 0;">
           🥈 <strong>2nd Place: ${secondPlace.name}</strong> - £${secondPrize}
         </div>`;
@@ -1215,13 +1274,13 @@
         </div>`;
       }
       
-      // Other finalists
-      if (allPlayersSorted.length > 2) {
+      // Other finalists (remaining eliminated players in order)
+      const otherFinalists = allPlayersSorted.filter(p => p.eliminated && p !== secondPlace);
+      if (otherFinalists.length > 0) {
         resultsHTML += '<div style="margin-top: 15px;"><strong>Other Finalists:</strong><br>';
-        for (let i = 2; i < allPlayersSorted.length; i++) {
-          const player = allPlayersSorted[i];
-          resultsHTML += `${i + 1}. ${player.name}<br>`;
-        }
+        otherFinalists.forEach((player, index) => {
+          resultsHTML += `${index + 3}. ${player.name}<br>`;
+        });
         resultsHTML += '</div>';
       }
       
