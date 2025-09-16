@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Texas Hold'em Championship Manager</title>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script src="https://apis.google.com/js/api.js"></script>
   <style>
     * {
@@ -716,13 +717,83 @@
     // Google Sheets Integration
     function handleClientLoad() {
       console.log('Loading Google API client...');
-      gapi.load('client:auth2', {
-        callback: initClient,
-        onerror: function() {
-          console.error('Failed to load Google API client');
-          showMessage('Google API failed to load', true);
+      
+      // Try the newer Google Identity Services approach first
+      if (window.google && window.google.accounts) {
+        console.log('Using Google Identity Services (new approach)');
+        initWithGIS();
+      } else {
+        console.log('Falling back to legacy Google API');
+        gapi.load('client:auth2', {
+          callback: initClient,
+          onerror: function() {
+            console.error('Failed to load Google API client');
+            enableFallbackMode();
+          }
+        });
+      }
+    }
+
+    function initWithGIS() {
+      try {
+        // Initialize the Google Identity Services
+        google.accounts.id.initialize({
+          client_id: CLIENT_ID,
+          callback: handleCredentialResponse
+        });
+
+        // Load the Google API client for Sheets
+        gapi.load('client', () => {
+          gapi.client.init({
+            discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4']
+          }).then(() => {
+            console.log('Google Identity Services initialized successfully');
+            googleApiReady = true;
+            
+            // Set up token client for authorization
+            window.tokenClient = google.accounts.oauth2.initTokenClient({
+              client_id: CLIENT_ID,
+              scope: SCOPES,
+              callback: (response) => {
+                if (response.access_token) {
+                  gapi.client.setToken(response);
+                  updateSigninStatus(true);
+                }
+              }
+            });
+            
+            updateSigninStatus(false); // Initially not signed in
+          }).catch(error => {
+            console.error('GIS client init failed:', error);
+            enableFallbackMode();
+          });
+        });
+      } catch (error) {
+        console.error('GIS initialization failed:', error);
+        enableFallbackMode();
+      }
+    }
+
+    function handleCredentialResponse(response) {
+      console.log('Credential response received');
+    }
+
+    function enableFallbackMode() {
+      console.log('Enabling fallback mode - Google Sheets disabled');
+      showMessage('Google Sheets integration unavailable - tournament results will be shown locally only', true);
+      
+      setTimeout(() => {
+        const exportBtn = document.getElementById('exportBtn');
+        const dashboardBtn = document.getElementById('loadDashboardBtn');
+        
+        if (tournamentEnded) {
+          exportBtn.disabled = false;
+          dashboardBtn.disabled = true;
+          exportBtn.textContent = 'Show Local Results';
+          dashboardBtn.textContent = 'Google API Failed';
+          exportBtn.onclick = showTournamentSummary;
         }
-      });
+      }, 1000);
     }
 
     function initClient() {
@@ -821,16 +892,25 @@
         return;
       }
       
+      // For Google Identity Services approach
+      if (window.tokenClient) {
+        window.tokenClient.requestAccessToken();
+        return;
+      }
+      
+      // For legacy approach
       const authInstance = gapi.auth2.getAuthInstance();
-      if (authInstance.isSignedIn.get()) {
+      if (authInstance && authInstance.isSignedIn.get()) {
         exportTournamentData();
-      } else {
+      } else if (authInstance) {
         authInstance.signIn().then(() => {
           exportTournamentData();
         }).catch(error => {
           showMessage('Sign-in failed', true);
           console.error('Sign-in error:', error);
         });
+      } else {
+        showTournamentSummary();
       }
     }
 
@@ -1016,8 +1096,8 @@ Note: Google Sheets integration not available - results not saved automatically.
             actions += `<button onclick="eliminatePlayer(${index})">Eliminate</button>`;
           }
           
-          // Re-buy available for eliminated players BEFORE final stage (but NOT after break starts)
-          if (player.eliminated && !isFinalStage && currentRound < 5) {
+          // Re-buy available for eliminated players BEFORE final stage (including during break)
+          if (player.eliminated && !isFinalStage) {
             actions += `<button class="rebuy-btn" onclick="rebuyPlayer(${index})">Re-buy £5</button>`;
           }
           
