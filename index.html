@@ -455,7 +455,7 @@
 
     // Tournament structure
     const rounds = [
-      { name: "Test Round", sb: 0, bb: 0, duration: 0.083, isTest: true },
+      { name: "Test Round", sb: 0, bb: 0, duration: 5, isTest: true },
       { name: "Round 1", sb: 5, bb: 10, duration: 20 },
       { name: "Round 2", sb: 10, bb: 20, duration: 20 },
       { name: "Round 3", sb: 20, bb: 40, duration: 20 },
@@ -1018,14 +1018,14 @@
       } else if (round.isTest) {
         roundInfoHTML += `
           <div class="blind-display">TEST ROUND</div>
-          <div style="font-size: 1.1rem; margin-top: 10px;">Duration: ${Math.round(round.duration * 60)} seconds</div>
+          <div style="font-size: 1.1rem; margin-top: 10px;">Duration: ${round.duration} seconds</div>
         `;
       }
       
       document.getElementById('roundInfo').innerHTML = roundInfoHTML;
       
-      // Set time left
-      timeLeft = round.isTest ? Math.round(round.duration * 60) : round.duration * 60;
+      // Set time left - test rounds use seconds, others use minutes
+      timeLeft = round.isTest ? round.duration : round.duration * 60;
       document.getElementById('timeRemaining').textContent = formatTime(timeLeft);
       
       // Update break and final stage indicators
@@ -1117,19 +1117,28 @@
     // Event handlers and initialization
     function setupEventHandlers() {
       const nameInput = document.getElementById('playerNameInput');
-      nameInput.addEventListener('keydown', (event) => {
-        if (event.key === 'Enter') {
-          event.preventDefault();
-          addPlayer();
-        }
-      });
+      if (nameInput) {
+        nameInput.addEventListener('keydown', (event) => {
+          if (event.key === 'Enter') {
+            event.preventDefault();
+            addPlayer();
+          }
+        });
+        
+        // Focus on name input when page loads
+        nameInput.focus();
+      }
       
-      // Focus on name input when page loads
-      nameInput.focus();
+      // Set up button click handlers as backup
+      const addPlayerBtn = document.querySelector('button[onclick="addPlayer()"]');
+      if (addPlayerBtn) {
+        addPlayerBtn.addEventListener('click', addPlayer);
+      }
     }
 
     // Initialize application
     function initializeApp() {
+      console.log('Initializing app...');
       setupEventHandlers();
       updatePlayerTable();
       updateRoundDisplay();
@@ -1138,12 +1147,18 @@
       if (typeof gapi !== 'undefined') {
         handleClientLoad();
       } else {
+        console.warn('Google API not available');
         showMessage('Google Sheets integration not available', true);
       }
+      
+      console.log('App initialized');
     }
 
     // Run initialization when page loads
     window.addEventListener('load', initializeApp);
+    
+    // Also run when DOM is ready (fallback)
+    document.addEventListener('DOMContentLoaded', initializeApp);
   </script>
 </body>
 </html>
