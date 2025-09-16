@@ -446,11 +446,12 @@
   </div>
 
   <script>
+    // Debug logging
+    console.log('Script starting...');
+
     // Configuration - REPLACE WITH YOUR ACTUAL VALUES
-    const CLIENT_ID = '341648594146-vljhd1s0mgblpafrkh7rsgjf70u6k43n.apps.googleusercontent.com
-';
-    const SPREADSHEET_ID = '1I6dwNCQfUWg6Xb4eMbnxgZbMD8GQ0rnJ-AquE08LIzc
-';
+    const CLIENT_ID = '341648594146-vljhd1s0mgblpafrkh7rsgjf70u6k43n.apps.googleusercontent.com';
+    const SPREADSHEET_ID = '1I6dwNCQfUWg6Xb4eMbnxgZbMD8GQ0rnJ-AquE08LIzc';
     const SCOPES = 'https://www.googleapis.com/auth/spreadsheets';
 
     // Tournament structure
@@ -468,6 +469,8 @@
       { name: "Round 9", sb: 1000, bb: 2000, duration: 20 }
     ];
 
+    console.log('Rounds defined:', rounds);
+
     // Global state
     let players = [];
     let currentRound = 0;
@@ -479,6 +482,26 @@
     let isFinalStage = false;
     let timerRunning = false;
     let googleApiReady = false;
+
+    console.log('Global state initialized');
+
+    // Make functions globally accessible
+    window.addPlayer = addPlayer;
+    window.removePlayer = removePlayer;
+    window.startTournament = startTournament;
+    window.endTournament = endTournament;
+    window.clearPlayers = clearPlayers;
+    window.eliminatePlayer = eliminatePlayer;
+    window.rebuyPlayer = rebuyPlayer;
+    window.addonPlayer = addonPlayer;
+    window.startTimer = startTimer;
+    window.pauseTimer = pauseTimer;
+    window.resetTimer = resetTimer;
+    window.skipRound = skipRound;
+    window.signInAndExport = signInAndExport;
+    window.signInAndLoadDashboard = signInAndLoadDashboard;
+
+    console.log('Functions attached to window object');
 
     // Utility functions
     function formatTime(seconds) {
