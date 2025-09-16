@@ -1330,7 +1330,20 @@ Note: Google Sheets integration not available - results not saved automatically.
       document.getElementById('timerSkipBtn').disabled = true;
       
       const activePlayers = players.filter(p => !p.eliminated);
-      updateSigninStatus(googleApiReady && gapi.auth2.getAuthInstance().isSignedIn.get());
+      
+      // Update buttons based on Google API status
+      if (googleApiReady) {
+        // For Google Identity Services, we don't have a persistent isSignedIn state
+        // So we enable the buttons and let the sign-in happen when clicked
+        updateSigninStatus(false); // Start as not signed in, will prompt when clicked
+      } else {
+        const exportBtn = document.getElementById('exportBtn');
+        const dashboardBtn = document.getElementById('loadDashboardBtn');
+        exportBtn.disabled = true;
+        dashboardBtn.disabled = true;
+        exportBtn.textContent = 'Google API Not Available';
+        dashboardBtn.textContent = 'Google API Not Available';
+      }
       
       updatePlayerTable();
       displayFinalResults(activePlayers);
