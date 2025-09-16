@@ -868,6 +868,10 @@
         } else {
           exportBtn.textContent = 'Sign in to Save';
           dashboardBtn.textContent = 'Sign in to Load Dashboard';
+          
+          // Make sure the buttons can trigger sign-in
+          exportBtn.onclick = signInAndExport;
+          dashboardBtn.onclick = signInAndLoadDashboard;
         }
       } else {
         exportBtn.disabled = true;
@@ -1447,10 +1451,12 @@ Note: Google Sheets integration not available - results not saved automatically.
       
       // Update break and final stage indicators
       isBreak = !!round.isBreak;
-      isFinalStage = currentRound >= rounds.length - 2;
+      isFinalStage = currentRound > 5; // Final stage starts AFTER break (Round 6+)
       
       document.getElementById('breakNotice').style.display = isBreak ? 'block' : 'none';
       document.getElementById('finalStage').style.display = isFinalStage ? 'block' : 'none';
+      
+      console.log(`Round ${currentRound}: ${round.name}, isBreak: ${isBreak}, isFinalStage: ${isFinalStage}`);
       
       // Update player table to reflect break/final stage
       if (tournamentStarted) {
