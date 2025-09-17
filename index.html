@@ -384,7 +384,10 @@
     <div class="player-setup">
       <h3>Add Players</h3>
       <div class="player-input-row">
-        <input type="text" id="playerNameInput" placeholder="Enter player name..." autocomplete="off" />
+        <select id="playerSelect" style="flex: 1; padding: 8px; border: 2px solid #ffa726; border-radius: 6px; font-size: 16px; margin-right: 10px;">
+          <option value="">Select a player...</option>
+        </select>
+        <input type="text" id="playerNameInput" placeholder="Or enter new player name..." style="flex: 1; padding: 8px; border: 2px solid #ffa726; border-radius: 6px; font-size: 16px; margin-right: 10px;" />
         <button onclick="addPlayer()">Add Player</button>
       </div>
       
@@ -479,8 +482,12 @@
 
     console.log('Rounds defined:', rounds);
 
-    // Global state
-    let players = [];
+    // Pre-populated player list - add your regular players here
+    const regularPlayers = [
+      'Andre', 'Craig', 'Dale', 'Declan', 'Elton', 'Graham', 'Jacques', 'James', 'Lachy', 'Luciano', 'Malzo', 'Matt', 'Nick', 'Rafa', 'Rhys', 'Roberto'
+    ].sort();
+
+    let customPlayers = []; // For new players added during session
     let currentRound = 0;
     let timer = null;
     let timeLeft = 0;
@@ -989,12 +996,16 @@ Note: Google Sheets integration not available - results not saved automatically.
       const now = new Date();
       const date = now.toISOString().split('T')[0];
       const timestamp = now.toLocaleTimeString();
+      const tournamentId = `${date}_${timestamp.replace(/:/g, '-')}`;
       
       console.log('=== TOURNAMENT DATA COLLECTION START ===');
+      console.log('Tournament ID:', tournamentId);
       console.log('Raw players data:', players.map(p => ({
         name: p.name, 
         eliminated: p.eliminated, 
-        eliminationTime: p.eliminationTime
+        eliminationTime: p.eliminationTime,
+        stacks: p.stacks,
+        totalPaid: p.totalPaid
       })));
       
       // Sort players by elimination time (most recent elimination = highest finish)
@@ -1009,37 +1020,69 @@ Note: Google Sheets integration not available - results not saved automatically.
       
       console.log('All players sorted by finish:', allPlayersSorted.map(p => `${p.name}: ${p.eliminated ? 'eliminated at ' + new Date(p.eliminationTime).toLocaleTimeString() : 'WINNER'}`));
       
-      // Get all player names
-      const allPlayerNames = allPlayersSorted.map(p => p.name);
-      console.log('All player names:', allPlayerNames);
+      // Calculate prize pool
+      const totalPaid = players.reduce((sum, p) => sum + p.totalPaid, 0);
+      const houseFee = totalPaid > 100 ? 10 : 5;
+      const prizePool = totalPaid - houseFee;
+      const firstPrize = Math.round(prizePool * 0.8);
+      const secondPrize = Math.round(prizePool * 0.2);
       
-      // Get winner (first active player)
-      const winner = allPlayersSorted.find(p => !p.eliminated);
-      const first = winner ? winner.name : '';
-      console.log('First place (winner):', first);
+      console.log('Prize calculations:', { totalPaid, houseFee, prizePool, firstPrize, secondPrize });
       
-      // Get second place (first eliminated player in sorted order)
-      const secondPlace = allPlayersSorted.find(p => p.eliminated);
-      const second = secondPlace ? secondPlace.name : '';
-      console.log('Second place (last eliminated):', second);
+      // Create individual player records
+      const playerRecords = [];
       
-      const data = {
-        date: date,
-        timestamp: timestamp,
-        results: allPlayerNames,
-        first: first,
-        second: second
-      };
+      allPlayersSorted.forEach((player, index) => {
+        const finishPosition = player.eliminated ? (allPlayersSorted.filter(p => !p.eliminated).length + index) : 1;
+        let earnings = 0;
+        
+        // Award prize money
+        if (finishPosition === 1) earnings = firstPrize;
+        else if (finishPosition === 2) earnings = secondPrize;
+        
+        // Calculate rebuys and addons from total paid
+        const baseStacks = 1;
+        const additionalStacks = player.stacks - baseStacks;
+        const baseCost = 5;
+        const additionalCost = player.totalPaid - baseCost;
+        const rebuys = player.eliminated ? Math.max(0, additionalStacks - (player.hasAddon ? 1 : 0)) : additionalStacks - (player.hasAddon ? 1 : 0);
+        const addons = player.hasAddon ? 1 : 0;
+        
+        const playerRecord = {
+          date,
+          timestamp,
+          tournamentId,
+          playerName: player.name,
+          finishPosition,
+          fieldSize: players.length,
+          amountPaid: player.totalPaid,
+          earnings,
+          rebuys: Math.max(0, rebuys),
+          addons,
+          roi: player.totalPaid > 0 ? ((earnings - player.totalPaid) / player.totalPaid * 100).toFixed(1) : 0
+        };
+        
+        playerRecords.push(playerRecord);
+        console.log(`Player record: ${player.name} - Position: ${finishPosition}, Paid: £${player.totalPaid}, Earned: £${earnings}, ROI: ${playerRecord.roi}%`);
+      });
       
       console.log('=== FINAL TOURNAMENT DATA ===');
-      console.log('Date:', data.date);
-      console.log('Time:', data.timestamp);
-      console.log('All Players:', data.results);
-      console.log('First Place:', data.first);
-      console.log('Second Place:', data.second);
+      console.log('Total player records:', playerRecords.length);
+      console.log('Tournament ID:', tournamentId);
       console.log('=== END COLLECTION ===');
       
-      return data;
+      return {
+        tournamentId,
+        playerRecords,
+        summary: {
+          date,
+          timestamp,
+          fieldSize: players.length,
+          prizePool,
+          winner: allPlayersSorted[0]?.name || '',
+          second: allPlayersSorted.find(p => p.eliminated)?.name || ''
+        }
+      };
     }
 
     function exportTournamentData() {
@@ -1051,15 +1094,32 @@ Note: Google Sheets integration not available - results not saved automatically.
       const data = collectCurrentTournamentData();
       console.log('About to export tournament data:', data);
       
+      // Prepare rows for Google Sheets - each player gets their own row
+      const rows = data.playerRecords.map(record => [
+        record.date,
+        record.timestamp,
+        record.tournamentId,
+        record.playerName,
+        record.finishPosition,
+        record.fieldSize,
+        record.amountPaid,
+        record.earnings,
+        record.rebuys,
+        record.addons,
+        record.roi
+      ]);
+      
+      console.log('Rows to export:', rows);
+      
       gapi.client.sheets.spreadsheets.values.append({
         spreadsheetId: SPREADSHEET_ID,
-        range: 'RawResults!A:E',
+        range: 'PlayerResults!A:K',
         valueInputOption: 'USER_ENTERED',
         resource: {
-          values: [[data.date, data.timestamp, data.results.join('|'), data.first, data.second]]
+          values: rows
         }
       }).then(response => {
-        showMessage('Tournament data saved successfully!');
+        showMessage(`Tournament data saved successfully! ${rows.length} player records exported.`);
         console.log('Export successful:', response);
       }).catch(error => {
         showMessage('Failed to save tournament data', true);
@@ -1081,70 +1141,86 @@ Note: Google Sheets integration not available - results not saved automatically.
       });
     }
 
-    function buildDashboardFromRows(rows) {
-      console.log('Building dashboard from rows:', rows);
+    function buildDashboardFromPlayerRows(rows) {
+      console.log('Building dashboard from player rows:', rows);
       const stats = {};
       
       // Skip header row if it exists
       const dataRows = rows.length > 0 && rows[0][0] === 'Date' ? rows.slice(1) : rows;
+      console.log('Data rows after header filter:', dataRows);
       
       dataRows.forEach((row, index) => {
-        console.log(`Processing row ${index + 1}:`, row);
-        
-        if (row.length < 4) {
+        if (row.length < 8) {
           console.log('Skipping incomplete row', index + 1, ':', row);
           return;
         }
         
-        // Expected format: [Date, Time, Players, First, Second] or [Date, Players, First, Second]
-        let players, first, second;
+        // Expected format: [Date, Time, TournamentID, PlayerName, Position, FieldSize, AmountPaid, Earnings, Rebuys, Addons, ROI]
+        const [date, time, tournamentId, playerName, position, fieldSize, amountPaid, earnings, rebuys, addons, roi] = row;
         
-        if (row.length >= 5) {
-          // New format: Date, Time, Players, First, Second
-          [, , players, first, second] = row;
-          console.log(`New format - Players: "${players}", First: "${first}", Second: "${second}"`);
-        } else if (row.length === 4) {
-          // Old format: Date, Players, First, Second
-          [, players, first, second] = row;
-          console.log(`Old format - Players: "${players}", First: "${first}", Second: "${second}"`);
-        }
-        
-        if (!players) {
-          console.log('No players data in row', index + 1);
+        if (!playerName) {
+          console.log('No player name in row', index + 1);
           return;
         }
         
-        const playerNames = players.split('|').filter(name => name && name.trim());
-        console.log('Player names extracted:', playerNames);
+        const player = playerName.trim();
         
-        if (playerNames.length === 0) {
-          console.log('No valid player names found');
-          return;
+        // Initialize player stats if first time seeing them
+        if (!stats[player]) {
+          stats[player] = {
+            played: 0,
+            wins: 0,
+            seconds: 0,
+            thirds: 0,
+            totalEarnings: 0,
+            totalSpent: 0,
+            totalRebuys: 0,
+            totalAddons: 0,
+            bestFinish: 999,
+            worstFinish: 0,
+            avgROI: 0,
+            cashes: 0,
+            bubbles: 0
+          };
         }
         
-        playerNames.forEach(name => {
-          name = name.trim();
-          if (!stats[name]) {
-            stats[name] = { played: 0, wins: 0, seconds: 0, earnings: 0 };
-          }
-          stats[name].played++;
-        });
+        // Parse numerical values
+        const pos = parseInt(position) || 999;
+        const paid = parseFloat(amountPaid) || 0;
+        const earned = parseFloat(earnings) || 0;
+        const rebuyCount = parseInt(rebuys) || 0;
+        const addonCount = parseInt(addons) || 0;
+        const field = parseInt(fieldSize) || 0;
         
-        // Calculate prize pool based on players
-        const playerCount = playerNames.length;
-        const totalPaid = playerCount * 5; // Base buy-in
-        const houseFee = totalPaid > 100 ? 10 : 5;
-        const prizePool = totalPaid - houseFee;
+        // Update player statistics
+        stats[player].played++;
+        stats[player].totalSpent += paid;
+        stats[player].totalEarnings += earned;
+        stats[player].totalRebuys += rebuyCount;
+        stats[player].totalAddons += addonCount;
         
-        if (first && first.trim() && stats[first.trim()]) {
-          stats[first.trim()].wins++;
-          stats[first.trim()].earnings += Math.round(prizePool * 0.8);
-        }
+        // Track finish positions
+        if (pos === 1) stats[player].wins++;
+        if (pos === 2) stats[player].seconds++;
+        if (pos === 3) stats[player].thirds++;
+        if (pos <= 2) stats[player].cashes++; // Made money
+        if (pos === 3 && field >= 4) stats[player].bubbles++; // 3rd in 4+ player field
         
-        if (second && second.trim() && stats[second.trim()]) {
-          stats[second.trim()].seconds++;
-          stats[second.trim()].earnings += Math.round(prizePool * 0.2);
-        }
+        // Best and worst finishes
+        if (pos < stats[player].bestFinish) stats[player].bestFinish = pos;
+        if (pos > stats[player].worstFinish) stats[player].worstFinish = pos;
+        
+        console.log(`Processed ${player}: Position ${pos}, Earned £${earned}, Spent £${paid}`);
+      });
+      
+      // Calculate derived statistics
+      Object.keys(stats).forEach(player => {
+        const s = stats[player];
+        s.avgROI = s.totalSpent > 0 ? ((s.totalEarnings - s.totalSpent) / s.totalSpent * 100).toFixed(1) : '0.0';
+        s.avgEarnings = s.played > 0 ? (s.totalEarnings / s.played).toFixed(2) : '0.00';
+        s.winRate = s.played > 0 ? ((s.wins / s.played) * 100).toFixed(1) : '0.0';
+        s.cashRate = s.played > 0 ? ((s.cashes / s.played) * 100).toFixed(1) : '0.0';
+        if (s.bestFinish === 999) s.bestFinish = 'N/A';
       });
       
       console.log('Final player statistics:', stats);
@@ -1166,31 +1242,41 @@ Note: Google Sheets integration not available - results not saved automatically.
             <th>Player</th>
             <th>Played</th>
             <th>Wins</th>
-            <th>2nd Places</th>
+            <th>2nd</th>
+            <th>3rd</th>
+            <th>Cash Rate</th>
             <th>Total Earnings</th>
-            <th>Avg Earnings</th>
+            <th>Total Spent</th>
+            <th>Net Profit</th>
+            <th>ROI</th>
+            <th>Best Finish</th>
           </tr>
         </thead>
       `;
       
       const tbody = document.createElement('tbody');
       const sortedStats = Object.entries(stats)
-        .sort((a, b) => b[1].earnings - a[1].earnings);
+        .sort((a, b) => (b[1].totalEarnings - b[1].totalSpent) - (a[1].totalEarnings - a[1].totalSpent)); // Sort by net profit
       
       if (sortedStats.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7">No player data available</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="12">No valid player data available</td></tr>';
       } else {
         sortedStats.forEach(([name, s], index) => {
+          const netProfit = s.totalEarnings - s.totalSpent;
           const tr = document.createElement('tr');
-          const avgEarnings = s.played > 0 ? (s.earnings / s.played).toFixed(2) : '0.00';
           tr.innerHTML = `
             <td>${index + 1}</td>
             <td><strong>${name}</strong></td>
             <td>${s.played}</td>
             <td>${s.wins}</td>
             <td>${s.seconds}</td>
-            <td>£${s.earnings.toFixed(2)}</td>
-            <td>£${avgEarnings}</td>
+            <td>${s.thirds}</td>
+            <td>${s.cashRate}%</td>
+            <td>£${s.totalEarnings.toFixed(2)}</td>
+            <td>£${s.totalSpent.toFixed(2)}</td>
+            <td style="color: ${netProfit >= 0 ? '#4caf50' : '#f44336'}">£${netProfit.toFixed(2)}</td>
+            <td>${s.avgROI}%</td>
+            <td>${s.bestFinish}</td>
           `;
           tbody.appendChild(tr);
         });
@@ -1199,7 +1285,7 @@ Note: Google Sheets integration not available - results not saved automatically.
       table.appendChild(tbody);
       section.appendChild(table);
       
-      console.log('Dashboard built successfully with', sortedStats.length, 'players');
+      console.log('Advanced dashboard built successfully with', sortedStats.length, 'players');
     }
 
     // Player management
@@ -1684,6 +1770,8 @@ Note: Google Sheets integration not available - results not saved automatically.
     // Event handlers and initialization
     function setupEventHandlers() {
       const nameInput = document.getElementById('playerNameInput');
+      const playerSelect = document.getElementById('playerSelect');
+      
       if (nameInput) {
         nameInput.addEventListener('keydown', (event) => {
           if (event.key === 'Enter') {
@@ -1691,9 +1779,22 @@ Note: Google Sheets integration not available - results not saved automatically.
             addPlayer();
           }
         });
+      }
+      
+      if (playerSelect) {
+        playerSelect.addEventListener('keydown', (event) => {
+          if (event.key === 'Enter') {
+            event.preventDefault();
+            addPlayer();
+          }
+        });
         
-        // Focus on name input when page loads
-        nameInput.focus();
+        // When a player is selected, focus goes to Add button or clear the input
+        playerSelect.addEventListener('change', () => {
+          if (playerSelect.value) {
+            nameInput.value = ''; // Clear the input if dropdown is selected
+          }
+        });
       }
       
       // Set up button click handlers as backup
@@ -1707,6 +1808,7 @@ Note: Google Sheets integration not available - results not saved automatically.
     function initializeApp() {
       console.log('Initializing app...');
       setupEventHandlers();
+      populatePlayerDropdown();
       updatePlayerTable();
       updateRoundDisplay();
       requestNotificationPermission();
