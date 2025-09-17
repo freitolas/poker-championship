@@ -986,16 +986,60 @@ Note: Google Sheets integration not available - results not saved automatically.
     }
 
     function collectCurrentTournamentData() {
-      const date = new Date().toISOString().split('T')[0];
-      const activePlayers = players.filter(p => !p.eliminated);
-      const results = activePlayers.map(p => p.name);
+      const now = new Date();
+      const date = now.toISOString().split('T')[0];
+      const timestamp = now.toLocaleTimeString();
       
-      return {
+      console.log('=== TOURNAMENT DATA COLLECTION START ===');
+      console.log('Raw players data:', players.map(p => ({
+        name: p.name, 
+        eliminated: p.eliminated, 
+        eliminationTime: p.eliminationTime
+      })));
+      
+      // Sort players by elimination time (most recent elimination = highest finish)
+      const allPlayersSorted = [...players].sort((a, b) => {
+        if (!a.eliminated && !b.eliminated) return 0;
+        if (!a.eliminated) return -1; // a is active (winner)
+        if (!b.eliminated) return 1; // b is active (winner)
+        
+        // Both eliminated - most recent elimination time = better finish
+        return (b.eliminationTime || 0) - (a.eliminationTime || 0);
+      });
+      
+      console.log('All players sorted by finish:', allPlayersSorted.map(p => `${p.name}: ${p.eliminated ? 'eliminated at ' + new Date(p.eliminationTime).toLocaleTimeString() : 'WINNER'}`));
+      
+      // Get all player names
+      const allPlayerNames = allPlayersSorted.map(p => p.name);
+      console.log('All player names:', allPlayerNames);
+      
+      // Get winner (first active player)
+      const winner = allPlayersSorted.find(p => !p.eliminated);
+      const first = winner ? winner.name : '';
+      console.log('First place (winner):', first);
+      
+      // Get second place (first eliminated player in sorted order)
+      const secondPlace = allPlayersSorted.find(p => p.eliminated);
+      const second = secondPlace ? secondPlace.name : '';
+      console.log('Second place (last eliminated):', second);
+      
+      const data = {
         date: date,
-        results: results,
-        first: results[0] || '',
-        second: results[1] || ''
+        timestamp: timestamp,
+        results: allPlayerNames,
+        first: first,
+        second: second
       };
+      
+      console.log('=== FINAL TOURNAMENT DATA ===');
+      console.log('Date:', data.date);
+      console.log('Time:', data.timestamp);
+      console.log('All Players:', data.results);
+      console.log('First Place:', data.first);
+      console.log('Second Place:', data.second);
+      console.log('=== END COLLECTION ===');
+      
+      return data;
     }
 
     function exportTournamentData() {
@@ -1674,3 +1718,4 @@ Note: Google Sheets integration not available - results not saved automatically.
   </script>
 </body>
 </html>
+      
