@@ -865,13 +865,21 @@
         if (isSignedIn) {
           exportBtn.textContent = 'Save Tournament Data';
           dashboardBtn.textContent = 'Load Championship Dashboard';
+          exportBtn.onclick = () => exportTournamentData();
+          dashboardBtn.onclick = () => loadDashboard();
         } else {
           exportBtn.textContent = 'Sign in to Save';
           dashboardBtn.textContent = 'Sign in to Load Dashboard';
           
           // Make sure the buttons can trigger sign-in
-          exportBtn.onclick = signInAndExport;
-          dashboardBtn.onclick = signInAndLoadDashboard;
+          exportBtn.onclick = () => {
+            console.log('Sign in to Save button clicked');
+            signInAndExport();
+          };
+          dashboardBtn.onclick = () => {
+            console.log('Sign in to Load Dashboard button clicked');
+            signInAndLoadDashboard();
+          };
         }
       } else {
         exportBtn.disabled = true;
