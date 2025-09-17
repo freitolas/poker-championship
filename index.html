@@ -1808,10 +1808,16 @@ Note: Google Sheets integration not available - results not saved automatically.
     function initializeApp() {
       console.log('Initializing app...');
       setupEventHandlers();
-      populatePlayerDropdown();
       updatePlayerTable();
       updateRoundDisplay();
       requestNotificationPermission();
+      
+      // Populate dropdown after a short delay to ensure DOM is ready
+      setTimeout(() => {
+        if (document.getElementById('playerSelect')) {
+          populatePlayerDropdown();
+        }
+      }, 100);
       
       // Initialize Google API
       if (typeof gapi !== 'undefined') {
