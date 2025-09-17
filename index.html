@@ -456,7 +456,7 @@
     // Debug logging
     console.log('Script starting...');
 
-    // Configuration - REPLACE WITH YOUR ACTUAL VALUES
+ // Configuration - REPLACE WITH YOUR ACTUAL VALUES
     const CLIENT_ID = '341648594146-vljhd1s0mgblpafrkh7rsgjf70u6k43n.apps.googleusercontent.com';
     const SPREADSHEET_ID = '1I6dwNCQfUWg6Xb4eMbnxgZbMD8GQ0rnJ-AquE08LIzc';
     const SCOPES = 'https://www.googleapis.com/auth/spreadsheets';
@@ -1005,17 +1005,18 @@ Note: Google Sheets integration not available - results not saved automatically.
       }
 
       const data = collectCurrentTournamentData();
+      console.log('About to export tournament data:', data);
       
       gapi.client.sheets.spreadsheets.values.append({
         spreadsheetId: SPREADSHEET_ID,
-        range: 'RawResults!A:D',
+        range: 'RawResults!A:E',
         valueInputOption: 'USER_ENTERED',
         resource: {
-          values: [[data.date, data.results.join('|'), data.first, data.second]]
+          values: [[data.date, data.timestamp, data.results.join('|'), data.first, data.second]]
         }
       }).then(response => {
         showMessage('Tournament data saved successfully!');
-        console.log('Data saved:', response);
+        console.log('Export successful:', response);
       }).catch(error => {
         showMessage('Failed to save tournament data', true);
         console.error('Export error:', error);
@@ -1037,15 +1038,45 @@ Note: Google Sheets integration not available - results not saved automatically.
     }
 
     function buildDashboardFromRows(rows) {
+      console.log('Building dashboard from rows:', rows);
       const stats = {};
       
-      rows.forEach(row => {
-        if (row.length < 4) return;
+      // Skip header row if it exists
+      const dataRows = rows.length > 0 && rows[0][0] === 'Date' ? rows.slice(1) : rows;
+      
+      dataRows.forEach((row, index) => {
+        if (row.length < 4) {
+          console.log('Skipping incomplete row', index + 1, ':', row);
+          return;
+        }
         
-        const [date, namesStr, first, second] = row;
-        const names = namesStr.split('|').filter(name => name.trim());
+        const [date, timeOrPlayers, playersOrFirst, firstOrSecond, second] = row;
         
-        names.forEach(name => {
+        // Handle both old format (A:D) and new format (A:E)
+        let names, first, secondPlace;
+        if (row.length === 5) {
+          // New format: Date, Time, Players, First, Second
+          names = playersOrFirst;
+          first = firstOrSecond;
+          secondPlace = second;
+        } else {
+          // Old format: Date, Players, First, Second
+          names = timeOrPlayers;
+          first = playersOrFirst;
+          secondPlace = firstOrSecond;
+        }
+        
+        console.log(`Processing row ${index + 1}: Players="${names}", First="${first}", Second="${secondPlace}"`);
+        
+        if (!names) {
+          console.log('No players data in row', index + 1);
+          return;
+        }
+        
+        const playerNames = names.split('|').filter(name => name.trim());
+        console.log('Player names extracted:', playerNames);
+        
+        playerNames.forEach(name => {
           name = name.trim();
           if (!stats[name]) {
             stats[name] = { played: 0, wins: 0, seconds: 0, earnings: 0 };
@@ -1054,7 +1085,7 @@ Note: Google Sheets integration not available - results not saved automatically.
         });
         
         // Calculate prize pool based on players
-        const playerCount = names.length;
+        const playerCount = playerNames.length;
         const totalPaid = playerCount * 5; // Base buy-in
         const houseFee = totalPaid > 100 ? 10 : 5;
         const prizePool = totalPaid - houseFee;
@@ -1064,11 +1095,13 @@ Note: Google Sheets integration not available - results not saved automatically.
           stats[first].earnings += Math.round(prizePool * 0.8);
         }
         
-        if (second && stats[second]) {
-          stats[second].seconds++;
-          stats[second].earnings += Math.round(prizePool * 0.2);
+        if (secondPlace && stats[secondPlace]) {
+          stats[secondPlace].seconds++;
+          stats[secondPlace].earnings += Math.round(prizePool * 0.2);
         }
       });
+      
+      console.log('Final player statistics:', stats);
       
       const section = document.getElementById('chartsSection');
       section.innerHTML = '<h3>Annual Championship Leaderboard</h3>';
@@ -1109,6 +1142,8 @@ Note: Google Sheets integration not available - results not saved automatically.
       
       table.appendChild(tbody);
       section.appendChild(table);
+      
+      console.log('Dashboard built successfully with', sortedStats.length, 'players');
     }
 
     // Player management
