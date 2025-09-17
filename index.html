@@ -1089,36 +1089,38 @@ Note: Google Sheets integration not available - results not saved automatically.
       const dataRows = rows.length > 0 && rows[0][0] === 'Date' ? rows.slice(1) : rows;
       
       dataRows.forEach((row, index) => {
+        console.log(`Processing row ${index + 1}:`, row);
+        
         if (row.length < 4) {
           console.log('Skipping incomplete row', index + 1, ':', row);
           return;
         }
         
-        const [date, timeOrPlayers, playersOrFirst, firstOrSecond, second] = row;
+        // Expected format: [Date, Time, Players, First, Second] or [Date, Players, First, Second]
+        let players, first, second;
         
-        // Handle both old format (A:D) and new format (A:E)
-        let names, first, secondPlace;
-        if (row.length === 5) {
+        if (row.length >= 5) {
           // New format: Date, Time, Players, First, Second
-          names = playersOrFirst;
-          first = firstOrSecond;
-          secondPlace = second;
-        } else {
+          [, , players, first, second] = row;
+          console.log(`New format - Players: "${players}", First: "${first}", Second: "${second}"`);
+        } else if (row.length === 4) {
           // Old format: Date, Players, First, Second
-          names = timeOrPlayers;
-          first = playersOrFirst;
-          secondPlace = firstOrSecond;
+          [, players, first, second] = row;
+          console.log(`Old format - Players: "${players}", First: "${first}", Second: "${second}"`);
         }
         
-        console.log(`Processing row ${index + 1}: Players="${names}", First="${first}", Second="${secondPlace}"`);
-        
-        if (!names) {
+        if (!players) {
           console.log('No players data in row', index + 1);
           return;
         }
         
-        const playerNames = names.split('|').filter(name => name.trim());
+        const playerNames = players.split('|').filter(name => name && name.trim());
         console.log('Player names extracted:', playerNames);
+        
+        if (playerNames.length === 0) {
+          console.log('No valid player names found');
+          return;
+        }
         
         playerNames.forEach(name => {
           name = name.trim();
@@ -1134,20 +1136,26 @@ Note: Google Sheets integration not available - results not saved automatically.
         const houseFee = totalPaid > 100 ? 10 : 5;
         const prizePool = totalPaid - houseFee;
         
-        if (first && stats[first]) {
-          stats[first].wins++;
-          stats[first].earnings += Math.round(prizePool * 0.8);
+        if (first && first.trim() && stats[first.trim()]) {
+          stats[first.trim()].wins++;
+          stats[first.trim()].earnings += Math.round(prizePool * 0.8);
         }
         
-        if (secondPlace && stats[secondPlace]) {
-          stats[secondPlace].seconds++;
-          stats[secondPlace].earnings += Math.round(prizePool * 0.2);
+        if (second && second.trim() && stats[second.trim()]) {
+          stats[second.trim()].seconds++;
+          stats[second.trim()].earnings += Math.round(prizePool * 0.2);
         }
       });
       
       console.log('Final player statistics:', stats);
       
       const section = document.getElementById('chartsSection');
+      
+      if (Object.keys(stats).length === 0) {
+        section.innerHTML = '<h3>Championship Dashboard</h3><p>No tournament data found to display.</p>';
+        return;
+      }
+      
       section.innerHTML = '<h3>Annual Championship Leaderboard</h3>';
       
       const table = document.createElement('table');
@@ -1169,20 +1177,24 @@ Note: Google Sheets integration not available - results not saved automatically.
       const sortedStats = Object.entries(stats)
         .sort((a, b) => b[1].earnings - a[1].earnings);
       
-      sortedStats.forEach(([name, s], index) => {
-        const tr = document.createElement('tr');
-        const avgEarnings = s.played > 0 ? (s.earnings / s.played).toFixed(2) : '0.00';
-        tr.innerHTML = `
-          <td>${index + 1}</td>
-          <td><strong>${name}</strong></td>
-          <td>${s.played}</td>
-          <td>${s.wins}</td>
-          <td>${s.seconds}</td>
-          <td>£${s.earnings.toFixed(2)}</td>
-          <td>£${avgEarnings}</td>
-        `;
-        tbody.appendChild(tr);
-      });
+      if (sortedStats.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7">No player data available</td></tr>';
+      } else {
+        sortedStats.forEach(([name, s], index) => {
+          const tr = document.createElement('tr');
+          const avgEarnings = s.played > 0 ? (s.earnings / s.played).toFixed(2) : '0.00';
+          tr.innerHTML = `
+            <td>${index + 1}</td>
+            <td><strong>${name}</strong></td>
+            <td>${s.played}</td>
+            <td>${s.wins}</td>
+            <td>${s.seconds}</td>
+            <td>£${s.earnings.toFixed(2)}</td>
+            <td>£${avgEarnings}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+      }
       
       table.appendChild(tbody);
       section.appendChild(table);
