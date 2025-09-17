@@ -859,8 +859,9 @@
       console.log('updateSigninStatus called:', { isSignedIn, tournamentEnded, googleApiReady });
       
       if (tournamentEnded && googleApiReady) {
-        exportBtn.disabled = !isSignedIn;
-        dashboardBtn.disabled = !isSignedIn;
+        // Always enable buttons when tournament is ended and API is ready
+        exportBtn.disabled = false;
+        dashboardBtn.disabled = false;
         
         if (isSignedIn) {
           exportBtn.textContent = 'Save Tournament Data';
