@@ -486,6 +486,7 @@
       'Andre', 'Craig', 'Dale', 'Declan', 'Elton', 'Graham', 'Jacques', 'James', 'Lachy', 'Luciano', 'Malzo', 'Matt', 'Nick', 'Rafa', 'Rhys', 'Roberto'
     ].sort();
 
+    // Global variables
     let customPlayers = []; // For new players added during session
     let players = []; // Main players array for current tournament
     let currentRound = 0;
@@ -499,10 +500,13 @@
     let googleApiReady = false;
     let actionHistory = []; // For undo functionality
 
-    console.log('Global state initialized');
+    console.log('Global variables initialized');
+    console.log('Players array:', players);
+    console.log('Regular players:', regularPlayers);
 
     // Populate player dropdown
     function populatePlayerDropdown() {
+      console.log('populatePlayerDropdown called');
       const dropdown = document.getElementById('playerSelect');
       if (!dropdown) {
         console.error('Player dropdown element not found');
@@ -531,93 +535,146 @@
       console.log('Player dropdown populated with', regularPlayers.length, 'regular players');
     }
 
-    // Undo functionality
-    function recordAction(action, data) {
-      actionHistory.push({
-        type: action,
-        data: data,
-        timestamp: Date.now()
-      });
-      // Keep only last 10 actions
-      if (actionHistory.length > 10) {
-        actionHistory.shift();
+    // Player management functions
+    function addPlayer() {
+      console.log('addPlayer called');
+      const input = document.getElementById('playerNameInput');
+      const dropdown = document.getElementById('playerSelect');
+      
+      // Get name from either dropdown or input field
+      let name = '';
+      if (dropdown && dropdown.value) {
+        name = dropdown.value;
+      } else if (input && input.value) {
+        name = input.value.trim();
       }
-      updateUndoButton();
-    }
-
-    function undoLastAction() {
-      if (actionHistory.length === 0) {
-        showMessage('Nothing to undo', true);
+      
+      console.log('Player name to add:', name);
+      
+      if (!name) {
+        showMessage('Please enter a player name or select from dropdown', true);
         return;
       }
-
-      const lastAction = actionHistory.pop();
       
-      switch (lastAction.type) {
-        case 'eliminate':
-          const eliminatedPlayer = players.find(p => p.name === lastAction.data.name);
-          if (eliminatedPlayer) {
-            eliminatedPlayer.eliminated = false;
-            showMessage(`Undid elimination of ${lastAction.data.name}`);
-          }
-          break;
-          
-        case 'rebuy':
-          const rebuyPlayer = players.find(p => p.name === lastAction.data.name);
-          if (rebuyPlayer) {
-            rebuyPlayer.eliminated = true;
-            rebuyPlayer.stacks = lastAction.data.previousStacks;
-            rebuyPlayer.totalPaid = lastAction.data.previousPaid;
-            showMessage(`Undid rebuy for ${lastAction.data.name}`);
-          }
-          break;
-          
-        case 'addon':
-          const addonPlayer = players.find(p => p.name === lastAction.data.name);
-          if (addonPlayer) {
-            addonPlayer.stacks = lastAction.data.previousStacks;
-            addonPlayer.totalPaid = lastAction.data.previousPaid;
-            addonPlayer.hasAddon = lastAction.data.previousHasAddon || false;
-            showMessage(`Undid add-on for ${lastAction.data.name}`);
-          }
-          break;
+      if (players.some(p => p.name.toLowerCase() === name.toLowerCase())) {
+        showMessage('Player already exists', true);
+        return;
       }
+      
+      if (tournamentStarted) {
+        showMessage('Cannot add players after tournament has started', true);
+        return;
+      }
+      
+      players.push({
+        name: name,
+        stacks: 1,
+        totalPaid: 5,
+        eliminated: false,
+        hasAddon: false,
+        eliminationTime: null
+      });
+      
+      // Clear both input fields
+      if (input) input.value = '';
+      if (dropdown) dropdown.value = '';
+      
+      // Add to custom players if it's not in regular players list
+      if (!regularPlayers.includes(name) && !customPlayers.includes(name)) {
+        customPlayers.push(name);
+        populatePlayerDropdown(); // Refresh dropdown
+      }
+      
+      // Focus back to input for quick entry
+      if (input) input.focus();
       
       updatePlayerTable();
-      updateUndoButton();
+      showMessage(`${name} added to tournament`);
+      console.log('Player added successfully. Total players:', players.length);
     }
 
-    function updateUndoButton() {
-      const undoBtn = document.getElementById('undoBtn');
-      if (undoBtn) {
-        undoBtn.disabled = actionHistory.length === 0;
-        if (actionHistory.length > 0) {
-          const lastAction = actionHistory[actionHistory.length - 1];
-          undoBtn.textContent = `Undo ${lastAction.type}`;
-        } else {
-          undoBtn.textContent = 'Undo';
+    function removePlayer(index) {
+      if (tournamentStarted) {
+        showMessage('Cannot remove players after tournament has started', true);
+        return;
+      }
+      
+      const playerName = players[index].name;
+      players.splice(index, 1);
+      updatePlayerTable();
+      showMessage(`${playerName} removed from tournament`);
+    }
+
+    function clearPlayers() {
+      if (tournamentStarted && !tournamentEnded) {
+        if (!confirm('Tournament is in progress. Are you sure you want to clear all players?')) {
+          return;
         }
       }
+      
+      players = [];
+      tournamentStarted = false;
+      tournamentEnded = false;
+      resetTournament();
+      updatePlayerTable();
+      showMessage('All players cleared');
     }
 
-    // Make functions globally accessible
+    // Tournament management functions
+    function startTournament() {
+      if (players.length < 2) {
+        showMessage('Need at least 2 players to start tournament', true);
+        return;
+      }
+      
+      tournamentStarted = true;
+      tournamentEnded = false;
+      
+      document.getElementById('startBtn').disabled = true;
+      document.getElementById('endBtn').disabled = false;
+      document.getElementById('exportBtn').disabled = true;
+      document.getElementById('loadDashboardBtn').disabled = true;
+      
+      // Start the timer automatically
+      currentRound = 0;
+      updateRoundDisplay();
+      startTimer();
+      
+      updatePlayerTable();
+      showMessage('Tournament started! Timer is running.');
+    }
+
+    function endTournament() {
+      if (!confirm('Are you sure you want to end the tournament?')) {
+        return;
+      }
+      
+      tournamentEnded = true;
+      tournamentStarted = false;
+      clearInterval(timer);
+      timerRunning = false;
+      
+      document.getElementById('endBtn').disabled = true;
+      document.getElementById('timerStartBtn').disabled = true;
+      document.getElementById('timerPauseBtn').disabled = true;
+      document.getElementById('timerSkipBtn').disabled = true;
+      
+      const activePlayers = players.filter(p => !p.eliminated);
+      
+      updatePlayerTable();
+      displayFinalResults(activePlayers);
+      showMessage('Tournament ended! You can now save the results.');
+    }
+
+    // IMMEDIATELY attach all functions to window object
     window.addPlayer = addPlayer;
     window.removePlayer = removePlayer;
     window.startTournament = startTournament;
     window.endTournament = endTournament;
     window.clearPlayers = clearPlayers;
-    window.eliminatePlayer = eliminatePlayer;
-    window.rebuyPlayer = rebuyPlayer;
-    window.addonPlayer = addonPlayer;
-    window.startTimer = startTimer;
-    window.pauseTimer = pauseTimer;
-    window.resetTimer = resetTimer;
-    window.skipRound = skipRound;
-    window.signInAndExport = signInAndExport;
-    window.signInAndLoadDashboard = signInAndLoadDashboard;
-    window.undoLastAction = undoLastAction;
-
-    console.log('Functions attached to window object');
+    
+    console.log('Critical functions attached to window');
+    console.log('window.addPlayer:', typeof window.addPlayer);
 
     // Utility functions
     function formatTime(seconds) {
@@ -627,157 +684,239 @@
     }
 
     function showMessage(message, isError = false) {
+      console.log('Message:', message, 'Error:', isError);
       const statusEl = document.getElementById('statusMessage');
       const errorEl = document.getElementById('errorMessage');
       
       // Reset both messages first
-      statusEl.classList.remove('show');
-      errorEl.classList.remove('show');
+      if (statusEl) statusEl.classList.remove('show');
+      if (errorEl) errorEl.classList.remove('show');
       
       setTimeout(() => {
-        if (isError) {
+        if (isError && errorEl) {
           errorEl.textContent = message;
           errorEl.classList.add('show');
-        } else {
+        } else if (!isError && statusEl) {
           statusEl.textContent = message;
           statusEl.classList.add('show');
         }
         
         // Auto-hide after 5 seconds
         setTimeout(() => {
-          statusEl.classList.remove('show');
-          errorEl.classList.remove('show');
+          if (statusEl) statusEl.classList.remove('show');
+          if (errorEl) errorEl.classList.remove('show');
         }, 5000);
       }, 10);
     }
 
-    function playAlarm() {
-      console.log('Playing alarm...');
-      
-      // Primary method: Play your alarm.mp3 file
-      const audio = document.getElementById('roundAlarm');
-      if (audio) {
-        // Reset audio to beginning
-        audio.currentTime = 0;
-        
-        const playPromise = audio.play();
-        
-        if (playPromise !== undefined) {
-          playPromise.then(() => {
-            console.log('alarm.mp3 played successfully');
-          }).catch(error => {
-            console.log('alarm.mp3 playback failed:', error.message);
-            console.log('Trying fallback audio methods...');
-            playFallbackAlarm();
-          });
-        } else {
-          console.log('Audio play() returned undefined, trying fallback...');
-          playFallbackAlarm();
-        }
-      } else {
-        console.log('Audio element not found, trying fallback...');
-        playFallbackAlarm();
+    function updatePlayerTable() {
+      console.log('updatePlayerTable called, players:', players);
+      const tbody = document.getElementById('playerTableBody');
+      if (!tbody) {
+        console.error('Player table body not found');
+        return;
       }
       
-      // Always show visual indicators regardless of audio success
-      showVisualAlarm();
-    }
-
-    function playFallbackAlarm() {
-      // Web Audio API beep as backup
-      try {
-        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        
-        // Create 3 beeps
-        for (let i = 0; i < 3; i++) {
-          setTimeout(() => {
-            const oscillator = audioContext.createOscillator();
-            const gainNode = audioContext.createGain();
-            
-            oscillator.connect(gainNode);
-            gainNode.connect(audioContext.destination);
-            
-            oscillator.frequency.value = 800;
-            oscillator.type = 'square';
-            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
-            
-            oscillator.start(audioContext.currentTime);
-            oscillator.stop(audioContext.currentTime + 0.5);
-          }, i * 600);
+      tbody.innerHTML = '';
+      
+      players.forEach((player, index) => {
+        const tr = document.createElement('tr');
+        if (player.eliminated) {
+          tr.classList.add('eliminated');
         }
         
-        console.log('Fallback Web Audio beeps created');
-      } catch (e) {
-        console.log('Fallback Web Audio failed:', e.message);
-      }
-    }
-
-    function showVisualAlarm() {
-      // Visual alarm (timer flashing)
-      const timerDisplay = document.getElementById('timeRemaining');
-      let flashCount = 0;
-      const flashInterval = setInterval(() => {
-        timerDisplay.style.background = flashCount % 2 === 0 ? '#f44336' : '#ffd54f';
-        timerDisplay.style.color = flashCount % 2 === 0 ? '#fff' : '#e65100';
-        flashCount++;
-        
-        if (flashCount >= 6) {
-          clearInterval(flashInterval);
-          timerDisplay.style.background = '#ffd54f';
-          timerDisplay.style.color = '#e65100';
+        let actions = '';
+        if (!tournamentStarted && !tournamentEnded) {
+          actions = `<button onclick="removePlayer(${index})">Remove</button>`;
         }
-      }, 300);
+        
+        tr.innerHTML = `
+          <td><strong>${player.name}</strong></td>
+          <td>${player.stacks}</td>
+          <td>£${player.totalPaid}</td>
+          <td>${player.eliminated ? 'Eliminated' : 'Active'}</td>
+          <td>${actions}</td>
+        `;
+        tbody.appendChild(tr);
+      });
       
-      // Vibration on mobile
-      if (navigator.vibrate) {
-        navigator.vibrate([200, 100, 200, 100, 200]);
-        console.log('Vibration triggered');
+      updatePrizeInfo();
+    }
+
+    function updatePrizeInfo() {
+      const totalPaid = players.reduce((sum, p) => sum + p.totalPaid, 0);
+      const houseFee = totalPaid > 100 ? 10 : 5;
+      const prizePool = Math.max(0, totalPaid - houseFee);
+      
+      const playerCountEl = document.getElementById('playerCount');
+      if (playerCountEl) {
+        playerCountEl.textContent = `Players: ${players.length} | Prize Pot: £${prizePool} | House Fee: £${houseFee}`;
       }
       
-      // Browser notification
-      if (Notification.permission === 'granted') {
-        new Notification('Poker Tournament', {
-          body: 'Round finished! Time to advance.',
-          icon: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiByeD0iMjAiIGZpbGw9IiNmZjk4MDAiLz4KPHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDJMMTMuMDkgOC4yNkwyMCA5TDEzLjA5IDE1Ljc0TDEyIDIyTDEwLjkxIDE1Ljc0TDQgOUwxMC45MSA4LjI2TDEyIDJaIiBmaWxsPSJ3aGl0ZSIvPgo8L3N2Zz4KPC9zdmc+'
-        });
+      const currentPrizePoolEl = document.getElementById('currentPrizePool');
+      const firstPrizeEl = document.getElementById('firstPrize');
+      const secondPrizeEl = document.getElementById('secondPrize');
+      
+      if (currentPrizePoolEl) currentPrizePoolEl.textContent = prizePool;
+      if (firstPrizeEl) firstPrizeEl.textContent = Math.round(prizePool * 0.8);
+      if (secondPrizeEl) secondPrizeEl.textContent = Math.round(prizePool * 0.2);
+    }
+
+    function updateRoundDisplay() {
+      const round = rounds[currentRound];
+      let roundInfoHTML = `<div style="font-size: 1.6rem; margin-bottom: 15px;">${round.name}</div>`;
+      
+      if (!round.isBreak && !round.isTest) {
+        roundInfoHTML += `
+          <div class="blind-display">SB: ${round.sb} | BB: ${round.bb}</div>
+          <div style="font-size: 1.1rem; margin-top: 10px;">Duration: ${round.duration} minutes</div>
+        `;
+      } else if (round.isBreak) {
+        roundInfoHTML += `
+          <div class="blind-display">BREAK TIME</div>
+          <div style="font-size: 1.1rem; margin-top: 10px;">Duration: ${round.duration} minutes</div>
+        `;
+      } else if (round.isTest) {
+        roundInfoHTML += `
+          <div class="blind-display">TEST ROUND</div>
+          <div style="font-size: 1.1rem; margin-top: 10px;">Duration: ${round.duration} seconds</div>
+        `;
+      }
+      
+      const roundInfoEl = document.getElementById('roundInfo');
+      if (roundInfoEl) {
+        roundInfoEl.innerHTML = roundInfoHTML;
+      }
+      
+      // Set time left
+      timeLeft = round.isTest ? round.duration : round.duration * 60;
+      const timeRemainingEl = document.getElementById('timeRemaining');
+      if (timeRemainingEl) {
+        timeRemainingEl.textContent = formatTime(timeLeft);
       }
     }
 
-    // Request notification permission on app load
-    function requestNotificationPermission() {
-      if ('Notification' in window && Notification.permission === 'default') {
-        Notification.requestPermission().then(permission => {
-          console.log('Notification permission:', permission);
-        });
-      }
-    }
-
-    // Google Sheets Integration
-    function handleClientLoad() {
-      console.log('Loading Google API client...');
+    function resetTournament() {
+      clearInterval(timer);
+      timerRunning = false;
+      currentRound = 0;
+      timeLeft = 0;
+      isBreak = false;
+      isFinalStage = false;
       
-      // Try the newer Google Identity Services approach first
-      if (window.google && window.google.accounts) {
-        console.log('Using Google Identity Services (new approach)');
-        initWithGIS();
-      } else {
-        console.log('Falling back to legacy Google API');
-        gapi.load('client:auth2', {
-          callback: initClient,
-          onerror: function() {
-            console.error('Failed to load Google API client');
-            enableFallbackMode();
-          }
-        });
-      }
+      const startBtn = document.getElementById('startBtn');
+      const endBtn = document.getElementById('endBtn');
+      const exportBtn = document.getElementById('exportBtn');
+      const loadDashboardBtn = document.getElementById('loadDashboardBtn');
+      
+      if (startBtn) startBtn.disabled = false;
+      if (endBtn) endBtn.disabled = true;
+      if (exportBtn) exportBtn.disabled = true;
+      if (loadDashboardBtn) loadDashboardBtn.disabled = true;
+      
+      updateRoundDisplay();
     }
 
-    function initWithGIS() {
-      try {
-        // Initialize the Google Identity Services
-        google.accounts.id.initialize({
-          client_id: CLIENT_ID,
+    // Timer functions (placeholder implementations)
+    function startTimer() {
+      console.log('Timer started');
+      showMessage('Timer started');
+    }
+
+    function pauseTimer() {
+      console.log('Timer paused');
+      showMessage('Timer paused');
+    }
+
+    function resetTimer() {
+      console.log('Timer reset');
+      updateRoundDisplay();
+      showMessage('Timer reset');
+    }
+
+    function skipRound() {
+      console.log('Round skipped');
+      showMessage('Round skipped');
+    }
+
+    // Placeholder functions for buttons that need to exist
+    function eliminatePlayer(index) {
+      console.log('Eliminate player:', index);
+    }
+
+    function rebuyPlayer(index) {
+      console.log('Rebuy player:', index);
+    }
+
+    function addonPlayer(index) {
+      console.log('Addon player:', index);
+    }
+
+    function undoLastAction() {
+      console.log('Undo last action');
+    }
+
+    function signInAndExport() {
+      console.log('Sign in and export');
+      showMessage('Google Sheets integration not fully configured');
+    }
+
+    function signInAndLoadDashboard() {
+      console.log('Sign in and load dashboard');
+      showMessage('Google Sheets integration not fully configured');
+    }
+
+    function displayFinalResults(finalists) {
+      console.log('Display final results for:', finalists);
+    }
+
+    // Attach ALL functions to window
+    window.startTimer = startTimer;
+    window.pauseTimer = pauseTimer;
+    window.resetTimer = resetTimer;
+    window.skipRound = skipRound;
+    window.eliminatePlayer = eliminatePlayer;
+    window.rebuyPlayer = rebuyPlayer;
+    window.addonPlayer = addonPlayer;
+    window.undoLastAction = undoLastAction;
+    window.signInAndExport = signInAndExport;
+    window.signInAndLoadDashboard = signInAndLoadDashboard;
+
+    console.log('All functions attached to window object');
+
+    // Initialize application
+    function initializeApp() {
+      console.log('Initializing app...');
+      
+      // Ensure arrays are initialized
+      if (!players) players = [];
+      if (!actionHistory) actionHistory = [];
+      
+      // Populate dropdown
+      populatePlayerDropdown();
+      
+      // Update displays
+      updatePlayerTable();
+      updateRoundDisplay();
+      
+      console.log('App initialized successfully');
+    }
+
+    // Run initialization immediately and on DOM ready
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initializeApp);
+    } else {
+      initializeApp();
+    }
+    
+    // Also run on window load as backup
+    window.addEventListener('load', () => {
+      console.log('Window loaded - running initialization again as backup');
+      initializeApp();
+    });
+
+    console.log('Script setup complete');
+  </script>id: CLIENT_ID,
           callback: handleCredentialResponse
         });
 
@@ -1593,4 +1732,307 @@ Note: Google Sheets integration not available - results not saved automatically.
       if (googleApiReady) {
         // For Google Identity Services, we don't have a persistent isSignedIn state
         // So we enable the buttons and let the sign-in happen when clicked
-        update
+        updateSigninStatus(false); // Start as not signed in, will prompt when clicked
+      } else {
+        const exportBtn = document.getElementById('exportBtn');
+        const dashboardBtn = document.getElementById('loadDashboardBtn');
+        exportBtn.disabled = true;
+        dashboardBtn.disabled = true;
+        exportBtn.textContent = 'Google API Not Available';
+        dashboardBtn.textContent = 'Google API Not Available';
+      }
+      
+      updatePlayerTable();
+      displayFinalResults(activePlayers);
+      showMessage('Tournament ended! You can now save the results.');
+    }
+
+    function displayFinalResults(finalists) {
+      const resultsDiv = document.getElementById('prizeResults');
+      if (finalists.length === 0) {
+        resultsDiv.innerHTML = '<div class="prize-info"><h3>No finalists!</h3></div>';
+        return;
+      }
+      
+      const totalPaid = players.reduce((sum, p) => sum + p.totalPaid, 0);
+      const houseFee = totalPaid > 100 ? 10 : 5;
+      const prizePool = totalPaid - houseFee;
+      const firstPrize = Math.round(prizePool * 0.8);
+      const secondPrize = Math.round(prizePool * 0.2);
+      
+      // Sort players by elimination time (most recent elimination = highest finish)
+      // Active players (not eliminated) come first
+      const allPlayersSorted = [...players].sort((a, b) => {
+        if (!a.eliminated && !b.eliminated) return 0; // Both active - doesn't matter
+        if (!a.eliminated) return -1; // a is active (winner)
+        if (!b.eliminated) return 1; // b is active (winner)
+        
+        // Both eliminated - most recent elimination time = better finish (2nd place)
+        return (b.eliminationTime || 0) - (a.eliminationTime || 0);
+      });
+      
+      console.log('Final ranking:', allPlayersSorted.map(p => `${p.name}: ${p.eliminated ? 'eliminated at ' + new Date(p.eliminationTime).toLocaleTimeString() : 'active'}`));
+      
+      let resultsHTML = '<div class="prize-info"><h3>Final Results</h3>';
+      
+      // 1st Place (active player)
+      const winner = allPlayersSorted.find(p => !p.eliminated);
+      if (winner) {
+        resultsHTML += `<div style="font-size: 1.4rem; color: #d84315; margin: 10px 0;">
+          🥇 <strong>1st Place: ${winner.name}</strong> - £${firstPrize}
+        </div>`;
+      }
+      
+      // 2nd Place (most recently eliminated player)
+      const secondPlace = allPlayersSorted.find(p => p.eliminated);
+      if (secondPlace) {
+        resultsHTML += `<div style="font-size: 1.2rem; color: #d84315; margin: 10px 0;">
+          🥈 <strong>2nd Place: ${secondPlace.name}</strong> - £${secondPrize}
+        </div>`;
+      } else {
+        resultsHTML += `<div style="font-size: 1.2rem; color: #666; margin: 10px 0;">
+          🥈 <strong>2nd Place:</strong> No qualifying player - £0
+        </div>`;
+      }
+      
+      // Other finalists (remaining eliminated players in order)
+      const otherFinalists = allPlayersSorted.filter(p => p.eliminated && p !== secondPlace);
+      if (otherFinalists.length > 0) {
+        resultsHTML += '<div style="margin-top: 15px;"><strong>Other Finalists:</strong><br>';
+        otherFinalists.forEach((player, index) => {
+          resultsHTML += `${index + 3}. ${player.name}<br>`;
+        });
+        resultsHTML += '</div>';
+      }
+      
+      resultsHTML += '</div>';
+      resultsDiv.innerHTML = resultsHTML;
+    }
+
+    function resetTournament() {
+      clearInterval(timer);
+      timerRunning = false;
+      currentRound = 0;
+      timeLeft = 0;
+      isBreak = false;
+      isFinalStage = false;
+      
+      document.getElementById('startBtn').disabled = false;
+      document.getElementById('endBtn').disabled = true;
+      document.getElementById('exportBtn').disabled = true;
+      document.getElementById('loadDashboardBtn').disabled = true;
+      document.getElementById('timerStartBtn').disabled = false;
+      document.getElementById('timerPauseBtn').disabled = true;
+      document.getElementById('timerSkipBtn').disabled = false;
+      
+      document.getElementById('prizeResults').innerHTML = '';
+      document.getElementById('chartsSection').innerHTML = '';
+      
+      updateRoundDisplay();
+    }
+
+    // Timer management
+    function updateRoundDisplay() {
+      const round = rounds[currentRound];
+      let roundInfoHTML = `<div style="font-size: 1.6rem; margin-bottom: 15px;">${round.name}</div>`;
+      
+      if (!round.isBreak && !round.isTest) {
+        roundInfoHTML += `
+          <div class="blind-display">SB: ${round.sb} | BB: ${round.bb}</div>
+          <div style="font-size: 1.1rem; margin-top: 10px;">Duration: ${round.duration} minutes</div>
+        `;
+      } else if (round.isBreak) {
+        roundInfoHTML += `
+          <div class="blind-display">BREAK TIME</div>
+          <div style="font-size: 1.1rem; margin-top: 10px;">Duration: ${round.duration} minutes</div>
+        `;
+      } else if (round.isTest) {
+        roundInfoHTML += `
+          <div class="blind-display">TEST ROUND</div>
+          <div style="font-size: 1.1rem; margin-top: 10px;">Duration: ${round.duration} seconds</div>
+        `;
+      }
+      
+      document.getElementById('roundInfo').innerHTML = roundInfoHTML;
+      
+      // Set time left - test rounds use seconds, others use minutes
+      timeLeft = round.isTest ? round.duration : round.duration * 60;
+      document.getElementById('timeRemaining').textContent = formatTime(timeLeft);
+      
+      // Update break and final stage indicators
+      isBreak = !!round.isBreak;
+      isFinalStage = currentRound > 5; // Final stage starts AFTER break (Round 6+)
+      
+      document.getElementById('breakNotice').style.display = isBreak ? 'block' : 'none';
+      document.getElementById('finalStage').style.display = isFinalStage ? 'block' : 'none';
+      
+      console.log(`Round ${currentRound}: ${round.name}, isBreak: ${isBreak}, isFinalStage: ${isFinalStage}`);
+      
+      // Update player table to reflect break/final stage
+      if (tournamentStarted) {
+        updatePlayerTable();
+      }
+    }
+
+    function tick() {
+      if (timeLeft > 0) {
+        timeLeft--;
+        document.getElementById('timeRemaining').textContent = formatTime(timeLeft);
+      } else {
+        // Time's up - auto advance to next round
+        console.log('Timer finished, playing alarm...');
+        clearInterval(timer);
+        timerRunning = false;
+        
+        // Play alarm immediately
+        playAlarm();
+        
+        // Show message and auto-advance after 3 seconds
+        showMessage('⏰ ROUND FINISHED! Advancing to next round...');
+        
+        setTimeout(() => {
+          nextRound();
+        }, 3000);
+      }
+    }
+
+    function startTimer() {
+      if (!tournamentStarted || tournamentEnded || timerRunning) return;
+      
+      timerRunning = true;
+      document.getElementById('timerStartBtn').disabled = true;
+      document.getElementById('timerPauseBtn').disabled = false;
+      
+      timer = setInterval(tick, 1000);
+      showMessage('Timer started');
+    }
+
+    function pauseTimer() {
+      if (!timerRunning) return;
+      
+      clearInterval(timer);
+      timerRunning = false;
+      
+      document.getElementById('timerStartBtn').disabled = false;
+      document.getElementById('timerPauseBtn').disabled = true;
+      
+      showMessage('Timer paused');
+    }
+
+    function resetTimer() {
+      clearInterval(timer);
+      timerRunning = false;
+      
+      document.getElementById('timerStartBtn').disabled = false;
+      document.getElementById('timerPauseBtn').disabled = true;
+      
+      updateRoundDisplay();
+      showMessage('Timer reset');
+    }
+
+    function skipRound() {
+      if (!tournamentStarted || tournamentEnded) return;
+      
+      clearInterval(timer);
+      timerRunning = false;
+      nextRound();
+      showMessage('Round skipped');
+    }
+
+    function nextRound() {
+      if (currentRound < rounds.length - 1) {
+        currentRound++;
+        updateRoundDisplay();
+        
+        // Auto-start next round if tournament is still active
+        if (tournamentStarted && !tournamentEnded) {
+          setTimeout(() => {
+            startTimer();
+          }, 1000); // Small delay to allow players to see the round change
+        }
+      } else {
+        // Tournament structure complete
+        showMessage('All rounds complete! Consider ending the tournament.');
+      }
+    }
+
+    // Event handlers and initialization
+    function setupEventHandlers() {
+      const nameInput = document.getElementById('playerNameInput');
+      const playerSelect = document.getElementById('playerSelect');
+      
+      if (nameInput) {
+        nameInput.addEventListener('keydown', (event) => {
+          if (event.key === 'Enter') {
+            event.preventDefault();
+            addPlayer();
+          }
+        });
+      }
+      
+      if (playerSelect) {
+        playerSelect.addEventListener('keydown', (event) => {
+          if (event.key === 'Enter') {
+            event.preventDefault();
+            addPlayer();
+          }
+        });
+        
+        // When a player is selected, focus goes to Add button or clear the input
+        playerSelect.addEventListener('change', () => {
+          if (playerSelect.value) {
+            nameInput.value = ''; // Clear the input if dropdown is selected
+          }
+        });
+      }
+      
+      // Set up button click handlers as backup
+      const addPlayerBtn = document.querySelector('button[onclick="addPlayer()"]');
+      if (addPlayerBtn) {
+        addPlayerBtn.addEventListener('click', addPlayer);
+      }
+    }
+
+    // Initialize application
+    function initializeApp() {
+      console.log('Initializing app...');
+      
+      // Ensure players array is initialized
+      if (!players) {
+        players = [];
+      }
+      
+      // Initialize other arrays if needed
+      if (!actionHistory) actionHistory = [];
+      
+      setupEventHandlers();
+      updatePlayerTable();
+      updateRoundDisplay();
+      requestNotificationPermission();
+      
+      // Populate dropdown after a short delay to ensure DOM is ready
+      setTimeout(() => {
+        if (document.getElementById('playerSelect')) {
+          populatePlayerDropdown();
+        }
+      }, 100);
+      
+      // Initialize Google API
+      if (typeof gapi !== 'undefined') {
+        handleClientLoad();
+      } else {
+        console.warn('Google API not available');
+        showMessage('Google Sheets integration not available', true);
+      }
+      
+      console.log('App initialized');
+    }
+
+    // Run initialization when page loads
+    window.addEventListener('load', initializeApp);
+    
+    // Also run when DOM is ready (fallback)
+    document.addEventListener('DOMContentLoaded', initializeApp);
+  </script>
+</body>
+</html>
