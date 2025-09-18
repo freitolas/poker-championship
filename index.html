@@ -1052,12 +1052,15 @@ Note: Google Sheets integration not available - results not saved automatically.
       
       console.log('All players sorted by finish:', allPlayersSorted.map(p => `${p.name}: ${p.eliminated ? 'eliminated at ' + new Date(p.eliminationTime).toLocaleTimeString() : 'WINNER'}`));
       
-      // Calculate prize pool
+      // Calculate prize pool with £5 rounding for easier cash handling
       const totalPaid = players.reduce((sum, p) => sum + p.totalPaid, 0);
       const houseFee = totalPaid > 100 ? 10 : 5;
       const prizePool = totalPaid - houseFee;
-      const firstPrize = Math.round(prizePool * 0.8);
-      const secondPrize = Math.round(prizePool * 0.2);
+      
+      const rawFirstPrize = prizePool * 0.8;
+      const rawSecondPrize = prizePool * 0.2;
+      const firstPrize = Math.round(rawFirstPrize / 5) * 5;
+      const secondPrize = Math.round(rawSecondPrize / 5) * 5;
       
       console.log('Prize calculations:', { totalPaid, houseFee, prizePool, firstPrize, secondPrize });
       
@@ -1162,10 +1165,10 @@ Note: Google Sheets integration not available - results not saved automatically.
     function loadDashboard() {
       gapi.client.sheets.spreadsheets.values.get({
         spreadsheetId: SPREADSHEET_ID,
-        range: 'RawResults!A:D'
+        range: 'PlayerResults!A:K'  // Fixed: Use PlayerResults sheet with all columns
       }).then(response => {
         const rows = response.result.values || [];
-        buildDashboardFromRows(rows);
+        buildDashboardFromPlayerRows(rows);  // Fixed: Use correct function name
         showMessage('Championship dashboard loaded!');
       }).catch(error => {
         showMessage('Failed to load dashboard data', true);
@@ -1379,11 +1382,18 @@ Note: Google Sheets integration not available - results not saved automatically.
       const houseFee = totalPaid > 100 ? 10 : 5;
       const prizePool = Math.max(0, totalPaid - houseFee);
       
+      // Round prizes to nearest £5 for easier cash handling
+      const rawFirstPrize = prizePool * 0.8;
+      const rawSecondPrize = prizePool * 0.2;
+      
+      const firstPrize = Math.round(rawFirstPrize / 5) * 5;
+      const secondPrize = Math.round(rawSecondPrize / 5) * 5;
+      
       document.getElementById('playerCount').textContent = 
         `Players: ${players.length} | Prize Pot: £${prizePool} | House Fee: £${houseFee}`;
       document.getElementById('currentPrizePool').textContent = prizePool;
-      document.getElementById('firstPrize').textContent = Math.round(prizePool * 0.8);
-      document.getElementById('secondPrize').textContent = Math.round(prizePool * 0.2);
+      document.getElementById('firstPrize').textContent = firstPrize;
+      document.getElementById('secondPrize').textContent = secondPrize;
     }
 
     // FIXED addPlayer function to handle dropdown:
@@ -1615,8 +1625,12 @@ Note: Google Sheets integration not available - results not saved automatically.
       const totalPaid = players.reduce((sum, p) => sum + p.totalPaid, 0);
       const houseFee = totalPaid > 100 ? 10 : 5;
       const prizePool = totalPaid - houseFee;
-      const firstPrize = Math.round(prizePool * 0.8);
-      const secondPrize = Math.round(prizePool * 0.2);
+      
+      // Round prizes to nearest £5 for easier cash handling
+      const rawFirstPrize = prizePool * 0.8;
+      const rawSecondPrize = prizePool * 0.2;
+      const firstPrize = Math.round(rawFirstPrize / 5) * 5;
+      const secondPrize = Math.round(rawSecondPrize / 5) * 5;
       
       // Sort players by elimination time (most recent elimination = highest finish)
       // Active players (not eliminated) come first
