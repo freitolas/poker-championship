@@ -425,8 +425,8 @@
   
   <div class="timer-panel">
     <div class="timer-header">ROUND TIMER</div>
-    <div id="roundInfo" class="round-info"></div>
-    <div id="timeRemaining" class="time-remaining">20:00</div>
+    <div id="roundInfo" class="round-info">Test Round<br><span class="blind-display">TEST ROUND</span><div style="font-size: 1.1rem; margin-top: 10px;">Duration: 5 seconds</div></div>
+    <div id="timeRemaining" class="time-remaining">00:05</div>
     
     <div class="timer-controls">
       <button id="timerStartBtn" onclick="startTimer()">START</button>
@@ -448,24 +448,18 @@
       <div>1st Place: £<span id="firstPrize">0</span></div>
       <div>2nd Place: £<span id="secondPrize">0</span></div>
     </div>
-    
-    <audio id="roundAlarm" preload="auto">
-      <source src="alarm.mp3" type="audio/mpeg">
-      <source src="alarm.mp3" type="audio/mp3">
-    </audio>
   </div>
 
   <script>
-    // Debug logging
-    console.log('Script starting...');
+    console.log('Texas Hold\'em Championship Manager - Starting...');
 
- // Configuration - REPLACE WITH YOUR ACTUAL VALUES
+    // Configuration
     const CLIENT_ID = '341648594146-a9httcsv8e29vr4ehcup08qlpaak5u8a.apps.googleusercontent.com';
     const SPREADSHEET_ID = '1fZWOlbf95Xqg4AnsEm9ga8x1ENrZ_K_0EEF3sEZGz2Y';
     const SCOPES = 'https://www.googleapis.com/auth/spreadsheets';
 
     // Tournament structure
-    const rounds = [
+    const tournamentRounds = [
       { name: "Test Round", sb: 0, bb: 0, duration: 5, isTest: true },
       { name: "Round 1", sb: 5, bb: 10, duration: 20 },
       { name: "Round 2", sb: 10, bb: 20, duration: 20 },
@@ -479,95 +473,239 @@
       { name: "Round 9", sb: 1000, bb: 2000, duration: 20 }
     ];
 
-    console.log('Rounds defined:', rounds);
-
-    // Pre-populated player list - add your regular players here
-    const regularPlayers = [
+    // Pre-populated player list
+    const regularPlayerList = [
       'Andre', 'Craig', 'Dale', 'Declan', 'Elton', 'Graham', 'Jacques', 'James', 'Lachy', 'Luciano', 'Malzo', 'Matt', 'Nick', 'Rafa', 'Rhys', 'Roberto'
     ].sort();
 
-    // Global variables
-    let customPlayers = []; // For new players added during session
-    let players = []; // Main players array for current tournament
-    let currentRound = 0;
-    let timer = null;
-    let timeLeft = 0;
-    let tournamentStarted = false;
-    let tournamentEnded = false;
-    let isBreak = false;
-    let isFinalStage = false;
-    let timerRunning = false;
-    let googleApiReady = false;
-    let actionHistory = []; // For undo functionality
+    // Global state variables
+    let tournamentPlayers = [];
+    let customPlayerList = [];
+    let currentTournamentRound = 0;
+    let roundTimer = null;
+    let timeLeftInRound = 5;
+    let isTournamentStarted = false;
+    let isTournamentEnded = false;
+    let isBreakTime = false;
+    let isFinalTournamentStage = false;
+    let isTimerRunning = false;
+    let tournamentActionHistory = [];
+    let isGoogleApiReady = false;
 
-    console.log('Global variables initialized');
-    console.log('Players array:', players);
-    console.log('Regular players:', regularPlayers);
+    console.log('All variables initialized successfully');
 
-    // Populate player dropdown
-    function populatePlayerDropdown() {
-      console.log('populatePlayerDropdown called');
-      const dropdown = document.getElementById('playerSelect');
-      if (!dropdown) {
-        console.error('Player dropdown element not found');
-        return;
+    // Utility functions
+    function formatTimeDisplay(seconds) {
+      const minutes = Math.floor(seconds / 60);
+      const secs = seconds % 60;
+      return `${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+    }
+
+    function displayMessage(message, isError = false) {
+      console.log((isError ? 'ERROR: ' : 'MESSAGE: ') + message);
+      const statusElement = document.getElementById('statusMessage');
+      const errorElement = document.getElementById('errorMessage');
+      
+      if (statusElement) statusElement.classList.remove('show');
+      if (errorElement) errorElement.classList.remove('show');
+      
+      setTimeout(() => {
+        if (isError && errorElement) {
+          errorElement.textContent = message;
+          errorElement.classList.add('show');
+        } else if (!isError && statusElement) {
+          statusElement.textContent = message;
+          statusElement.classList.add('show');
+        }
+        
+        setTimeout(() => {
+          if (statusElement) statusElement.classList.remove('show');
+          if (errorElement) errorElement.classList.remove('show');
+        }, 3000);
+      }, 10);
+    }
+
+    // Google Sheets Integration
+    function initializeGoogleAPI() {
+      try {
+        console.log('Initializing Google API...');
+        
+        if (window.google && window.google.accounts) {
+          console.log('Using Google Identity Services');
+          setupGoogleIdentityServices();
+        } else {
+          console.log('Using legacy Google API');
+          if (typeof gapi !== 'undefined') {
+            gapi.load('client:auth2', {
+              callback: setupLegacyGoogleAPI,
+              onerror: function(error) {
+                console.log('Google API load failed:', error);
+                enableGoogleAPIFallback();
+              }
+            });
+          } else {
+            enableGoogleAPIFallback();
+          }
+        }
+      } catch (error) {
+        console.log('Google API initialization failed:', error);
+        enableGoogleAPIFallback();
       }
+    }
+
+    function setupGoogleIdentityServices() {
+      try {
+        google.accounts.id.initialize({
+          client_id: CLIENT_ID,
+          callback: handleGoogleCredentialResponse
+        });
+
+        gapi.load('client', () => {
+          gapi.client.init({
+            discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4']
+          }).then(() => {
+            console.log('Google Identity Services initialized successfully');
+            isGoogleApiReady = true;
+            
+            window.googleTokenClient = google.accounts.oauth2.initTokenClient({
+              client_id: CLIENT_ID,
+              scope: SCOPES,
+              callback: (response) => {
+                if (response.access_token) {
+                  gapi.client.setToken(response);
+                  updateGoogleSigninStatus(true);
+                }
+              }
+            });
+            
+            updateGoogleSigninStatus(false);
+          }).catch(error => {
+            console.log('GIS client init failed:', error);
+            enableGoogleAPIFallback();
+          });
+        });
+      } catch (error) {
+        console.log('GIS initialization failed:', error);
+        enableGoogleAPIFallback();
+      }
+    }
+
+    function handleGoogleCredentialResponse(response) {
+      console.log('Google credential response received');
+    }
+
+    function enableGoogleAPIFallback() {
+      console.log('Google Sheets integration disabled - using fallback mode');
+      isGoogleApiReady = false;
+    }
+
+    function setupLegacyGoogleAPI() {
+      try {
+        return gapi.client.init({
+          apiKey: '',
+          clientId: CLIENT_ID,
+          discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4'],
+          scope: SCOPES
+        }).then(() => {
+          console.log('Legacy Google API initialized successfully');
+          isGoogleApiReady = true;
+          const authInstance = gapi.auth2.getAuthInstance();
+          updateGoogleSigninStatus(authInstance.isSignedIn.get());
+          authInstance.isSignedIn.listen(updateGoogleSigninStatus);
+        }).catch(error => {
+          console.log('Legacy Google API init failed:', error);
+          enableGoogleAPIFallback();
+        });
+      } catch (error) {
+        console.log('Legacy Google API setup failed:', error);
+        enableGoogleAPIFallback();
+      }
+    }
+
+    function updateGoogleSigninStatus(isSignedIn) {
+      const exportButton = document.getElementById('exportBtn');
+      const dashboardButton = document.getElementById('loadDashboardBtn');
       
-      // Clear existing options except the first one
-      dropdown.innerHTML = '<option value="">Select a player...</option>';
+      if (isTournamentEnded && isGoogleApiReady) {
+        exportButton.disabled = false;
+        dashboardButton.disabled = false;
+        
+        if (isSignedIn) {
+          exportButton.textContent = 'Save Tournament Data';
+          dashboardButton.textContent = 'Load Championship Dashboard';
+        } else {
+          exportButton.textContent = 'Sign in to Save';
+          dashboardButton.textContent = 'Sign in to Load Dashboard';
+        }
+      } else {
+        exportButton.disabled = true;
+        dashboardButton.disabled = true;
+        
+        if (!isTournamentEnded) {
+          exportButton.textContent = 'End Tournament First';
+          dashboardButton.textContent = 'End Tournament First';
+        } else if (!isGoogleApiReady) {
+          exportButton.textContent = 'Google API Loading...';
+          dashboardButton.textContent = 'Google API Loading...';
+        }
+      }
+    }
+
+    // Player dropdown population
+    function populatePlayerDropdown() {
+      console.log('Populating player dropdown...');
+      const dropdownElement = document.getElementById('playerSelect');
+      if (!dropdownElement) return;
       
-      // Add regular players
-      regularPlayers.forEach(player => {
-        const option = document.createElement('option');
-        option.value = player;
-        option.textContent = player;
-        dropdown.appendChild(option);
+      dropdownElement.innerHTML = '<option value="">Select a player...</option>';
+      
+      regularPlayerList.forEach(playerName => {
+        const optionElement = document.createElement('option');
+        optionElement.value = playerName;
+        optionElement.textContent = playerName;
+        dropdownElement.appendChild(optionElement);
       });
       
-      // Add any custom players added this session
-      customPlayers.forEach(player => {
-        const option = document.createElement('option');
-        option.value = player;
-        option.textContent = `${player} (New)`;
-        dropdown.appendChild(option);
+      customPlayerList.forEach(playerName => {
+        const optionElement = document.createElement('option');
+        optionElement.value = playerName;
+        optionElement.textContent = `${playerName} (New)`;
+        dropdownElement.appendChild(optionElement);
       });
       
-      console.log('Player dropdown populated with', regularPlayers.length, 'regular players');
+      console.log(`Dropdown populated with ${regularPlayerList.length} regular players`);
     }
 
     // Player management functions
     function addPlayer() {
-      console.log('addPlayer called');
-      const input = document.getElementById('playerNameInput');
-      const dropdown = document.getElementById('playerSelect');
+      console.log('addPlayer function called');
+      const inputElement = document.getElementById('playerNameInput');
+      const dropdownElement = document.getElementById('playerSelect');
       
-      // Get name from either dropdown or input field
-      let name = '';
-      if (dropdown && dropdown.value) {
-        name = dropdown.value;
-      } else if (input && input.value) {
-        name = input.value.trim();
+      let playerName = '';
+      if (dropdownElement && dropdownElement.value) {
+        playerName = dropdownElement.value;
+      } else if (inputElement && inputElement.value) {
+        playerName = inputElement.value.trim();
       }
       
-      console.log('Player name to add:', name);
-      
-      if (!name) {
-        showMessage('Please enter a player name or select from dropdown', true);
+      if (!playerName) {
+        displayMessage('Please enter a player name or select from dropdown', true);
         return;
       }
       
-      if (players.some(p => p.name.toLowerCase() === name.toLowerCase())) {
-        showMessage('Player already exists', true);
+      if (tournamentPlayers.some(p => p.name.toLowerCase() === playerName.toLowerCase())) {
+        displayMessage('Player already exists in tournament', true);
         return;
       }
       
-      if (tournamentStarted) {
-        showMessage('Cannot add players after tournament has started', true);
+      if (isTournamentStarted) {
+        displayMessage('Cannot add players after tournament has started', true);
         return;
       }
       
-      players.push({
-        name: name,
+      tournamentPlayers.push({
+        name: playerName,
         stacks: 1,
         totalPaid: 5,
         eliminated: false,
@@ -575,1464 +713,137 @@
         eliminationTime: null
       });
       
-      // Clear both input fields
-      if (input) input.value = '';
-      if (dropdown) dropdown.value = '';
+      if (inputElement) inputElement.value = '';
+      if (dropdownElement) dropdownElement.value = '';
       
-      // Add to custom players if it's not in regular players list
-      if (!regularPlayers.includes(name) && !customPlayers.includes(name)) {
-        customPlayers.push(name);
-        populatePlayerDropdown(); // Refresh dropdown
+      if (!regularPlayerList.includes(playerName) && !customPlayerList.includes(playerName)) {
+        customPlayerList.push(playerName);
+        populatePlayerDropdown();
       }
       
-      // Focus back to input for quick entry
-      if (input) input.focus();
+      if (inputElement) inputElement.focus();
       
       updatePlayerTable();
-      showMessage(`${name} added to tournament`);
-      console.log('Player added successfully. Total players:', players.length);
+      displayMessage(`${playerName} added to tournament`);
     }
 
     function removePlayer(index) {
-      if (tournamentStarted) {
-        showMessage('Cannot remove players after tournament has started', true);
+      if (isTournamentStarted) {
+        displayMessage('Cannot remove players after tournament has started', true);
         return;
       }
       
-      const playerName = players[index].name;
-      players.splice(index, 1);
+      const playerName = tournamentPlayers[index].name;
+      tournamentPlayers.splice(index, 1);
       updatePlayerTable();
-      showMessage(`${playerName} removed from tournament`);
-    }
-
-    function clearPlayers() {
-      if (tournamentStarted && !tournamentEnded) {
-        if (!confirm('Tournament is in progress. Are you sure you want to clear all players?')) {
-          return;
-        }
-      }
-      
-      players = [];
-      tournamentStarted = false;
-      tournamentEnded = false;
-      resetTournament();
-      updatePlayerTable();
-      showMessage('All players cleared');
-    }
-
-    // Tournament management functions
-    function startTournament() {
-      if (players.length < 2) {
-        showMessage('Need at least 2 players to start tournament', true);
-        return;
-      }
-      
-      tournamentStarted = true;
-      tournamentEnded = false;
-      
-      document.getElementById('startBtn').disabled = true;
-      document.getElementById('endBtn').disabled = false;
-      document.getElementById('exportBtn').disabled = true;
-      document.getElementById('loadDashboardBtn').disabled = true;
-      
-      // Start the timer automatically
-      currentRound = 0;
-      updateRoundDisplay();
-      startTimer();
-      
-      updatePlayerTable();
-      showMessage('Tournament started! Timer is running.');
-    }
-
-    function endTournament() {
-      if (!confirm('Are you sure you want to end the tournament?')) {
-        return;
-      }
-      
-      tournamentEnded = true;
-      tournamentStarted = false;
-      clearInterval(timer);
-      timerRunning = false;
-      
-      document.getElementById('endBtn').disabled = true;
-      document.getElementById('timerStartBtn').disabled = true;
-      document.getElementById('timerPauseBtn').disabled = true;
-      document.getElementById('timerSkipBtn').disabled = true;
-      
-      const activePlayers = players.filter(p => !p.eliminated);
-      
-      updatePlayerTable();
-      displayFinalResults(activePlayers);
-      showMessage('Tournament ended! You can now save the results.');
-    }
-
-    // IMMEDIATELY attach all functions to window object
-    window.addPlayer = addPlayer;
-    window.removePlayer = removePlayer;
-    window.startTournament = startTournament;
-    window.endTournament = endTournament;
-    window.clearPlayers = clearPlayers;
-    
-    console.log('Critical functions attached to window');
-    console.log('window.addPlayer:', typeof window.addPlayer);
-
-    // Utility functions
-    function formatTime(seconds) {
-      const m = Math.floor(seconds / 60);
-      const s = seconds % 60;
-      return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-    }
-
-    function showMessage(message, isError = false) {
-      console.log('Message:', message, 'Error:', isError);
-      const statusEl = document.getElementById('statusMessage');
-      const errorEl = document.getElementById('errorMessage');
-      
-      // Reset both messages first
-      if (statusEl) statusEl.classList.remove('show');
-      if (errorEl) errorEl.classList.remove('show');
-      
-      setTimeout(() => {
-        if (isError && errorEl) {
-          errorEl.textContent = message;
-          errorEl.classList.add('show');
-        } else if (!isError && statusEl) {
-          statusEl.textContent = message;
-          statusEl.classList.add('show');
-        }
-        
-        // Auto-hide after 5 seconds
-        setTimeout(() => {
-          if (statusEl) statusEl.classList.remove('show');
-          if (errorEl) errorEl.classList.remove('show');
-        }, 5000);
-      }, 10);
-    }
-
-    function updatePlayerTable() {
-      console.log('updatePlayerTable called, players:', players);
-      const tbody = document.getElementById('playerTableBody');
-      if (!tbody) {
-        console.error('Player table body not found');
-        return;
-      }
-      
-      tbody.innerHTML = '';
-      
-      players.forEach((player, index) => {
-        const tr = document.createElement('tr');
-        if (player.eliminated) {
-          tr.classList.add('eliminated');
-        }
-        
-        let actions = '';
-        if (!tournamentStarted && !tournamentEnded) {
-          actions = `<button onclick="removePlayer(${index})">Remove</button>`;
-        }
-        
-        tr.innerHTML = `
-          <td><strong>${player.name}</strong></td>
-          <td>${player.stacks}</td>
-          <td>£${player.totalPaid}</td>
-          <td>${player.eliminated ? 'Eliminated' : 'Active'}</td>
-          <td>${actions}</td>
-        `;
-        tbody.appendChild(tr);
-      });
-      
-      updatePrizeInfo();
-    }
-
-    function updatePrizeInfo() {
-      const totalPaid = players.reduce((sum, p) => sum + p.totalPaid, 0);
-      const houseFee = totalPaid > 100 ? 10 : 5;
-      const prizePool = Math.max(0, totalPaid - houseFee);
-      
-      const playerCountEl = document.getElementById('playerCount');
-      if (playerCountEl) {
-        playerCountEl.textContent = `Players: ${players.length} | Prize Pot: £${prizePool} | House Fee: £${houseFee}`;
-      }
-      
-      const currentPrizePoolEl = document.getElementById('currentPrizePool');
-      const firstPrizeEl = document.getElementById('firstPrize');
-      const secondPrizeEl = document.getElementById('secondPrize');
-      
-      if (currentPrizePoolEl) currentPrizePoolEl.textContent = prizePool;
-      if (firstPrizeEl) firstPrizeEl.textContent = Math.round(prizePool * 0.8);
-      if (secondPrizeEl) secondPrizeEl.textContent = Math.round(prizePool * 0.2);
-    }
-
-    function updateRoundDisplay() {
-      const round = rounds[currentRound];
-      let roundInfoHTML = `<div style="font-size: 1.6rem; margin-bottom: 15px;">${round.name}</div>`;
-      
-      if (!round.isBreak && !round.isTest) {
-        roundInfoHTML += `
-          <div class="blind-display">SB: ${round.sb} | BB: ${round.bb}</div>
-          <div style="font-size: 1.1rem; margin-top: 10px;">Duration: ${round.duration} minutes</div>
-        `;
-      } else if (round.isBreak) {
-        roundInfoHTML += `
-          <div class="blind-display">BREAK TIME</div>
-          <div style="font-size: 1.1rem; margin-top: 10px;">Duration: ${round.duration} minutes</div>
-        `;
-      } else if (round.isTest) {
-        roundInfoHTML += `
-          <div class="blind-display">TEST ROUND</div>
-          <div style="font-size: 1.1rem; margin-top: 10px;">Duration: ${round.duration} seconds</div>
-        `;
-      }
-      
-      const roundInfoEl = document.getElementById('roundInfo');
-      if (roundInfoEl) {
-        roundInfoEl.innerHTML = roundInfoHTML;
-      }
-      
-      // Set time left
-      timeLeft = round.isTest ? round.duration : round.duration * 60;
-      const timeRemainingEl = document.getElementById('timeRemaining');
-      if (timeRemainingEl) {
-        timeRemainingEl.textContent = formatTime(timeLeft);
-      }
-    }
-
-    function resetTournament() {
-      clearInterval(timer);
-      timerRunning = false;
-      currentRound = 0;
-      timeLeft = 0;
-      isBreak = false;
-      isFinalStage = false;
-      
-      const startBtn = document.getElementById('startBtn');
-      const endBtn = document.getElementById('endBtn');
-      const exportBtn = document.getElementById('exportBtn');
-      const loadDashboardBtn = document.getElementById('loadDashboardBtn');
-      
-      if (startBtn) startBtn.disabled = false;
-      if (endBtn) endBtn.disabled = true;
-      if (exportBtn) exportBtn.disabled = true;
-      if (loadDashboardBtn) loadDashboardBtn.disabled = true;
-      
-      updateRoundDisplay();
-    }
-
-    // Timer functions (placeholder implementations)
-    function startTimer() {
-      console.log('Timer started');
-      showMessage('Timer started');
-    }
-
-    function pauseTimer() {
-      console.log('Timer paused');
-      showMessage('Timer paused');
-    }
-
-    function resetTimer() {
-      console.log('Timer reset');
-      updateRoundDisplay();
-      showMessage('Timer reset');
-    }
-
-    function skipRound() {
-      console.log('Round skipped');
-      showMessage('Round skipped');
-    }
-
-    // Placeholder functions for buttons that need to exist
-    function eliminatePlayer(index) {
-      console.log('Eliminate player:', index);
-    }
-
-    function rebuyPlayer(index) {
-      console.log('Rebuy player:', index);
-    }
-
-    function addonPlayer(index) {
-      console.log('Addon player:', index);
-    }
-
-    function undoLastAction() {
-      console.log('Undo last action');
-    }
-
-    function signInAndExport() {
-      console.log('Sign in and export');
-      showMessage('Google Sheets integration not fully configured');
-    }
-
-    function signInAndLoadDashboard() {
-      console.log('Sign in and load dashboard');
-      showMessage('Google Sheets integration not fully configured');
-    }
-
-    function displayFinalResults(finalists) {
-      console.log('Display final results for:', finalists);
-    }
-
-    // Attach ALL functions to window
-    window.startTimer = startTimer;
-    window.pauseTimer = pauseTimer;
-    window.resetTimer = resetTimer;
-    window.skipRound = skipRound;
-    window.eliminatePlayer = eliminatePlayer;
-    window.rebuyPlayer = rebuyPlayer;
-    window.addonPlayer = addonPlayer;
-    window.undoLastAction = undoLastAction;
-    window.signInAndExport = signInAndExport;
-    window.signInAndLoadDashboard = signInAndLoadDashboard;
-
-    console.log('All functions attached to window object');
-
-    // Initialize application
-    function initializeApp() {
-      console.log('Initializing app...');
-      
-      // Ensure arrays are initialized
-      if (!players) players = [];
-      if (!actionHistory) actionHistory = [];
-      
-      // Populate dropdown
-      populatePlayerDropdown();
-      
-      // Update displays
-      updatePlayerTable();
-      updateRoundDisplay();
-      
-      console.log('App initialized successfully');
-    }
-
-    // Run initialization immediately and on DOM ready
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', initializeApp);
-    } else {
-      initializeApp();
-    }
-    
-    // Also run on window load as backup
-    window.addEventListener('load', () => {
-      console.log('Window loaded - running initialization again as backup');
-      initializeApp();
-    });
-
-    console.log('Script setup complete');
-  </script>id: CLIENT_ID,
-          callback: handleCredentialResponse
-        });
-
-        // Load the Google API client for Sheets
-        gapi.load('client', () => {
-          gapi.client.init({
-            discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4']
-          }).then(() => {
-            console.log('Google Identity Services initialized successfully');
-            googleApiReady = true;
-            
-            // Set up token client for authorization
-            window.tokenClient = google.accounts.oauth2.initTokenClient({
-              client_id: CLIENT_ID,
-              scope: SCOPES,
-              callback: (response) => {
-                if (response.access_token) {
-                  gapi.client.setToken(response);
-                  updateSigninStatus(true);
-                }
-              }
-            });
-            
-            updateSigninStatus(false); // Initially not signed in
-          }).catch(error => {
-            console.error('GIS client init failed:', error);
-            enableFallbackMode();
-          });
-        });
-      } catch (error) {
-        console.error('GIS initialization failed:', error);
-        enableFallbackMode();
-      }
-    }
-
-    function handleCredentialResponse(response) {
-      console.log('Credential response received');
-    }
-
-    function enableFallbackMode() {
-      console.log('Enabling fallback mode - Google Sheets disabled');
-      showMessage('Google Sheets integration unavailable - tournament results will be shown locally only', true);
-      
-      setTimeout(() => {
-        const exportBtn = document.getElementById('exportBtn');
-        const dashboardBtn = document.getElementById('loadDashboardBtn');
-        
-        if (tournamentEnded) {
-          exportBtn.disabled = false;
-          dashboardBtn.disabled = true;
-          exportBtn.textContent = 'Show Local Results';
-          dashboardBtn.textContent = 'Google API Failed';
-          exportBtn.onclick = showTournamentSummary;
-        }
-      }, 1000);
-    }
-
-    function initClient() {
-      console.log('Attempting to initialize Google API with CLIENT_ID:', CLIENT_ID);
-      
-      if (CLIENT_ID === 'YOUR_CLIENT_ID.apps.googleusercontent.com') {
-        console.error('CLIENT_ID still has placeholder value!');
-        showMessage('Google credentials not configured', true);
-        return Promise.reject('Invalid CLIENT_ID');
-      }
-      
-      // Try the legacy approach first, then fall back to newer method
-      return gapi.client.init({
-        apiKey: '', // We don't need API key for OAuth-only requests
-        clientId: CLIENT_ID,
-        discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4'],
-        scope: SCOPES
-      }).then(() => {
-        console.log('Google API initialized successfully');
-        googleApiReady = true;
-        const authInstance = gapi.auth2.getAuthInstance();
-        updateSigninStatus(authInstance.isSignedIn.get());
-        authInstance.isSignedIn.listen(updateSigninStatus);
-      }).catch(error => {
-        console.error('Standard init failed, trying alternative approach:', error);
-        
-        // Alternative initialization approach
-        return gapi.auth2.init({
-          client_id: CLIENT_ID,
-          scope: SCOPES
-        }).then(() => {
-          return gapi.client.load('sheets', 'v4');
-        }).then(() => {
-          console.log('Alternative Google API initialization successful');
-          googleApiReady = true;
-          const authInstance = gapi.auth2.getAuthInstance();
-          updateSigninStatus(authInstance.isSignedIn.get());
-          authInstance.isSignedIn.listen(updateSigninStatus);
-        }).catch(altError => {
-          console.error('Alternative init also failed:', altError);
-          showMessage('Google Sheets integration unavailable - OAuth configuration issue', true);
-          
-          // Enable buttons anyway for testing, but show different text
-          setTimeout(() => {
-            const exportBtn = document.getElementById('exportBtn');
-            const dashboardBtn = document.getElementById('loadDashboardBtn');
-            
-            if (tournamentEnded) {
-              exportBtn.disabled = false;
-              dashboardBtn.disabled = true;
-              exportBtn.textContent = 'Show Results (Google API Failed)';
-              dashboardBtn.textContent = 'Google API Failed';
-            }
-          }, 1000);
-        });
-      });
-    }
-
-    function updateSigninStatus(isSignedIn) {
-      const exportBtn = document.getElementById('exportBtn');
-      const dashboardBtn = document.getElementById('loadDashboardBtn');
-      
-      console.log('updateSigninStatus called:', { isSignedIn, tournamentEnded, googleApiReady });
-      
-      if (tournamentEnded && googleApiReady) {
-        // Always enable buttons when tournament is ended and API is ready
-        exportBtn.disabled = false;
-        dashboardBtn.disabled = false;
-        
-        if (isSignedIn) {
-          exportBtn.textContent = 'Save Tournament Data';
-          dashboardBtn.textContent = 'Load Championship Dashboard';
-          exportBtn.onclick = () => exportTournamentData();
-          dashboardBtn.onclick = () => loadDashboard();
-        } else {
-          exportBtn.textContent = 'Sign in to Save';
-          dashboardBtn.textContent = 'Sign in to Load Dashboard';
-          
-          // Make sure the buttons can trigger sign-in
-          exportBtn.onclick = () => {
-            console.log('Sign in to Save button clicked');
-            signInAndExport();
-          };
-          dashboardBtn.onclick = () => {
-            console.log('Sign in to Load Dashboard button clicked');
-            signInAndLoadDashboard();
-          };
-        }
-      } else {
-        exportBtn.disabled = true;
-        dashboardBtn.disabled = true;
-        
-        if (!tournamentEnded) {
-          exportBtn.textContent = 'End Tournament First';
-          dashboardBtn.textContent = 'End Tournament First';
-        } else if (!googleApiReady) {
-          exportBtn.textContent = 'Google API Loading...';
-          dashboardBtn.textContent = 'Google API Loading...';
-        }
-      }
-    }
-
-    function signInAndExport() {
-      console.log('signInAndExport called, googleApiReady:', googleApiReady);
-      
-      if (!googleApiReady) {
-        // Fallback: show results without saving to Google Sheets
-        showTournamentSummary();
-        return;
-      }
-      
-      // For Google Identity Services approach
-      if (window.tokenClient) {
-        console.log('Requesting access token via GIS...');
-        // Set up the callback for this specific request
-        window.tokenClient.callback = (response) => {
-          console.log('Token response received:', response);
-          if (response.access_token) {
-            console.log('Access token received, setting up API client...');
-            gapi.client.setToken(response);
-            updateSigninStatus(true);
-            exportTournamentData();
-          } else {
-            console.error('No access token in response');
-            showMessage('Authentication failed', true);
-          }
-        };
-        
-        try {
-          window.tokenClient.requestAccessToken({ prompt: '' });
-        } catch (error) {
-          console.error('Error requesting access token:', error);
-          showMessage('Sign-in failed', true);
-        }
-        return;
-      }
-      
-      // For legacy approach fallback
-      const authInstance = gapi.auth2.getAuthInstance();
-      if (authInstance && authInstance.isSignedIn.get()) {
-        exportTournamentData();
-      } else if (authInstance) {
-        authInstance.signIn().then(() => {
-          exportTournamentData();
-        }).catch(error => {
-          showMessage('Sign-in failed', true);
-          console.error('Sign-in error:', error);
-        });
-      } else {
-        console.log('No auth available, showing local summary');
-        showTournamentSummary();
-      }
-    }
-
-    function showTournamentSummary() {
-      const data = collectCurrentTournamentData();
-      const summary = `
-Tournament Results Summary:
-Date: ${data.summary.date}
-Winner: ${data.summary.winner}
-2nd Place: ${data.summary.second}
-All Players: ${data.playerRecords.map(p => `${p.playerName} (${p.finishPosition})`).join(', ')}
-
-Note: Google Sheets integration not available - results not saved automatically.
-      `;
-      
-      alert(summary);
-      console.log('Tournament Data:', data);
-      showMessage('Tournament results displayed (Google Sheets not available)');
-    }
-
-    function signInAndLoadDashboard() {
-      if (!googleApiReady) {
-        showMessage('Google API not ready', true);
-        return;
-      }
-      
-      const authInstance = gapi.auth2.getAuthInstance();
-      if (authInstance.isSignedIn.get()) {
-        loadDashboard();
-      } else {
-        authInstance.signIn().then(() => {
-          loadDashboard();
-        }).catch(error => {
-          showMessage('Sign-in failed', true);
-          console.error('Sign-in error:', error);
-        });
-      }
-    }
-
-    function collectCurrentTournamentData() {
-      const now = new Date();
-      const date = now.toISOString().split('T')[0];
-      const timestamp = now.toLocaleTimeString();
-      const tournamentId = `${date}_${timestamp.replace(/:/g, '-')}`;
-      
-      console.log('=== TOURNAMENT DATA COLLECTION START ===');
-      console.log('Tournament ID:', tournamentId);
-      console.log('Raw players data:', players.map(p => ({
-        name: p.name, 
-        eliminated: p.eliminated, 
-        eliminationTime: p.eliminationTime,
-        stacks: p.stacks,
-        totalPaid: p.totalPaid
-      })));
-      
-      // Sort players by elimination time (most recent elimination = highest finish)
-      const allPlayersSorted = [...players].sort((a, b) => {
-        if (!a.eliminated && !b.eliminated) return 0;
-        if (!a.eliminated) return -1; // a is active (winner)
-        if (!b.eliminated) return 1; // b is active (winner)
-        
-        // Both eliminated - most recent elimination time = better finish
-        return (b.eliminationTime || 0) - (a.eliminationTime || 0);
-      });
-      
-      console.log('All players sorted by finish:', allPlayersSorted.map(p => `${p.name}: ${p.eliminated ? 'eliminated at ' + new Date(p.eliminationTime).toLocaleTimeString() : 'WINNER'}`));
-      
-      // Calculate prize pool
-      const totalPaid = players.reduce((sum, p) => sum + p.totalPaid, 0);
-      const houseFee = totalPaid > 100 ? 10 : 5;
-      const prizePool = totalPaid - houseFee;
-      const firstPrize = Math.round(prizePool * 0.8);
-      const secondPrize = Math.round(prizePool * 0.2);
-      
-      console.log('Prize calculations:', { totalPaid, houseFee, prizePool, firstPrize, secondPrize });
-      
-      // Create individual player records
-      const playerRecords = [];
-      
-      allPlayersSorted.forEach((player, index) => {
-        const finishPosition = player.eliminated ? (allPlayersSorted.filter(p => !p.eliminated).length + index) : 1;
-        let earnings = 0;
-        
-        // Award prize money
-        if (finishPosition === 1) earnings = firstPrize;
-        else if (finishPosition === 2) earnings = secondPrize;
-        
-        // Calculate rebuys and addons from total paid
-        const baseStacks = 1;
-        const additionalStacks = player.stacks - baseStacks;
-        const baseCost = 5;
-        const additionalCost = player.totalPaid - baseCost;
-        const rebuys = player.eliminated ? Math.max(0, additionalStacks - (player.hasAddon ? 1 : 0)) : additionalStacks - (player.hasAddon ? 1 : 0);
-        const addons = player.hasAddon ? 1 : 0;
-        
-        const playerRecord = {
-          date,
-          timestamp,
-          tournamentId,
-          playerName: player.name,
-          finishPosition,
-          fieldSize: players.length,
-          amountPaid: player.totalPaid,
-          earnings,
-          rebuys: Math.max(0, rebuys),
-          addons,
-          roi: player.totalPaid > 0 ? ((earnings - player.totalPaid) / player.totalPaid * 100).toFixed(1) : 0
-        };
-        
-        playerRecords.push(playerRecord);
-        console.log(`Player record: ${player.name} - Position: ${finishPosition}, Paid: £${player.totalPaid}, Earned: £${earnings}, ROI: ${playerRecord.roi}%`);
-      });
-      
-      console.log('=== FINAL TOURNAMENT DATA ===');
-      console.log('Total player records:', playerRecords.length);
-      console.log('Tournament ID:', tournamentId);
-      console.log('=== END COLLECTION ===');
-      
-      return {
-        tournamentId,
-        playerRecords,
-        summary: {
-          date,
-          timestamp,
-          fieldSize: players.length,
-          prizePool,
-          winner: allPlayersSorted[0]?.name || '',
-          second: allPlayersSorted.find(p => p.eliminated)?.name || ''
-        }
-      };
-    }
-
-    function exportTournamentData() {
-      if (!tournamentEnded) {
-        showMessage('Tournament must be ended first', true);
-        return;
-      }
-
-      const data = collectCurrentTournamentData();
-      console.log('About to export tournament data:', data);
-      
-      // Prepare rows for Google Sheets - each player gets their own row
-      const rows = data.playerRecords.map(record => [
-        record.date,
-        record.timestamp,
-        record.tournamentId,
-        record.playerName,
-        record.finishPosition,
-        record.fieldSize,
-        record.amountPaid,
-        record.earnings,
-        record.rebuys,
-        record.addons,
-        record.roi
-      ]);
-      
-      console.log('Rows to export:', rows);
-      
-      gapi.client.sheets.spreadsheets.values.append({
-        spreadsheetId: SPREADSHEET_ID,
-        range: 'PlayerResults!A:K',
-        valueInputOption: 'USER_ENTERED',
-        resource: {
-          values: rows
-        }
-      }).then(response => {
-        showMessage(`Tournament data saved successfully! ${rows.length} player records exported.`);
-        console.log('Export successful:', response);
-      }).catch(error => {
-        showMessage('Failed to save tournament data', true);
-        console.error('Export error:', error);
-      });
-    }
-
-    function loadDashboard() {
-      gapi.client.sheets.spreadsheets.values.get({
-        spreadsheetId: SPREADSHEET_ID,
-        range: 'PlayerResults!A:K'
-      }).then(response => {
-        const rows = response.result.values || [];
-        buildDashboardFromPlayerRows(rows);
-        showMessage('Championship dashboard loaded!');
-      }).catch(error => {
-        showMessage('Failed to load dashboard data', true);
-        console.error('Dashboard load error:', error);
-      });
-    }
-
-    function buildDashboardFromPlayerRows(rows) {
-      console.log('Building dashboard from player rows:', rows);
-      const stats = {};
-      
-      // Skip header row if it exists
-      const dataRows = rows.length > 0 && rows[0][0] === 'Date' ? rows.slice(1) : rows;
-      console.log('Data rows after header filter:', dataRows);
-      
-      dataRows.forEach((row, index) => {
-        if (row.length < 8) {
-          console.log('Skipping incomplete row', index + 1, ':', row);
-          return;
-        }
-        
-        // Expected format: [Date, Time, TournamentID, PlayerName, Position, FieldSize, AmountPaid, Earnings, Rebuys, Addons, ROI]
-        const [date, time, tournamentId, playerName, position, fieldSize, amountPaid, earnings, rebuys, addons, roi] = row;
-        
-        if (!playerName) {
-          console.log('No player name in row', index + 1);
-          return;
-        }
-        
-        const player = playerName.trim();
-        
-        // Initialize player stats if first time seeing them
-        if (!stats[player]) {
-          stats[player] = {
-            played: 0,
-            wins: 0,
-            seconds: 0,
-            thirds: 0,
-            totalEarnings: 0,
-            totalSpent: 0,
-            totalRebuys: 0,
-            totalAddons: 0,
-            bestFinish: 999,
-            worstFinish: 0,
-            avgROI: 0,
-            cashes: 0,
-            bubbles: 0
-          };
-        }
-        
-        // Parse numerical values
-        const pos = parseInt(position) || 999;
-        const paid = parseFloat(amountPaid) || 0;
-        const earned = parseFloat(earnings) || 0;
-        const rebuyCount = parseInt(rebuys) || 0;
-        const addonCount = parseInt(addons) || 0;
-        const field = parseInt(fieldSize) || 0;
-        
-        // Update player statistics
-        stats[player].played++;
-        stats[player].totalSpent += paid;
-        stats[player].totalEarnings += earned;
-        stats[player].totalRebuys += rebuyCount;
-        stats[player].totalAddons += addonCount;
-        
-        // Track finish positions
-        if (pos === 1) stats[player].wins++;
-        if (pos === 2) stats[player].seconds++;
-        if (pos === 3) stats[player].thirds++;
-        if (pos <= 2) stats[player].cashes++; // Made money
-        if (pos === 3 && field >= 4) stats[player].bubbles++; // 3rd in 4+ player field
-        
-        // Best and worst finishes
-        if (pos < stats[player].bestFinish) stats[player].bestFinish = pos;
-        if (pos > stats[player].worstFinish) stats[player].worstFinish = pos;
-        
-        console.log(`Processed ${player}: Position ${pos}, Earned £${earned}, Spent £${paid}`);
-      });
-      
-      // Calculate derived statistics
-      Object.keys(stats).forEach(player => {
-        const s = stats[player];
-        s.avgROI = s.totalSpent > 0 ? ((s.totalEarnings - s.totalSpent) / s.totalSpent * 100).toFixed(1) : '0.0';
-        s.avgEarnings = s.played > 0 ? (s.totalEarnings / s.played).toFixed(2) : '0.00';
-        s.winRate = s.played > 0 ? ((s.wins / s.played) * 100).toFixed(1) : '0.0';
-        s.cashRate = s.played > 0 ? ((s.cashes / s.played) * 100).toFixed(1) : '0.0';
-        if (s.bestFinish === 999) s.bestFinish = 'N/A';
-      });
-      
-      console.log('Final player statistics:', stats);
-      
-      const section = document.getElementById('chartsSection');
-      
-      if (Object.keys(stats).length === 0) {
-        section.innerHTML = '<h3>Championship Dashboard</h3><p>No tournament data found to display.</p>';
-        return;
-      }
-      
-      section.innerHTML = '<h3>Annual Championship Leaderboard</h3>';
-      
-      const table = document.createElement('table');
-      table.innerHTML = `
-        <thead>
-          <tr>
-            <th>Rank</th>
-            <th>Player</th>
-            <th>Played</th>
-            <th>Wins</th>
-            <th>2nd</th>
-            <th>3rd</th>
-            <th>Cash Rate</th>
-            <th>Total Earnings</th>
-            <th>Total Spent</th>
-            <th>Net Profit</th>
-            <th>ROI</th>
-            <th>Best Finish</th>
-          </tr>
-        </thead>
-      `;
-      
-      const tbody = document.createElement('tbody');
-      const sortedStats = Object.entries(stats)
-        .sort((a, b) => (b[1].totalEarnings - b[1].totalSpent) - (a[1].totalEarnings - a[1].totalSpent)); // Sort by net profit
-      
-      if (sortedStats.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="12">No valid player data available</td></tr>';
-      } else {
-        sortedStats.forEach(([name, s], index) => {
-          const netProfit = s.totalEarnings - s.totalSpent;
-          const tr = document.createElement('tr');
-          tr.innerHTML = `
-            <td>${index + 1}</td>
-            <td><strong>${name}</strong></td>
-            <td>${s.played}</td>
-            <td>${s.wins}</td>
-            <td>${s.seconds}</td>
-            <td>${s.thirds}</td>
-            <td>${s.cashRate}%</td>
-            <td>£${s.totalEarnings.toFixed(2)}</td>
-            <td>£${s.totalSpent.toFixed(2)}</td>
-            <td style="color: ${netProfit >= 0 ? '#4caf50' : '#f44336'}">£${netProfit.toFixed(2)}</td>
-            <td>${s.avgROI}%</td>
-            <td>${s.bestFinish}</td>
-          `;
-          tbody.appendChild(tr);
-        });
-      }
-      
-      table.appendChild(tbody);
-      section.appendChild(table);
-      
-      console.log('Advanced dashboard built successfully with', sortedStats.length, 'players');
-    }
-
-    // Player management
-    function updatePlayerTable() {
-      const tbody = document.getElementById('playerTableBody');
-      if (!tbody || !players) {
-        console.error('Missing table body element or players array not initialized');
-        return;
-      }
-      
-      tbody.innerHTML = '';
-      
-      players.forEach((player, index) => {
-        const tr = document.createElement('tr');
-        if (player.eliminated) {
-          tr.classList.add('eliminated');
-        }
-        
-        let actions = '';
-        if (!tournamentStarted && !tournamentEnded) {
-          actions = `<button onclick="removePlayer(${index})">Remove</button>`;
-        } else if (tournamentStarted && !tournamentEnded) {
-          // Show eliminate button for active players (including during breaks)
-          if (!player.eliminated) {
-            actions += `<button onclick="eliminatePlayer(${index})">Eliminate</button>`;
-          }
-          
-          // Re-buy available for eliminated players BEFORE final stage (including during break)
-          if (player.eliminated && !isFinalStage) {
-            actions += `<button class="rebuy-btn" onclick="rebuyPlayer(${index})">Re-buy £5</button>`;
-          }
-          
-          // Add-on available for ALL players ONLY during breaks (before final stage) and only once per player
-          if (isBreak && !isFinalStage && !player.hasAddon) {
-            actions += `<button class="addon-btn" onclick="addonPlayer(${index})">Add-on £5</button>`;
-          }
-        }
-        
-        tr.innerHTML = `
-          <td><strong>${player.name}</strong></td>
-          <td>${player.stacks}</td>
-          <td>£${player.totalPaid}</td>
-          <td>${player.eliminated ? 'Eliminated' : 'Active'}</td>
-          <td>${actions}</td>
-        `;
-        tbody.appendChild(tr);
-      });
-      
-      updatePrizeInfo();
-      checkForWinner();
-    }
-
-    function checkForWinner() {
-      if (!tournamentStarted || tournamentEnded) return;
-      
-      const activePlayers = players.filter(p => !p.eliminated);
-      if (activePlayers.length === 1) {
-        showMessage(`${activePlayers[0].name} is the last player standing! Click "End Tournament" to finish.`);
-      }
-    }
-
-    function updatePrizeInfo() {
-      const totalPaid = players.reduce((sum, p) => sum + p.totalPaid, 0);
-      const houseFee = totalPaid > 100 ? 10 : 5;
-      const prizePool = Math.max(0, totalPaid - houseFee);
-      
-      document.getElementById('playerCount').textContent = 
-        `Players: ${players.length} | Prize Pot: £${prizePool} | House Fee: £${houseFee}`;
-      document.getElementById('currentPrizePool').textContent = prizePool;
-      document.getElementById('firstPrize').textContent = Math.round(prizePool * 0.8);
-      document.getElementById('secondPrize').textContent = Math.round(prizePool * 0.2);
-    }
-
-    function addPlayer() {
-      const input = document.getElementById('playerNameInput');
-      const dropdown = document.getElementById('playerSelect');
-      
-      // Get name from either dropdown or input field
-      let name = dropdown?.value || input?.value?.trim() || '';
-      
-      if (!name) {
-        showMessage('Please enter a player name or select from dropdown', true);
-        return;
-      }
-      
-      if (players.some(p => p.name.toLowerCase() === name.toLowerCase())) {
-        showMessage('Player already exists', true);
-        return;
-      }
-      
-      if (tournamentStarted) {
-        showMessage('Cannot add players after tournament has started', true);
-        return;
-      }
-      
-      players.push({
-        name: name,
-        stacks: 1,
-        totalPaid: 5,
-        eliminated: false,
-        hasAddon: false, // Track if player has used their one add-on
-        eliminationTime: null // Track when they were eliminated
-      });
-      
-      // Clear both input fields
-      if (input) input.value = '';
-      if (dropdown) dropdown.value = '';
-      
-      // Add to custom players if it's not in regular players list
-      if (!regularPlayers.includes(name) && !customPlayers.includes(name)) {
-        customPlayers.push(name);
-        populatePlayerDropdown(); // Refresh dropdown
-      }
-      
-      // Focus back to input for quick entry
-      if (input) input.focus();
-      
-      updatePlayerTable();
-      showMessage(`${name} added to tournament`);
-    }
-
-    function removePlayer(index) {
-      if (tournamentStarted) {
-        showMessage('Cannot remove players after tournament has started', true);
-        return;
-      }
-      
-      const playerName = players[index].name;
-      players.splice(index, 1);
-      updatePlayerTable();
-      showMessage(`${playerName} removed from tournament`);
+      displayMessage(`${playerName} removed from tournament`);
     }
 
     function eliminatePlayer(index) {
-      if (!tournamentStarted || tournamentEnded) return;
+      if (!isTournamentStarted || isTournamentEnded) return;
       
-      const player = players[index];
-      
-      // Get the current timestamp for elimination order
+      const player = tournamentPlayers[index];
       player.eliminationTime = Date.now();
-      
-      recordAction('eliminate', {
-        name: player.name,
-        previousEliminated: player.eliminated,
-        previousEliminationTime: player.eliminationTime
-      });
-      
       player.eliminated = true;
       
-      // Calculate current position based on how many are left
-      const remainingPlayers = players.filter(p => !p.eliminated).length;
-      const position = remainingPlayers + 1; // +1 because this player just got eliminated
+      const remainingActivePlayers = tournamentPlayers.filter(p => !p.eliminated).length;
+      const finishPosition = remainingActivePlayers + 1;
       
       updatePlayerTable();
-      showMessage(`${player.name} eliminated from tournament (${position}${getSuffix(position)} place)`);
+      displayMessage(`${player.name} eliminated (${finishPosition}${getOrdinalSuffix(finishPosition)} place)`);
     }
 
-    function getSuffix(num) {
-      if (num % 10 === 1 && num % 100 !== 11) return 'st';
-      if (num % 10 === 2 && num % 100 !== 12) return 'nd';
-      if (num % 10 === 3 && num % 100 !== 13) return 'rd';
+    function getOrdinalSuffix(number) {
+      if (number % 10 === 1 && number % 100 !== 11) return 'st';
+      if (number % 10 === 2 && number % 100 !== 12) return 'nd';
+      if (number % 10 === 3 && number % 100 !== 13) return 'rd';
       return 'th';
     }
 
     function rebuyPlayer(index) {
-      if (tournamentEnded || isFinalStage) {
-        showMessage('Re-buys not available in final stage', true);
+      if (isTournamentEnded || isFinalTournamentStage) {
+        displayMessage('Re-buys not available in final stage', true);
         return;
       }
       
-      const player = players[index];
+      const player = tournamentPlayers[index];
       if (!player.eliminated) {
-        showMessage('Player must be eliminated to re-buy', true);
+        displayMessage('Player must be eliminated to re-buy', true);
         return;
       }
-      
-      recordAction('rebuy', {
-        name: player.name,
-        previousStacks: player.stacks,
-        previousPaid: player.totalPaid
-      });
       
       player.eliminated = false;
       player.stacks++;
       player.totalPaid += 5;
       updatePlayerTable();
-      showMessage(`${player.name} re-bought for £5`);
+      displayMessage(`${player.name} re-bought for £5`);
     }
 
     function addonPlayer(index) {
-      if (!isBreak || tournamentEnded || isFinalStage) {
-        showMessage('Add-ons only available during breaks before final stage', true);
+      if (!isBreakTime || isTournamentEnded || isFinalTournamentStage) {
+        displayMessage('Add-ons only available during breaks', true);
         return;
       }
       
-      const player = players[index];
-      
+      const player = tournamentPlayers[index];
       if (player.hasAddon) {
-        showMessage('Player has already used their one add-on', true);
+        displayMessage('Player already used their add-on', true);
         return;
       }
-      
-      recordAction('addon', {
-        name: player.name,
-        previousStacks: player.stacks,
-        previousPaid: player.totalPaid,
-        previousHasAddon: player.hasAddon
-      });
       
       player.stacks++;
       player.totalPaid += 5;
       player.hasAddon = true;
       updatePlayerTable();
-      showMessage(`${player.name} purchased add-on for £5`);
+      displayMessage(`${player.name} purchased add-on for £5`);
     }
 
     function clearPlayers() {
-      if (tournamentStarted && !tournamentEnded) {
-        if (!confirm('Tournament is in progress. Are you sure you want to clear all players?')) {
+      if (isTournamentStarted && !isTournamentEnded) {
+        if (!confirm('Tournament is in progress. Clear all players?')) {
           return;
         }
       }
       
-      players = [];
-      tournamentStarted = false;
-      tournamentEnded = false;
+      tournamentPlayers = [];
+      isTournamentStarted = false;
+      isTournamentEnded = false;
       resetTournament();
       updatePlayerTable();
-      showMessage('All players cleared');
+      displayMessage('All players cleared');
     }
 
-    // Tournament management
+    // Tournament management functions
     function startTournament() {
-      if (players.length < 2) {
-        showMessage('Need at least 2 players to start tournament', true);
+      if (tournamentPlayers.length < 2) {
+        displayMessage('Need at least 2 players to start tournament', true);
         return;
       }
       
-      tournamentStarted = true;
-      tournamentEnded = false;
+      isTournamentStarted = true;
+      isTournamentEnded = false;
       
       document.getElementById('startBtn').disabled = true;
       document.getElementById('endBtn').disabled = false;
       document.getElementById('exportBtn').disabled = true;
       document.getElementById('loadDashboardBtn').disabled = true;
       
-      // Start the timer automatically
-      currentRound = 0;
+      currentTournamentRound = 0;
       updateRoundDisplay();
-      startTimer();
       
       updatePlayerTable();
-      showMessage('Tournament started! Timer is running.');
+      displayMessage('Tournament started!');
     }
 
     function endTournament() {
-      if (!confirm('Are you sure you want to end the tournament?')) {
-        return;
-      }
+      if (!confirm('Are you sure you want to end the tournament?')) return;
       
-      tournamentEnded = true;
-      tournamentStarted = false;
-      clearInterval(timer);
-      timerRunning = false;
+      isTournamentEnded = true;
+      isTournamentStarted = false;
+      clearInterval(roundTimer);
+      isTimerRunning = false;
       
       document.getElementById('endBtn').disabled = true;
       document.getElementById('timerStartBtn').disabled = true;
       document.getElementById('timerPauseBtn').disabled = true;
-      document.getElementById('timerSkipBtn').disabled = true;
       
-      const activePlayers = players.filter(p => !p.eliminated);
-      
-      // Update buttons based on Google API status
-      if (googleApiReady) {
-        // For Google Identity Services, we don't have a persistent isSignedIn state
-        // So we enable the buttons and let the sign-in happen when clicked
-        updateSigninStatus(false); // Start as not signed in, will prompt when clicked
-      } else {
-        const exportBtn = document.getElementById('exportBtn');
-        const dashboardBtn = document.getElementById('loadDashboardBtn');
-        exportBtn.disabled = true;
-        dashboardBtn.disabled = true;
-        exportBtn.textContent = 'Google API Not Available';
-        dashboardBtn.textContent = 'Google API Not Available';
-      }
-      
-      updatePlayerTable();
-      displayFinalResults(activePlayers);
-      showMessage('Tournament ended! You can now save the results.');
-    }
-
-    function displayFinalResults(finalists) {
-      const resultsDiv = document.getElementById('prizeResults');
-      if (finalists.length === 0) {
-        resultsDiv.innerHTML = '<div class="prize-info"><h3>No finalists!</h3></div>';
-        return;
-      }
-      
-      const totalPaid = players.reduce((sum, p) => sum + p.totalPaid, 0);
-      const houseFee = totalPaid > 100 ? 10 : 5;
-      const prizePool = totalPaid - houseFee;
-      const firstPrize = Math.round(prizePool * 0.8);
-      const secondPrize = Math.round(prizePool * 0.2);
-      
-      // Sort players by elimination time (most recent elimination = highest finish)
-      // Active players (not eliminated) come first
-      const allPlayersSorted = [...players].sort((a, b) => {
-        if (!a.eliminated && !b.eliminated) return 0; // Both active - doesn't matter
-        if (!a.eliminated) return -1; // a is active (winner)
-        if (!b.eliminated) return 1; // b is active (winner)
-        
-        // Both eliminated - most recent elimination time = better finish (2nd place)
-        return (b.eliminationTime || 0) - (a.eliminationTime || 0);
-      });
-      
-      console.log('Final ranking:', allPlayersSorted.map(p => `${p.name}: ${p.eliminated ? 'eliminated at ' + new Date(p.eliminationTime).toLocaleTimeString() : 'active'}`));
-      
-      let resultsHTML = '<div class="prize-info"><h3>Final Results</h3>';
-      
-      // 1st Place (active player)
-      const winner = allPlayersSorted.find(p => !p.eliminated);
-      if (winner) {
-        resultsHTML += `<div style="font-size: 1.4rem; color: #d84315; margin: 10px 0;">
-          🥇 <strong>1st Place: ${winner.name}</strong> - £${firstPrize}
-        </div>`;
-      }
-      
-      // 2nd Place (most recently eliminated player)
-      const secondPlace = allPlayersSorted.find(p => p.eliminated);
-      if (secondPlace) {
-        resultsHTML += `<div style="font-size: 1.2rem; color: #d84315; margin: 10px 0;">
-          🥈 <strong>2nd Place: ${secondPlace.name}</strong> - £${secondPrize}
-        </div>`;
-      } else {
-        resultsHTML += `<div style="font-size: 1.2rem; color: #666; margin: 10px 0;">
-          🥈 <strong>2nd Place:</strong> No qualifying player - £0
-        </div>`;
-      }
-      
-      // Other finalists (remaining eliminated players in order)
-      const otherFinalists = allPlayersSorted.filter(p => p.eliminated && p !== secondPlace);
-      if (otherFinalists.length > 0) {
-        resultsHTML += '<div style="margin-top: 15px;"><strong>Other Finalists:</strong><br>';
-        otherFinalists.forEach((player, index) => {
-          resultsHTML += `${index + 3}. ${player.name}<br>`;
-        });
-        resultsHTML += '</div>';
-      }
-      
-      resultsHTML += '</div>';
-      resultsDiv.innerHTML = resultsHTML;
-    }
-
-    function resetTournament() {
-      clearInterval(timer);
-      timerRunning = false;
-      currentRound = 0;
-      timeLeft = 0;
-      isBreak = false;
-      isFinalStage = false;
-      
-      document.getElementById('startBtn').disabled = false;
-      document.getElementById('endBtn').disabled = true;
-      document.getElementById('exportBtn').disabled = true;
-      document.getElementById('loadDashboardBtn').disabled = true;
-      document.getElementById('timerStartBtn').disabled = false;
-      document.getElementById('timerPauseBtn').disabled = true;
-      document.getElementById('timerSkipBtn').disabled = false;
-      
-      document.getElementById('prizeResults').innerHTML = '';
-      document.getElementById('chartsSection').innerHTML = '';
-      
-      updateRoundDisplay();
-    }
-
-    // Timer management
-    function updateRoundDisplay() {
-      const round = rounds[currentRound];
-      let roundInfoHTML = `<div style="font-size: 1.6rem; margin-bottom: 15px;">${round.name}</div>`;
-      
-      if (!round.isBreak && !round.isTest) {
-        roundInfoHTML += `
-          <div class="blind-display">SB: ${round.sb} | BB: ${round.bb}</div>
-          <div style="font-size: 1.1rem; margin-top: 10px;">Duration: ${round.duration} minutes</div>
-        `;
-      } else if (round.isBreak) {
-        roundInfoHTML += `
-          <div class="blind-display">BREAK TIME</div>
-          <div style="font-size: 1.1rem; margin-top: 10px;">Duration: ${round.duration} minutes</div>
-        `;
-      } else if (round.isTest) {
-        roundInfoHTML += `
-          <div class="blind-display">TEST ROUND</div>
-          <div style="font-size: 1.1rem; margin-top: 10px;">Duration: ${round.duration} seconds</div>
-        `;
-      }
-      
-      document.getElementById('roundInfo').innerHTML = roundInfoHTML;
-      
-      // Set time left - test rounds use seconds, others use minutes
-      timeLeft = round.isTest ? round.duration : round.duration * 60;
-      document.getElementById('timeRemaining').textContent = formatTime(timeLeft);
-      
-      // Update break and final stage indicators
-      isBreak = !!round.isBreak;
-      isFinalStage = currentRound > 5; // Final stage starts AFTER break (Round 6+)
-      
-      document.getElementById('breakNotice').style.display = isBreak ? 'block' : 'none';
-      document.getElementById('finalStage').style.display = isFinalStage ? 'block' : 'none';
-      
-      console.log(`Round ${currentRound}: ${round.name}, isBreak: ${isBreak}, isFinalStage: ${isFinalStage}`);
-      
-      // Update player table to reflect break/final stage
-      if (tournamentStarted) {
-        updatePlayerTable();
-      }
-    }
-
-    function tick() {
-      if (timeLeft > 0) {
-        timeLeft--;
-        document.getElementById('timeRemaining').textContent = formatTime(timeLeft);
-      } else {
-        // Time's up - auto advance to next round
-        console.log('Timer finished, playing alarm...');
-        clearInterval(timer);
-        timerRunning = false;
-        
-        // Play alarm immediately
-        playAlarm();
-        
-        // Show message and auto-advance after 3 seconds
-        showMessage('⏰ ROUND FINISHED! Advancing to next round...');
-        
-        setTimeout(() => {
-          nextRound();
-        }, 3000);
-      }
-    }
-
-    function startTimer() {
-      if (!tournamentStarted || tournamentEnded || timerRunning) return;
-      
-      timerRunning = true;
-      document.getElementById('timerStartBtn').disabled = true;
-      document.getElementById('timerPauseBtn').disabled = false;
-      
-      timer = setInterval(tick, 1000);
-      showMessage('Timer started');
-    }
-
-    function pauseTimer() {
-      if (!timerRunning) return;
-      
-      clearInterval(timer);
-      timerRunning = false;
-      
-      document.getElementById('timerStartBtn').disabled = false;
-      document.getElementById('timerPauseBtn').disabled = true;
-      
-      showMessage('Timer paused');
-    }
-
-    function resetTimer() {
-      clearInterval(timer);
-      timerRunning = false;
-      
-      document.getElementById('timerStartBtn').disabled = false;
-      document.getElementById('timerPauseBtn').disabled = true;
-      
-      updateRoundDisplay();
-      showMessage('Timer reset');
-    }
-
-    function skipRound() {
-      if (!tournamentStarted || tournamentEnded) return;
-      
-      clearInterval(timer);
-      timerRunning = false;
-      nextRound();
-      showMessage('Round skipped');
-    }
-
-    function nextRound() {
-      if (currentRound < rounds.length - 1) {
-        currentRound++;
-        updateRoundDisplay();
-        
-        // Auto-start next round if tournament is still active
-        if (tournamentStarted && !tournamentEnded) {
-          setTimeout(() => {
-            startTimer();
-          }, 1000); // Small delay to allow players to see the round change
-        }
-      } else {
-        // Tournament structure complete
-        showMessage('All rounds complete! Consider ending the tournament.');
-      }
-    }
-
-    // Event handlers and initialization
-    function setupEventHandlers() {
-      const nameInput = document.getElementById('playerNameInput');
-      const playerSelect = document.getElementById('playerSelect');
-      
-      if (nameInput) {
-        nameInput.addEventListener('keydown', (event) => {
-          if (event.key === 'Enter') {
-            event.preventDefault();
-            addPlayer();
-          }
-        });
-      }
-      
-      if (playerSelect) {
-        playerSelect.addEventListener('keydown', (event) => {
-          if (event.key === 'Enter') {
-            event.preventDefault();
-            addPlayer();
-          }
-        });
-        
-        // When a player is selected, focus goes to Add button or clear the input
-        playerSelect.addEventListener('change', () => {
-          if (playerSelect.value) {
-            nameInput.value = ''; // Clear the input if dropdown is selected
-          }
-        });
-      }
-      
-      // Set up button click handlers as backup
-      const addPlayerBtn = document.querySelector('button[onclick="addPlayer()"]');
-      if (addPlayerBtn) {
-        addPlayerBtn.addEventListener('click', addPlayer);
-      }
-    }
-
-    // Initialize application
-    function initializeApp() {
-      console.log('Initializing app...');
-      
-      // Ensure players array is initialized
-      if (!players) {
-        players = [];
-      }
-      
-      // Initialize other arrays if needed
-      if (!actionHistory) actionHistory = [];
-      
-      setupEventHandlers();
-      updatePlayerTable();
-      updateRoundDisplay();
-      requestNotificationPermission();
-      
-      // Populate dropdown after a short delay to ensure DOM is ready
-      setTimeout(() => {
-        if (document.getElementById('playerSelect')) {
-          populatePlayerDropdown();
-        }
-      }, 100);
-      
-      // Initialize Google API
-      if (typeof gapi !== 'undefined') {
-        handleClientLoad();
-      } else {
-        console.warn('Google API not available');
-        showMessage('Google Sheets integration not available', true);
-      }
-      
-      console.log('App initialized');
-    }
-
-    // Run initialization when page loads
-    window.addEventListener('load', initializeApp);
-    
-    // Also run when DOM is ready (fallback)
-    document.addEventListener('DOMContentLoaded', initializeApp);
-  </script>
-</body>
-</html>
