@@ -487,6 +487,7 @@
     ].sort();
 
     let customPlayers = []; // For new players added during session
+    let players = []; // Main players array for current tournament
     let currentRound = 0;
     let timer = null;
     let timeLeft = 0;
@@ -499,6 +500,36 @@
     let actionHistory = []; // For undo functionality
 
     console.log('Global state initialized');
+
+    // Populate player dropdown
+    function populatePlayerDropdown() {
+      const dropdown = document.getElementById('playerSelect');
+      if (!dropdown) {
+        console.error('Player dropdown element not found');
+        return;
+      }
+      
+      // Clear existing options except the first one
+      dropdown.innerHTML = '<option value="">Select a player...</option>';
+      
+      // Add regular players
+      regularPlayers.forEach(player => {
+        const option = document.createElement('option');
+        option.value = player;
+        option.textContent = player;
+        dropdown.appendChild(option);
+      });
+      
+      // Add any custom players added this session
+      customPlayers.forEach(player => {
+        const option = document.createElement('option');
+        option.value = player;
+        option.textContent = `${player} (New)`;
+        dropdown.appendChild(option);
+      });
+      
+      console.log('Player dropdown populated with', regularPlayers.length, 'regular players');
+    }
 
     // Undo functionality
     function recordAction(action, data) {
@@ -568,6 +599,7 @@
         }
       }
     }
+
     // Make functions globally accessible
     window.addPlayer = addPlayer;
     window.removePlayer = removePlayer;
@@ -959,10 +991,10 @@
       const data = collectCurrentTournamentData();
       const summary = `
 Tournament Results Summary:
-Date: ${data.date}
-Winner: ${data.first}
-2nd Place: ${data.second}
-All Players: ${data.results.join(', ')}
+Date: ${data.summary.date}
+Winner: ${data.summary.winner}
+2nd Place: ${data.summary.second}
+All Players: ${data.playerRecords.map(p => `${p.playerName} (${p.finishPosition})`).join(', ')}
 
 Note: Google Sheets integration not available - results not saved automatically.
       `;
@@ -1129,10 +1161,10 @@ Note: Google Sheets integration not available - results not saved automatically.
     function loadDashboard() {
       gapi.client.sheets.spreadsheets.values.get({
         spreadsheetId: SPREADSHEET_ID,
-        range: 'RawResults!A:D'
+        range: 'PlayerResults!A:K'
       }).then(response => {
         const rows = response.result.values || [];
-        buildDashboardFromRows(rows);
+        buildDashboardFromPlayerRows(rows);
         showMessage('Championship dashboard loaded!');
       }).catch(error => {
         showMessage('Failed to load dashboard data', true);
@@ -1290,6 +1322,11 @@ Note: Google Sheets integration not available - results not saved automatically.
     // Player management
     function updatePlayerTable() {
       const tbody = document.getElementById('playerTableBody');
+      if (!tbody || !players) {
+        console.error('Missing table body element or players array not initialized');
+        return;
+      }
+      
       tbody.innerHTML = '';
       
       players.forEach((player, index) => {
@@ -1355,10 +1392,13 @@ Note: Google Sheets integration not available - results not saved automatically.
 
     function addPlayer() {
       const input = document.getElementById('playerNameInput');
-      const name = input.value.trim();
+      const dropdown = document.getElementById('playerSelect');
+      
+      // Get name from either dropdown or input field
+      let name = dropdown?.value || input?.value?.trim() || '';
       
       if (!name) {
-        showMessage('Please enter a player name', true);
+        showMessage('Please enter a player name or select from dropdown', true);
         return;
       }
       
@@ -1381,8 +1421,19 @@ Note: Google Sheets integration not available - results not saved automatically.
         eliminationTime: null // Track when they were eliminated
       });
       
-      input.value = '';
-      input.focus();
+      // Clear both input fields
+      if (input) input.value = '';
+      if (dropdown) dropdown.value = '';
+      
+      // Add to custom players if it's not in regular players list
+      if (!regularPlayers.includes(name) && !customPlayers.includes(name)) {
+        customPlayers.push(name);
+        populatePlayerDropdown(); // Refresh dropdown
+      }
+      
+      // Focus back to input for quick entry
+      if (input) input.focus();
+      
       updatePlayerTable();
       showMessage(`${name} added to tournament`);
     }
@@ -1542,299 +1593,4 @@ Note: Google Sheets integration not available - results not saved automatically.
       if (googleApiReady) {
         // For Google Identity Services, we don't have a persistent isSignedIn state
         // So we enable the buttons and let the sign-in happen when clicked
-        updateSigninStatus(false); // Start as not signed in, will prompt when clicked
-      } else {
-        const exportBtn = document.getElementById('exportBtn');
-        const dashboardBtn = document.getElementById('loadDashboardBtn');
-        exportBtn.disabled = true;
-        dashboardBtn.disabled = true;
-        exportBtn.textContent = 'Google API Not Available';
-        dashboardBtn.textContent = 'Google API Not Available';
-      }
-      
-      updatePlayerTable();
-      displayFinalResults(activePlayers);
-      showMessage('Tournament ended! You can now save the results.');
-    }
-
-    function displayFinalResults(finalists) {
-      const resultsDiv = document.getElementById('prizeResults');
-      if (finalists.length === 0) {
-        resultsDiv.innerHTML = '<div class="prize-info"><h3>No finalists!</h3></div>';
-        return;
-      }
-      
-      const totalPaid = players.reduce((sum, p) => sum + p.totalPaid, 0);
-      const houseFee = totalPaid > 100 ? 10 : 5;
-      const prizePool = totalPaid - houseFee;
-      const firstPrize = Math.round(prizePool * 0.8);
-      const secondPrize = Math.round(prizePool * 0.2);
-      
-      // Sort players by elimination time (most recent elimination = highest finish)
-      // Active players (not eliminated) come first
-      const allPlayersSorted = [...players].sort((a, b) => {
-        if (!a.eliminated && !b.eliminated) return 0; // Both active - doesn't matter
-        if (!a.eliminated) return -1; // a is active (winner)
-        if (!b.eliminated) return 1; // b is active (winner)
-        
-        // Both eliminated - most recent elimination time = better finish (2nd place)
-        return (b.eliminationTime || 0) - (a.eliminationTime || 0);
-      });
-      
-      console.log('Final ranking:', allPlayersSorted.map(p => `${p.name}: ${p.eliminated ? 'eliminated at ' + new Date(p.eliminationTime).toLocaleTimeString() : 'active'}`));
-      
-      let resultsHTML = '<div class="prize-info"><h3>Final Results</h3>';
-      
-      // 1st Place (active player)
-      const winner = allPlayersSorted.find(p => !p.eliminated);
-      if (winner) {
-        resultsHTML += `<div style="font-size: 1.4rem; color: #d84315; margin: 10px 0;">
-          🥇 <strong>1st Place: ${winner.name}</strong> - £${firstPrize}
-        </div>`;
-      }
-      
-      // 2nd Place (most recently eliminated player)
-      const secondPlace = allPlayersSorted.find(p => p.eliminated);
-      if (secondPlace) {
-        resultsHTML += `<div style="font-size: 1.2rem; color: #d84315; margin: 10px 0;">
-          🥈 <strong>2nd Place: ${secondPlace.name}</strong> - £${secondPrize}
-        </div>`;
-      } else {
-        resultsHTML += `<div style="font-size: 1.2rem; color: #666; margin: 10px 0;">
-          🥈 <strong>2nd Place:</strong> No qualifying player - £0
-        </div>`;
-      }
-      
-      // Other finalists (remaining eliminated players in order)
-      const otherFinalists = allPlayersSorted.filter(p => p.eliminated && p !== secondPlace);
-      if (otherFinalists.length > 0) {
-        resultsHTML += '<div style="margin-top: 15px;"><strong>Other Finalists:</strong><br>';
-        otherFinalists.forEach((player, index) => {
-          resultsHTML += `${index + 3}. ${player.name}<br>`;
-        });
-        resultsHTML += '</div>';
-      }
-      
-      resultsHTML += '</div>';
-      resultsDiv.innerHTML = resultsHTML;
-    }
-
-    function resetTournament() {
-      clearInterval(timer);
-      timerRunning = false;
-      currentRound = 0;
-      timeLeft = 0;
-      isBreak = false;
-      isFinalStage = false;
-      
-      document.getElementById('startBtn').disabled = false;
-      document.getElementById('endBtn').disabled = true;
-      document.getElementById('exportBtn').disabled = true;
-      document.getElementById('loadDashboardBtn').disabled = true;
-      document.getElementById('timerStartBtn').disabled = false;
-      document.getElementById('timerPauseBtn').disabled = true;
-      document.getElementById('timerSkipBtn').disabled = false;
-      
-      document.getElementById('prizeResults').innerHTML = '';
-      document.getElementById('chartsSection').innerHTML = '';
-      
-      updateRoundDisplay();
-    }
-
-    // Timer management
-    function updateRoundDisplay() {
-      const round = rounds[currentRound];
-      let roundInfoHTML = `<div style="font-size: 1.6rem; margin-bottom: 15px;">${round.name}</div>`;
-      
-      if (!round.isBreak && !round.isTest) {
-        roundInfoHTML += `
-          <div class="blind-display">SB: ${round.sb} | BB: ${round.bb}</div>
-          <div style="font-size: 1.1rem; margin-top: 10px;">Duration: ${round.duration} minutes</div>
-        `;
-      } else if (round.isBreak) {
-        roundInfoHTML += `
-          <div class="blind-display">BREAK TIME</div>
-          <div style="font-size: 1.1rem; margin-top: 10px;">Duration: ${round.duration} minutes</div>
-        `;
-      } else if (round.isTest) {
-        roundInfoHTML += `
-          <div class="blind-display">TEST ROUND</div>
-          <div style="font-size: 1.1rem; margin-top: 10px;">Duration: ${round.duration} seconds</div>
-        `;
-      }
-      
-      document.getElementById('roundInfo').innerHTML = roundInfoHTML;
-      
-      // Set time left - test rounds use seconds, others use minutes
-      timeLeft = round.isTest ? round.duration : round.duration * 60;
-      document.getElementById('timeRemaining').textContent = formatTime(timeLeft);
-      
-      // Update break and final stage indicators
-      isBreak = !!round.isBreak;
-      isFinalStage = currentRound > 5; // Final stage starts AFTER break (Round 6+)
-      
-      document.getElementById('breakNotice').style.display = isBreak ? 'block' : 'none';
-      document.getElementById('finalStage').style.display = isFinalStage ? 'block' : 'none';
-      
-      console.log(`Round ${currentRound}: ${round.name}, isBreak: ${isBreak}, isFinalStage: ${isFinalStage}`);
-      
-      // Update player table to reflect break/final stage
-      if (tournamentStarted) {
-        updatePlayerTable();
-      }
-    }
-
-    function tick() {
-      if (timeLeft > 0) {
-        timeLeft--;
-        document.getElementById('timeRemaining').textContent = formatTime(timeLeft);
-      } else {
-        // Time's up - auto advance to next round
-        console.log('Timer finished, playing alarm...');
-        clearInterval(timer);
-        timerRunning = false;
-        
-        // Play alarm immediately
-        playAlarm();
-        
-        // Show message and auto-advance after 3 seconds
-        showMessage('⏰ ROUND FINISHED! Advancing to next round...');
-        
-        setTimeout(() => {
-          nextRound();
-        }, 3000);
-      }
-    }
-
-    function startTimer() {
-      if (!tournamentStarted || tournamentEnded || timerRunning) return;
-      
-      timerRunning = true;
-      document.getElementById('timerStartBtn').disabled = true;
-      document.getElementById('timerPauseBtn').disabled = false;
-      
-      timer = setInterval(tick, 1000);
-      showMessage('Timer started');
-    }
-
-    function pauseTimer() {
-      if (!timerRunning) return;
-      
-      clearInterval(timer);
-      timerRunning = false;
-      
-      document.getElementById('timerStartBtn').disabled = false;
-      document.getElementById('timerPauseBtn').disabled = true;
-      
-      showMessage('Timer paused');
-    }
-
-    function resetTimer() {
-      clearInterval(timer);
-      timerRunning = false;
-      
-      document.getElementById('timerStartBtn').disabled = false;
-      document.getElementById('timerPauseBtn').disabled = true;
-      
-      updateRoundDisplay();
-      showMessage('Timer reset');
-    }
-
-    function skipRound() {
-      if (!tournamentStarted || tournamentEnded) return;
-      
-      clearInterval(timer);
-      timerRunning = false;
-      nextRound();
-      showMessage('Round skipped');
-    }
-
-    function nextRound() {
-      if (currentRound < rounds.length - 1) {
-        currentRound++;
-        updateRoundDisplay();
-        
-        // Auto-start next round if tournament is still active
-        if (tournamentStarted && !tournamentEnded) {
-          setTimeout(() => {
-            startTimer();
-          }, 1000); // Small delay to allow players to see the round change
-        }
-      } else {
-        // Tournament structure complete
-        showMessage('All rounds complete! Consider ending the tournament.');
-      }
-    }
-
-    // Event handlers and initialization
-    function setupEventHandlers() {
-      const nameInput = document.getElementById('playerNameInput');
-      const playerSelect = document.getElementById('playerSelect');
-      
-      if (nameInput) {
-        nameInput.addEventListener('keydown', (event) => {
-          if (event.key === 'Enter') {
-            event.preventDefault();
-            addPlayer();
-          }
-        });
-      }
-      
-      if (playerSelect) {
-        playerSelect.addEventListener('keydown', (event) => {
-          if (event.key === 'Enter') {
-            event.preventDefault();
-            addPlayer();
-          }
-        });
-        
-        // When a player is selected, focus goes to Add button or clear the input
-        playerSelect.addEventListener('change', () => {
-          if (playerSelect.value) {
-            nameInput.value = ''; // Clear the input if dropdown is selected
-          }
-        });
-      }
-      
-      // Set up button click handlers as backup
-      const addPlayerBtn = document.querySelector('button[onclick="addPlayer()"]');
-      if (addPlayerBtn) {
-        addPlayerBtn.addEventListener('click', addPlayer);
-      }
-    }
-
-    // Initialize application
-    function initializeApp() {
-      console.log('Initializing app...');
-      setupEventHandlers();
-      updatePlayerTable();
-      updateRoundDisplay();
-      requestNotificationPermission();
-      
-      // Populate dropdown after a short delay to ensure DOM is ready
-      setTimeout(() => {
-        if (document.getElementById('playerSelect')) {
-          populatePlayerDropdown();
-        }
-      }, 100);
-      
-      // Initialize Google API
-      if (typeof gapi !== 'undefined') {
-        handleClientLoad();
-      } else {
-        console.warn('Google API not available');
-        showMessage('Google Sheets integration not available', true);
-      }
-      
-      console.log('App initialized');
-    }
-
-    // Run initialization when page loads
-    window.addEventListener('load', initializeApp);
-    
-    // Also run when DOM is ready (fallback)
-    document.addEventListener('DOMContentLoaded', initializeApp);
-  </script>
-</body>
-</html>
-      
+        update
