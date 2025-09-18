@@ -560,6 +560,16 @@
           const eliminatedPlayer = players.find(p => p.name === lastAction.data.name);
           if (eliminatedPlayer) {
             eliminatedPlayer.eliminated = false;
+            eliminatedPlayer.eliminatedBy = undefined; // Clear elimination data
+            eliminatedPlayer.eliminationTime = lastAction.data.previousEliminationTime;
+            
+            // Re-enable timer controls if they were disabled due to winner state
+            if (tournamentStarted && !tournamentEnded) {
+              document.getElementById('timerStartBtn').disabled = false;
+              document.getElementById('timerPauseBtn').disabled = !timerRunning;
+              document.getElementById('timerSkipBtn').disabled = false;
+            }
+            
             showMessage(`Undid elimination of ${lastAction.data.name}`);
           }
           break;
@@ -1095,7 +1105,7 @@ Note: Google Sheets integration not available - results not saved automatically.
           rebuys: Math.max(0, rebuys),
           addons,
           roi: player.totalPaid > 0 ? ((earnings - player.totalPaid) / player.totalPaid * 100).toFixed(1) : 0,
-          eliminatedBy: player.eliminatedBy || 'N/A' // New field for tracking eliminations
+          eliminatedBy: player.eliminated ? (player.eliminatedBy || 'N/A') : '' // Only set for eliminated players
         };
         
         playerRecords.push(playerRecord);
@@ -1330,6 +1340,10 @@ Note: Google Sheets integration not available - results not saved automatically.
       const tbody = document.getElementById('playerTableBody');
       tbody.innerHTML = '';
       
+      // Check if we have a winner (only one active player left)
+      const activePlayers = players.filter(p => !p.eliminated);
+      const hasWinner = tournamentStarted && !tournamentEnded && activePlayers.length === 1;
+      
       players.forEach((player, index) => {
         const tr = document.createElement('tr');
         if (player.eliminated) {
@@ -1340,19 +1354,33 @@ Note: Google Sheets integration not available - results not saved automatically.
         if (!tournamentStarted && !tournamentEnded) {
           actions = `<button onclick="removePlayer(${index})">Remove</button>`;
         } else if (tournamentStarted && !tournamentEnded) {
-          // Show eliminate button for active players (including during breaks)
-          if (!player.eliminated) {
-            actions += `<button onclick="eliminatePlayer(${index})">Eliminate</button>`;
-          }
-          
-          // Re-buy available for eliminated players BEFORE final stage (including during break)
-          if (player.eliminated && !isFinalStage) {
-            actions += `<button class="rebuy-btn" onclick="rebuyPlayer(${index})">Re-buy £5</button>`;
-          }
-          
-          // Add-on available for ALL players ONLY during breaks (before final stage) and only once per player
-          if (isBreak && !isFinalStage && !player.hasAddon) {
-            actions += `<button class="addon-btn" onclick="addonPlayer(${index})">Add-on £5</button>`;
+          // If this is the winner, show winner banner
+          if (hasWinner && !player.eliminated) {
+            actions = `<div style="background: linear-gradient(90deg, #ffd700, #ffed4e); 
+                              color: #e65100; 
+                              padding: 8px 16px; 
+                              border-radius: 20px; 
+                              font-weight: bold; 
+                              text-align: center; 
+                              box-shadow: 0 2px 8px rgba(255, 215, 0, 0.4);
+                              border: 2px solid #ffc107;">
+                        🏆 WINNER 🏆
+                      </div>`;
+          } else {
+            // Show eliminate button for active players (including during breaks)
+            if (!player.eliminated) {
+              actions += `<button onclick="eliminatePlayer(${index})">Eliminate</button>`;
+            }
+            
+            // Re-buy available for eliminated players BEFORE final stage (including during break)
+            if (player.eliminated && !isFinalStage) {
+              actions += `<button class="rebuy-btn" onclick="rebuyPlayer(${index})">Re-buy £5</button>`;
+            }
+            
+            // Add-on available for ALL players ONLY during breaks (before final stage) and only once per player
+            if (isBreak && !isFinalStage && !player.hasAddon) {
+              actions += `<button class="addon-btn" onclick="addonPlayer(${index})">Add-on £5</button>`;
+            }
           }
         }
         
@@ -1360,7 +1388,7 @@ Note: Google Sheets integration not available - results not saved automatically.
           <td><strong>${player.name}</strong></td>
           <td>${player.stacks}</td>
           <td>£${player.totalPaid}</td>
-          <td>${player.eliminated ? 'Eliminated' : 'Active'}</td>
+          <td>${player.eliminated ? 'Eliminated' : (hasWinner && !player.eliminated ? 'WINNER' : 'Active')}</td>
           <td>${actions}</td>
         `;
         tbody.appendChild(tr);
@@ -1375,7 +1403,14 @@ Note: Google Sheets integration not available - results not saved automatically.
       
       const activePlayers = players.filter(p => !p.eliminated);
       if (activePlayers.length === 1) {
-        showMessage(`${activePlayers[0].name} is the last player standing! Click "End Tournament" to finish.`);
+        // Stop the timer immediately
+        clearInterval(timer);
+        timerRunning = false;
+        document.getElementById('timerStartBtn').disabled = true;
+        document.getElementById('timerPauseBtn').disabled = true;
+        document.getElementById('timerSkipBtn').disabled = true;
+        
+        showMessage(`${activePlayers[0].name} is the winner! Click "End Tournament" to finish and save results.`);
       }
     }
 
