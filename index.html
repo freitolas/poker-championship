@@ -318,6 +318,110 @@
       margin-bottom: 20px;
     }
     
+    /* Dashboard Tab Styles */
+    .dashboard-tabs {
+      display: flex;
+      border-bottom: 3px solid #ffa726;
+      margin-bottom: 20px;
+      background: #fff3e0;
+      border-radius: 10px 10px 0 0;
+      overflow: hidden;
+    }
+    
+    .dashboard-tab {
+      flex: 1;
+      padding: 15px 20px;
+      background: #ffe0b2;
+      color: #e65100;
+      border: none;
+      font-weight: 700;
+      font-size: 1.1rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border-right: 2px solid #ffa726;
+    }
+    
+    .dashboard-tab:last-child {
+      border-right: none;
+    }
+    
+    .dashboard-tab:hover {
+      background: #ffcc02;
+      transform: translateY(-2px);
+    }
+    
+    .dashboard-tab.active {
+      background: #ff9800;
+      color: white;
+      transform: translateY(-2px);
+      box-shadow: 0 2px 8px rgba(255, 152, 0, 0.4);
+    }
+    
+    .dashboard-tab-content {
+      background: #fff3e0;
+      padding: 25px;
+      border-radius: 0 0 10px 10px;
+      min-height: 400px;
+      box-shadow: 0 4px 12px rgba(255, 152, 0, 0.15);
+    }
+    
+    .dashboard-tab-panel {
+      display: none;
+    }
+    
+    .dashboard-tab-panel.active {
+      display: block;
+    }
+    
+    /* Title Cards Styles */
+    .titles-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+      margin-top: 20px;
+    }
+    
+    .title-card {
+      background: linear-gradient(135deg, #fff3e0 0%, #ffecb3 100%);
+      border: 3px solid #ffa726;
+      border-radius: 15px;
+      padding: 20px;
+      text-align: center;
+      box-shadow: 0 4px 12px rgba(255, 152, 0, 0.2);
+      transition: transform 0.3s ease;
+    }
+    
+    .title-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 20px rgba(255, 152, 0, 0.3);
+    }
+    
+    .title-card-emoji {
+      font-size: 3rem;
+      margin-bottom: 10px;
+      display: block;
+    }
+    
+    .title-card-name {
+      font-size: 1.3rem;
+      font-weight: bold;
+      color: #e65100;
+      margin-bottom: 8px;
+    }
+    
+    .title-card-holder {
+      font-size: 1.8rem;
+      font-weight: 900;
+      color: #d84315;
+      margin-bottom: 8px;
+    }
+    
+    .title-card-stat {
+      font-size: 1.1rem;
+      color: #bf360c;
+      font-weight: 600;
+    }
+    
     .status-message, .error-message {
       background: #e8f5e8;
       border: 2px solid #4caf50;
@@ -1180,7 +1284,7 @@ Note: Google Sheets integration not available - results not saved automatically.
         range: 'PlayerResults!A:L'  // Updated to include EliminatedBy column
       }).then(response => {
         const rows = response.result.values || [];
-        buildDashboardFromPlayerRows(rows);
+        buildDashboardWithTabs(rows);
         showMessage('Championship dashboard loaded!');
       }).catch(error => {
         showMessage('Failed to load dashboard data', true);
@@ -1188,53 +1292,88 @@ Note: Google Sheets integration not available - results not saved automatically.
       });
     }
 
-    function buildDashboardFromPlayerRows(rows) {
-      console.log('Building dashboard from player rows:', rows);
+    function buildDashboardWithTabs(rows) {
+      const section = document.getElementById('chartsSection');
+      
+      if (!rows || rows.length <= 1) {
+        section.innerHTML = '<h3>Championship Dashboard</h3><p>No tournament data found to display.</p>';
+        return;
+      }
+      
+      // Calculate player stats (reuse existing logic)
+      const stats = calculatePlayerStats(rows);
+      
+      section.innerHTML = `
+        <h3>Championship Dashboard</h3>
+        <div class="dashboard-tabs">
+          <button class="dashboard-tab active" onclick="switchDashboardTab('overview')">📊 Overview</button>
+          <button class="dashboard-tab" onclick="switchDashboardTab('titles')">🏆 Titles</button>
+          <button class="dashboard-tab" onclick="switchDashboardTab('stats')">📈 Detailed Stats</button>
+        </div>
+        <div class="dashboard-tab-content">
+          <div id="overview-panel" class="dashboard-tab-panel active">
+            ${buildOverviewPanel(stats)}
+          </div>
+          <div id="titles-panel" class="dashboard-tab-panel">
+            ${buildTitlesPanel(stats)}
+          </div>
+          <div id="stats-panel" class="dashboard-tab-panel">
+            ${buildStatsPanel(stats)}
+          </div>
+        </div>
+      `;
+    }
+
+    // Add tab switching function to global scope
+    window.switchDashboardTab = function(tabName) {
+      // Remove active class from all tabs and panels
+      document.querySelectorAll('.dashboard-tab').forEach(tab => tab.classList.remove('active'));
+      document.querySelectorAll('.dashboard-tab-panel').forEach(panel => panel.classList.remove('active'));
+      
+      // Add active class to selected tab and panel
+      event.target.classList.add('active');
+      document.getElementById(tabName + '-panel').classList.add('active');
+    };
+
+    function calculatePlayerStats(rows) {
       const stats = {};
       
       // Skip header row if it exists
       const dataRows = rows.length > 0 && rows[0][0] === 'Date' ? rows.slice(1) : rows;
-      console.log('Data rows after header filter:', dataRows);
       
       dataRows.forEach((row, index) => {
-        if (row.length < 8) {
-          console.log('Skipping incomplete row', index + 1, ':', row);
-          return;
-        }
+        if (row.length < 8) return;
         
-        // Expected format: [Date, Time, TournamentID, PlayerName, Position, FieldSize, AmountPaid, Earnings, Rebuys, Addons, ROI, EliminatedBy]
-        const [date, time, tournamentId, playerName, position, fieldSize, amountPaid, earnings, rebuys, addons, roi] = row;
+        const [date, time, tournamentId, playerName, position, fieldSize, amountPaid, earnings, rebuys, addons, roi, eliminatedBy] = row;
         
-        if (!playerName) {
-          console.log('No player name in row', index + 1);
-          return;
-        }
+        if (!playerName) return;
         
         const player = playerName.trim();
         
-        // Initialize player stats if first time seeing them
+        // Initialize player stats
         if (!stats[player]) {
           stats[player] = {
             played: 0,
-            wins: 0, // Gold medals
-            seconds: 0, // Silver medals
+            wins: 0,
+            seconds: 0,
+            thirds: 0, // Track 3rd places for bubble boy
             totalEarnings: 0,
             totalSpent: 0,
             totalRebuys: 0,
             totalAddons: 0,
             bestFinish: 999,
-            worstFinish: 0,
-            avgROI: 0,
+            eliminations: 0, // Track how many people this player eliminated
+            firstOuts: 0, // Track first eliminations
             cashes: 0
           };
         }
         
-        // Parse numerical values
         const pos = parseInt(position) || 999;
         const paid = parseFloat(amountPaid) || 0;
         const earned = parseFloat(earnings) || 0;
         const rebuyCount = parseInt(rebuys) || 0;
         const addonCount = parseInt(addons) || 0;
+        const fieldSize = parseInt(fieldSize) || 0;
         
         // Update player statistics
         stats[player].played++;
@@ -1243,100 +1382,245 @@ Note: Google Sheets integration not available - results not saved automatically.
         stats[player].totalRebuys += rebuyCount;
         stats[player].totalAddons += addonCount;
         
-        // Track medal positions
-        if (pos === 1) stats[player].wins++; // Gold medal
-        if (pos === 2) stats[player].seconds++; // Silver medal
-        if (pos <= 2) stats[player].cashes++; // Made money
+        // Track positions
+        if (pos === 1) stats[player].wins++;
+        if (pos === 2) stats[player].seconds++;
+        if (pos === 3) stats[player].thirds++; // Track 3rd place for bubble boy
+        if (pos <= 2) stats[player].cashes++;
+        if (pos === fieldSize) stats[player].firstOuts++; // Last position = first out
         
-        // Best and worst finishes
         if (pos < stats[player].bestFinish) stats[player].bestFinish = pos;
-        if (pos > stats[player].worstFinish) stats[player].worstFinish = pos;
         
-        console.log(`Processed ${player}: Position ${pos}, Earned £${earned}, Spent £${paid}`);
+        // Track eliminations caused by this player
+        if (eliminatedBy && eliminatedBy === player) {
+          if (!stats[eliminatedBy]) {
+            stats[eliminatedBy] = {
+              played: 0, wins: 0, seconds: 0, totalEarnings: 0, totalSpent: 0,
+              totalRebuys: 0, totalAddons: 0, bestFinish: 999, eliminations: 0,
+              firstOuts: 0, cashes: 0
+            };
+          }
+          stats[eliminatedBy].eliminations++;
+        }
       });
       
-      // Calculate derived statistics
+      // Calculate derived stats
       Object.keys(stats).forEach(player => {
         const s = stats[player];
         s.avgROI = s.totalSpent > 0 ? ((s.totalEarnings - s.totalSpent) / s.totalSpent * 100).toFixed(1) : '0.0';
-        s.avgEarnings = s.played > 0 ? (s.totalEarnings / s.played).toFixed(2) : '0.00';
         s.winRate = s.played > 0 ? ((s.wins / s.played) * 100).toFixed(1) : '0.0';
         s.cashRate = s.played > 0 ? ((s.cashes / s.played) * 100).toFixed(1) : '0.0';
+        s.phoenixCount = s.totalRebuys + s.totalAddons; // Total second chances
         if (s.bestFinish === 999) s.bestFinish = 'N/A';
       });
       
-      console.log('Final player statistics:', stats);
-      
-      const section = document.getElementById('chartsSection');
-      
-      if (Object.keys(stats).length === 0) {
-        section.innerHTML = '<h3>Championship Leaderboard</h3><p>No tournament data found to display.</p>';
-        return;
-      }
-      
-      section.innerHTML = '<h3>Annual Championship Leaderboard</h3>';
-      
-      const table = document.createElement('table');
-      table.innerHTML = `
-        <thead>
-          <tr>
-            <th>Rank</th>
-            <th>Player</th>
-            <th>🥇 Wins</th>
-            <th>🥈 2nd Place</th>
-            <th>Tournaments</th>
-            <th>Cash Rate</th>
-            <th>Total Earnings</th>
-            <th>Total Spent</th>
-            <th>Net Profit</th>
-            <th>ROI</th>
-          </tr>
-        </thead>
-      `;
-      
-      const tbody = document.createElement('tbody');
-      
-      // Olympic-style sorting: Gold medals first, then silver medals, then attendance
+      return stats;
+    }
+
+    function buildOverviewPanel(stats) {
+      // Olympic-style sorting for leaderboard
       const sortedStats = Object.entries(stats)
         .sort((a, b) => {
-          // Primary: Gold medals (wins)
-          if (b[1].wins !== a[1].wins) {
-            return b[1].wins - a[1].wins;
-          }
-          // Secondary: Silver medals (seconds)
-          if (b[1].seconds !== a[1].seconds) {
-            return b[1].seconds - a[1].seconds;
-          }
-          // Tiebreaker: Tournament attendance
+          if (b[1].wins !== a[1].wins) return b[1].wins - a[1].wins;
+          if (b[1].seconds !== a[1].seconds) return b[1].seconds - a[1].seconds;
           return b[1].played - a[1].played;
         });
       
+      let html = '<h4>Championship Leaderboard</h4>';
+      html += `
+        <table>
+          <thead>
+            <tr>
+              <th>Rank</th>
+              <th>Player</th>
+              <th>🥇 Wins</th>
+              <th>🥈 2nd</th>
+              <th>Tournaments</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+      
       if (sortedStats.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="10">No valid player data available</td></tr>';
+        html += '<tr><td colspan="5">No tournament data available</td></tr>';
       } else {
         sortedStats.forEach(([name, s], index) => {
-          const netProfit = s.totalEarnings - s.totalSpent;
-          const tr = document.createElement('tr');
-          tr.innerHTML = `
-            <td><strong>${index + 1}</strong></td>
-            <td><strong>${name}</strong></td>
-            <td style="text-align: center;">${s.wins}</td>
-            <td style="text-align: center;">${s.seconds}</td>
-            <td style="text-align: center;">${s.played}</td>
-            <td style="text-align: center;">${s.cashRate}%</td>
-            <td>£${s.totalEarnings.toFixed(2)}</td>
-            <td>£${s.totalSpent.toFixed(2)}</td>
-            <td style="color: ${netProfit >= 0 ? '#4caf50' : '#f44336'}">£${netProfit.toFixed(2)}</td>
-            <td style="color: ${s.avgROI >= 0 ? '#4caf50' : '#f44336'}">${s.avgROI}%</td>
+          html += `
+            <tr>
+              <td><strong>${index + 1}</strong></td>
+              <td><strong>${name}</strong></td>
+              <td style="text-align: center; font-size: 1.2em;">${s.wins}</td>
+              <td style="text-align: center; font-size: 1.2em;">${s.seconds}</td>
+              <td style="text-align: center;">${s.played}</td>
+            </tr>
           `;
-          tbody.appendChild(tr);
         });
       }
       
-      table.appendChild(tbody);
-      section.appendChild(table);
+      html += '</tbody></table>';
+      return html;
+    }
+
+    function buildTitlesPanel(stats) {
+      const titles = calculateTitles(stats);
       
-      console.log('Olympic-style championship leaderboard built with', sortedStats.length, 'players');
+      let html = '<h4>Championship Title Holders</h4>';
+      html += '<div class="titles-grid">';
+      
+      titles.forEach(title => {
+        html += `
+          <div class="title-card">
+            <span class="title-card-emoji">${title.emoji}</span>
+            <div class="title-card-name">${title.name}</div>
+            <div class="title-card-holder">${title.holder}</div>
+            <div class="title-card-stat">${title.stat}</div>
+          </div>
+        `;
+      });
+      
+      html += '</div>';
+      return html;
+    }
+
+    function buildStatsPanel(stats) {
+      const sortedStats = Object.entries(stats)
+        .sort((a, b) => {
+          if (b[1].wins !== a[1].wins) return b[1].wins - a[1].wins;
+          if (b[1].seconds !== a[1].seconds) return b[1].seconds - a[1].seconds;
+          return b[1].played - a[1].played;
+        });
+      
+      let html = '<h4>Detailed Player Statistics</h4>';
+      html += `
+        <table>
+          <thead>
+            <tr>
+              <th>Rank</th>
+              <th>Player</th>
+              <th>🥇 Wins</th>
+              <th>🥈 2nd</th>
+              <th>Tournaments</th>
+              <th>Cash Rate</th>
+              <th>Win Rate</th>
+              <th>Rebuys</th>
+              <th>Add-ons</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+      
+      if (sortedStats.length === 0) {
+        html += '<tr><td colspan="9">No tournament data available</td></tr>';
+      } else {
+        sortedStats.forEach(([name, s], index) => {
+          html += `
+            <tr>
+              <td><strong>${index + 1}</strong></td>
+              <td><strong>${name}</strong></td>
+              <td style="text-align: center;">${s.wins}</td>
+              <td style="text-align: center;">${s.seconds}</td>
+              <td style="text-align: center;">${s.played}</td>
+              <td style="text-align: center;">${s.cashRate}%</td>
+              <td style="text-align: center;">${s.winRate}%</td>
+              <td style="text-align: center;">${s.totalRebuys}</td>
+              <td style="text-align: center;">${s.totalAddons}</td>
+            </tr>
+          `;
+        });
+      }
+      
+      html += '</tbody></table>';
+      return html;
+    }
+
+    function calculateTitles(stats) {
+      const sortedByWins = Object.entries(stats).sort((a, b) => b[1].wins - a[1].wins);
+      const sortedBySeconds = Object.entries(stats).sort((a, b) => b[1].seconds - a[1].seconds);
+      const sortedByEarnings = Object.entries(stats).sort((a, b) => (b[1].totalEarnings - b[1].totalSpent) - (a[1].totalEarnings - a[1].totalSpent));
+      const sortedByAttendance = Object.entries(stats).filter(([name]) => name !== 'Rafa').sort((a, b) => b[1].played - a[1].played);
+      const sortedByEliminations = Object.entries(stats).sort((a, b) => b[1].eliminations - a[1].eliminations);
+      const sortedByFirstOuts = Object.entries(stats).sort((a, b) => b[1].firstOuts - a[1].firstOuts);
+      const sortedByPhoenix = Object.entries(stats).sort((a, b) => b[1].phoenixCount - a[1].phoenixCount);
+      const sortedByBubbles = Object.entries(stats).sort((a, b) => b[1].thirds - a[1].thirds);
+      
+      const titles = [];
+      
+      if (sortedByWins.length > 0 && sortedByWins[0][1].wins > 0) {
+        titles.push({
+          emoji: '👑',
+          name: 'The Champion',
+          holder: sortedByWins[0][0],
+          stat: `${sortedByWins[0][1].wins} tournament wins`
+        });
+      }
+      
+      if (sortedBySeconds.length > 0 && sortedBySeconds[0][1].seconds > 0) {
+        titles.push({
+          emoji: '🥈',
+          name: 'The Runner-up',
+          holder: sortedBySeconds[0][0],
+          stat: `${sortedBySeconds[0][1].seconds} second places`
+        });
+      }
+      
+      if (sortedByEarnings.length > 0) {
+        const profit = sortedByEarnings[0][1].totalEarnings - sortedByEarnings[0][1].totalSpent;
+        if (profit > 0) {
+          titles.push({
+            emoji: '💰',
+            name: 'Elon Musk',
+            holder: sortedByEarnings[0][0],
+            stat: `£${profit.toFixed(2)} profit`
+          });
+        }
+      }
+      
+      if (sortedByAttendance.length > 0) {
+        titles.push({
+          emoji: '🏠',
+          name: 'The Permanent Fixture',
+          holder: sortedByAttendance[0][0],
+          stat: `${sortedByAttendance[0][1].played} tournaments`
+        });
+      }
+      
+      if (sortedByEliminations.length > 0 && sortedByEliminations[0][1].eliminations > 0) {
+        titles.push({
+          emoji: '💀',
+          name: 'The Killer',
+          holder: sortedByEliminations[0][0],
+          stat: `${sortedByEliminations[0][1].eliminations} eliminations`
+        });
+      }
+      
+      if (sortedByFirstOuts.length > 0 && sortedByFirstOuts[0][1].firstOuts > 0) {
+        titles.push({
+          emoji: '🐦',
+          name: 'The Early Bird',
+          holder: sortedByFirstOuts[0][0],
+          stat: `${sortedByFirstOuts[0][1].firstOuts} first eliminations`
+        });
+      }
+      
+      if (sortedByPhoenix.length > 0 && sortedByPhoenix[0][1].phoenixCount > 0) {
+        titles.push({
+          emoji: '🔥',
+          name: 'The Phoenix',
+          holder: sortedByPhoenix[0][0],
+          stat: `${sortedByPhoenix[0][1].phoenixCount} second chances`
+        });
+      }
+      
+      if (sortedByBubbles.length > 0 && sortedByBubbles[0][1].thirds > 0) {
+        titles.push({
+          emoji: '🫧',
+          name: 'Bubble Boy',
+          holder: sortedByBubbles[0][0],
+          stat: `${sortedByBubbles[0][1].thirds} third place finishes`
+        });
+      }
+      
+      return titles;
     }
 
     // Player management
