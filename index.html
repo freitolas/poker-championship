@@ -1373,7 +1373,7 @@ Note: Google Sheets integration not available - results not saved automatically.
         const earned = parseFloat(earnings) || 0;
         const rebuyCount = parseInt(rebuys) || 0;
         const addonCount = parseInt(addons) || 0;
-        const fieldSize = parseInt(fieldSize) || 0;
+        const field = parseInt(fieldSize) || 0; // Changed variable name to avoid conflict
         
         // Update player statistics
         stats[player].played++;
@@ -1387,7 +1387,7 @@ Note: Google Sheets integration not available - results not saved automatically.
         if (pos === 2) stats[player].seconds++;
         if (pos === 3) stats[player].thirds++; // Track 3rd place for bubble boy
         if (pos <= 2) stats[player].cashes++;
-        if (pos === fieldSize) stats[player].firstOuts++; // Last position = first out
+        if (pos === field) stats[player].firstOuts++; // Last position = first out
         
         if (pos < stats[player].bestFinish) stats[player].bestFinish = pos;
         
@@ -1395,7 +1395,7 @@ Note: Google Sheets integration not available - results not saved automatically.
         if (eliminatedBy && eliminatedBy === player) {
           if (!stats[eliminatedBy]) {
             stats[eliminatedBy] = {
-              played: 0, wins: 0, seconds: 0, totalEarnings: 0, totalSpent: 0,
+              played: 0, wins: 0, seconds: 0, thirds: 0, totalEarnings: 0, totalSpent: 0,
               totalRebuys: 0, totalAddons: 0, bestFinish: 999, eliminations: 0,
               firstOuts: 0, cashes: 0
             };
