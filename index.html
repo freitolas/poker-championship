@@ -1202,7 +1202,7 @@ Note: Google Sheets integration not available - results not saved automatically.
           return;
         }
         
-        // Expected format: [Date, Time, TournamentID, PlayerName, Position, FieldSize, AmountPaid, Earnings, Rebuys, Addons, ROI]
+        // Expected format: [Date, Time, TournamentID, PlayerName, Position, FieldSize, AmountPaid, Earnings, Rebuys, Addons, ROI, EliminatedBy]
         const [date, time, tournamentId, playerName, position, fieldSize, amountPaid, earnings, rebuys, addons, roi] = row;
         
         if (!playerName) {
@@ -1216,9 +1216,8 @@ Note: Google Sheets integration not available - results not saved automatically.
         if (!stats[player]) {
           stats[player] = {
             played: 0,
-            wins: 0,
-            seconds: 0,
-            thirds: 0,
+            wins: 0, // Gold medals
+            seconds: 0, // Silver medals
             totalEarnings: 0,
             totalSpent: 0,
             totalRebuys: 0,
@@ -1226,8 +1225,7 @@ Note: Google Sheets integration not available - results not saved automatically.
             bestFinish: 999,
             worstFinish: 0,
             avgROI: 0,
-            cashes: 0,
-            bubbles: 0
+            cashes: 0
           };
         }
         
@@ -1237,7 +1235,6 @@ Note: Google Sheets integration not available - results not saved automatically.
         const earned = parseFloat(earnings) || 0;
         const rebuyCount = parseInt(rebuys) || 0;
         const addonCount = parseInt(addons) || 0;
-        const field = parseInt(fieldSize) || 0;
         
         // Update player statistics
         stats[player].played++;
@@ -1246,12 +1243,10 @@ Note: Google Sheets integration not available - results not saved automatically.
         stats[player].totalRebuys += rebuyCount;
         stats[player].totalAddons += addonCount;
         
-        // Track finish positions
-        if (pos === 1) stats[player].wins++;
-        if (pos === 2) stats[player].seconds++;
-        if (pos === 3) stats[player].thirds++;
+        // Track medal positions
+        if (pos === 1) stats[player].wins++; // Gold medal
+        if (pos === 2) stats[player].seconds++; // Silver medal
         if (pos <= 2) stats[player].cashes++; // Made money
-        if (pos === 3 && field >= 4) stats[player].bubbles++; // 3rd in 4+ player field
         
         // Best and worst finishes
         if (pos < stats[player].bestFinish) stats[player].bestFinish = pos;
@@ -1275,7 +1270,7 @@ Note: Google Sheets integration not available - results not saved automatically.
       const section = document.getElementById('chartsSection');
       
       if (Object.keys(stats).length === 0) {
-        section.innerHTML = '<h3>Championship Dashboard</h3><p>No tournament data found to display.</p>';
+        section.innerHTML = '<h3>Championship Leaderboard</h3><p>No tournament data found to display.</p>';
         return;
       }
       
@@ -1287,43 +1282,52 @@ Note: Google Sheets integration not available - results not saved automatically.
           <tr>
             <th>Rank</th>
             <th>Player</th>
-            <th>Played</th>
-            <th>Wins</th>
-            <th>2nd</th>
-            <th>3rd</th>
+            <th>🥇 Wins</th>
+            <th>🥈 2nd Place</th>
+            <th>Tournaments</th>
             <th>Cash Rate</th>
             <th>Total Earnings</th>
             <th>Total Spent</th>
             <th>Net Profit</th>
             <th>ROI</th>
-            <th>Best Finish</th>
           </tr>
         </thead>
       `;
       
       const tbody = document.createElement('tbody');
+      
+      // Olympic-style sorting: Gold medals first, then silver medals, then attendance
       const sortedStats = Object.entries(stats)
-        .sort((a, b) => (b[1].totalEarnings - b[1].totalSpent) - (a[1].totalEarnings - a[1].totalSpent)); // Sort by net profit
+        .sort((a, b) => {
+          // Primary: Gold medals (wins)
+          if (b[1].wins !== a[1].wins) {
+            return b[1].wins - a[1].wins;
+          }
+          // Secondary: Silver medals (seconds)
+          if (b[1].seconds !== a[1].seconds) {
+            return b[1].seconds - a[1].seconds;
+          }
+          // Tiebreaker: Tournament attendance
+          return b[1].played - a[1].played;
+        });
       
       if (sortedStats.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="12">No valid player data available</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="10">No valid player data available</td></tr>';
       } else {
         sortedStats.forEach(([name, s], index) => {
           const netProfit = s.totalEarnings - s.totalSpent;
           const tr = document.createElement('tr');
           tr.innerHTML = `
-            <td>${index + 1}</td>
+            <td><strong>${index + 1}</strong></td>
             <td><strong>${name}</strong></td>
-            <td>${s.played}</td>
-            <td>${s.wins}</td>
-            <td>${s.seconds}</td>
-            <td>${s.thirds}</td>
-            <td>${s.cashRate}%</td>
+            <td style="text-align: center;">${s.wins}</td>
+            <td style="text-align: center;">${s.seconds}</td>
+            <td style="text-align: center;">${s.played}</td>
+            <td style="text-align: center;">${s.cashRate}%</td>
             <td>£${s.totalEarnings.toFixed(2)}</td>
             <td>£${s.totalSpent.toFixed(2)}</td>
             <td style="color: ${netProfit >= 0 ? '#4caf50' : '#f44336'}">£${netProfit.toFixed(2)}</td>
-            <td>${s.avgROI}%</td>
-            <td>${s.bestFinish}</td>
+            <td style="color: ${s.avgROI >= 0 ? '#4caf50' : '#f44336'}">${s.avgROI}%</td>
           `;
           tbody.appendChild(tr);
         });
@@ -1332,7 +1336,7 @@ Note: Google Sheets integration not available - results not saved automatically.
       table.appendChild(tbody);
       section.appendChild(table);
       
-      console.log('Advanced dashboard built successfully with', sortedStats.length, 'players');
+      console.log('Olympic-style championship leaderboard built with', sortedStats.length, 'players');
     }
 
     // Player management
@@ -1402,15 +1406,24 @@ Note: Google Sheets integration not available - results not saved automatically.
       if (!tournamentStarted || tournamentEnded) return;
       
       const activePlayers = players.filter(p => !p.eliminated);
+      
       if (activePlayers.length === 1) {
         // Stop the timer immediately
-        clearInterval(timer);
+        if (timer) {
+          clearInterval(timer);
+        }
         timerRunning = false;
+        
         document.getElementById('timerStartBtn').disabled = true;
         document.getElementById('timerPauseBtn').disabled = true;
         document.getElementById('timerSkipBtn').disabled = true;
         
-        showMessage(`${activePlayers[0].name} is the winner! Click "End Tournament" to finish and save results.`);
+        showMessage(`🏆 ${activePlayers[0].name} is the winner! Click "End Tournament" to finish and save results.`);
+        
+        // Force table update to show winner state
+        setTimeout(() => {
+          updatePlayerTable();
+        }, 100);
       }
     }
 
@@ -1590,6 +1603,7 @@ Note: Google Sheets integration not available - results not saved automatically.
       // Clean up dialog
       cancelElimination();
       
+      // Update table and check for winner
       updatePlayerTable();
       
       const eliminationMsg = eliminatedBy === 'N/A' ? 
@@ -1597,6 +1611,12 @@ Note: Google Sheets integration not available - results not saved automatically.
         `${player.name} eliminated by ${eliminatedBy} (${position}${getSuffix(position)} place)`;
       
       showMessage(eliminationMsg);
+      
+      // Force winner check after a brief delay to ensure table is updated
+      setTimeout(() => {
+        console.log('Forcing winner check after elimination...');
+        checkForWinner();
+      }, 200);
     };
 
     window.cancelElimination = function() {
