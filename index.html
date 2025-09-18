@@ -1094,7 +1094,8 @@ Note: Google Sheets integration not available - results not saved automatically.
           earnings,
           rebuys: Math.max(0, rebuys),
           addons,
-          roi: player.totalPaid > 0 ? ((earnings - player.totalPaid) / player.totalPaid * 100).toFixed(1) : 0
+          roi: player.totalPaid > 0 ? ((earnings - player.totalPaid) / player.totalPaid * 100).toFixed(1) : 0,
+          eliminatedBy: player.eliminatedBy || 'N/A' // New field for tracking eliminations
         };
         
         playerRecords.push(playerRecord);
@@ -1141,14 +1142,15 @@ Note: Google Sheets integration not available - results not saved automatically.
         record.earnings,
         record.rebuys,
         record.addons,
-        record.roi
+        record.roi,
+        record.eliminatedBy
       ]);
       
       console.log('Rows to export:', rows);
       
       gapi.client.sheets.spreadsheets.values.append({
         spreadsheetId: SPREADSHEET_ID,
-        range: 'PlayerResults!A:K',
+        range: 'PlayerResults!A:L', // Updated to include new EliminatedBy column
         valueInputOption: 'USER_ENTERED',
         resource: {
           values: rows
@@ -1165,10 +1167,10 @@ Note: Google Sheets integration not available - results not saved automatically.
     function loadDashboard() {
       gapi.client.sheets.spreadsheets.values.get({
         spreadsheetId: SPREADSHEET_ID,
-        range: 'PlayerResults!A:K'  // Fixed: Use PlayerResults sheet with all columns
+        range: 'PlayerResults!A:L'  // Updated to include EliminatedBy column
       }).then(response => {
         const rows = response.result.values || [];
-        buildDashboardFromPlayerRows(rows);  // Fixed: Use correct function name
+        buildDashboardFromPlayerRows(rows);
         showMessage('Championship dashboard loaded!');
       }).catch(error => {
         showMessage('Failed to load dashboard data', true);
@@ -1462,24 +1464,116 @@ Note: Google Sheets integration not available - results not saved automatically.
       
       const player = players[index];
       
+      // Get list of all players (including eliminated ones) for the elimination dropdown
+      const availablePlayers = players.map(p => p.name);
+      
+      // Create dropdown for who eliminated this player
+      const eliminatorOptions = availablePlayers
+        .filter(name => name !== player.name) // Can't eliminate yourself
+        .map(name => `<option value="${name}">${name}</option>`)
+        .join('');
+      
+      const eliminatorHtml = `
+        <div style="margin: 10px 0;">
+          <label for="eliminatorSelect">Who eliminated ${player.name}?</label><br>
+          <select id="eliminatorSelect" style="padding: 5px; margin: 5px 0; width: 200px;">
+            <option value="N/A">N/A (Self-elimination/Split pot)</option>
+            ${eliminatorOptions}
+          </select>
+        </div>
+      `;
+      
+      // Show a custom dialog for elimination
+      const eliminationDialog = document.createElement('div');
+      eliminationDialog.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: white;
+        border: 3px solid #ffa726;
+        border-radius: 10px;
+        padding: 20px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        z-index: 1000;
+        text-align: center;
+      `;
+      
+      eliminationDialog.innerHTML = `
+        <h3 style="color: #e65100; margin-top: 0;">Eliminate ${player.name}</h3>
+        ${eliminatorHtml}
+        <div style="margin-top: 15px;">
+          <button onclick="confirmElimination(${index})" style="margin: 5px; background: #f44336; color: white;">Confirm Elimination</button>
+          <button onclick="cancelElimination()" style="margin: 5px;">Cancel</button>
+        </div>
+      `;
+      
+      // Add backdrop
+      const backdrop = document.createElement('div');
+      backdrop.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.5);
+        z-index: 999;
+      `;
+      backdrop.onclick = () => cancelElimination();
+      
+      document.body.appendChild(backdrop);
+      document.body.appendChild(eliminationDialog);
+      
+      // Store references for cleanup
+      window.currentEliminationDialog = eliminationDialog;
+      window.currentEliminationBackdrop = backdrop;
+    }
+
+    // Add these new global functions
+    window.confirmElimination = function(index) {
+      const player = players[index];
+      const eliminatorSelect = document.getElementById('eliminatorSelect');
+      const eliminatedBy = eliminatorSelect.value;
+      
       // Get the current timestamp for elimination order
       player.eliminationTime = Date.now();
       
       recordAction('eliminate', {
         name: player.name,
         previousEliminated: player.eliminated,
-        previousEliminationTime: player.eliminationTime
+        previousEliminationTime: player.eliminationTime,
+        eliminatedBy: eliminatedBy
       });
       
       player.eliminated = true;
+      player.eliminatedBy = eliminatedBy; // Store who eliminated them
       
       // Calculate current position based on how many are left
       const remainingPlayers = players.filter(p => !p.eliminated).length;
       const position = remainingPlayers + 1; // +1 because this player just got eliminated
       
+      // Clean up dialog
+      cancelElimination();
+      
       updatePlayerTable();
-      showMessage(`${player.name} eliminated from tournament (${position}${getSuffix(position)} place)`);
-    }
+      
+      const eliminationMsg = eliminatedBy === 'N/A' ? 
+        `${player.name} eliminated from tournament (${position}${getSuffix(position)} place)` :
+        `${player.name} eliminated by ${eliminatedBy} (${position}${getSuffix(position)} place)`;
+      
+      showMessage(eliminationMsg);
+    };
+
+    window.cancelElimination = function() {
+      if (window.currentEliminationDialog) {
+        document.body.removeChild(window.currentEliminationDialog);
+        window.currentEliminationDialog = null;
+      }
+      if (window.currentEliminationBackdrop) {
+        document.body.removeChild(window.currentEliminationBackdrop);
+        window.currentEliminationBackdrop = null;
+      }
+    };
 
     function getSuffix(num) {
       if (num % 10 === 1 && num % 100 !== 11) return 'st';
