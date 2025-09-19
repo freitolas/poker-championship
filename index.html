@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Texas Hold'em Championship Manager</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8IS0tIEZhY2UgLS0+CiAgPGNpcmNsZSBjeD0iMzIiIGN5PSIzNSIgcj0iMjAiIGZpbGw9IiNGRkRCQjMiIHN0cm9rZT0iI0ZGOTgwMCIgc3Ryb2tlLXdpZHRoPSIyIi8+CiAgCiAgPCEtLSBIYWlyIC0tPgogIDxwYXRoIGQ9Ik0xNSAyNUMxNSAyNSAyMCAxNSAzMiAxNVM0OSAxNSA0OSAyNUw0NSAzMEw0MCAyMkwzNiAxOEwzMiAxNkwyOCAxOEwyNCAyMkwxOSAzMEwxNSAyNVoiIGZpbGw9InVybCgjZ3JhZGllbnQpIi8+CiAgCiAgPCEtLSBFeWVzIC0tPgogIDxjaXJjbGUgY3g9IjI2IiBjeT0iMzAiIHI9IjMiIGZpbGw9IndoaXRlIi8+CiAgPGNpcmNsZSBjeD0iMzgiIGN5PSIzMCIgcj0iMyIgZmlsbD0id2hpdGUiLz4KICA8Y2lyY2xlIGN4PSIyNiIgY3k9IjMwIiByPSIxLjUiIGZpbGw9ImJsYWNrIi8+CiAgPGNpcmNsZSBjeD0iMzgiIGN5PSIzMCIgcj0iMS41IiBmaWxsPSJibGFjayIvPgogIAogIDwhLS0gTm9zZSAtLT4KICA8ZWxsaXBzZSBjeD0iMzIiIGN5PSIzNiIgcng9IjIiIHJ5PSIzIiBmaWxsPSIjRkY5ODAwIi8+CiAgCiAgPCEtLSBNb3V0aCAtLT4KICA8cGF0aCBkPSJNMjQgNDJDMjQgNDIgMjggNDYgMzIgNDZTNDAgNDIgNDAgNDIiIHN0cm9rZT0iYmxhY2siIHN0cm9rZS13aWR0aD0iMiIgZmlsbD0ibm9uZSIvPgogIAogIDxkZWZzPgogICAgPGxpbmVhckdyYWRpZW50IGlkPSJncmFkaWVudCIgeDE9IjAiIHkxPSIwIiB4Mj0iMSIgeTI9IjEiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjRkZEQjQwIi8+CiAgICAgIDxzdG9wIG9mZnNldD0iNTAlIiBzdG9wLWNvbG9yPSIjRkZBNzI2Ii8+CiAgICAgIDxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iI0ZGOTgwMCIvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICA8L2RlZnM+Cjwvc3ZnPg==">
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script src="https://apis.google.com/js/api.js"></script>
   <style>
@@ -34,6 +35,27 @@
       font-size: 2.2rem;
       margin-bottom: 15px;
       text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+      position: relative;
+    }
+    
+    h1::before {
+      content: "♠";
+      position: absolute;
+      left: -40px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #d84315;
+      font-size: 1.8rem;
+    }
+    
+    h1::after {
+      content: "♥";
+      position: absolute;
+      right: -40px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #d84315;
+      font-size: 1.8rem;
     }
     
     .game-info {
@@ -45,6 +67,25 @@
       font-weight: 700;
       margin-bottom: 20px;
       box-shadow: 0 2px 8px rgba(255, 152, 0, 0.2);
+      position: relative;
+    }
+    
+    .game-info::before {
+      content: "🎰";
+      position: absolute;
+      left: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 1.5rem;
+    }
+    
+    .game-info::after {
+      content: "🃏";
+      position: absolute;
+      right: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 1.5rem;
     }
     
     .player-setup {
@@ -211,6 +252,25 @@
       color: #e65100;
       margin-bottom: 20px;
       text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+      position: relative;
+    }
+    
+    .timer-header::before {
+      content: "⏰";
+      position: absolute;
+      left: -50px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 2rem;
+    }
+    
+    .timer-header::after {
+      content: "⏱️";
+      position: absolute;
+      right: -50px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 2rem;
     }
     
     .round-info {
