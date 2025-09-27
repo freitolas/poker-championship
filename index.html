@@ -1183,21 +1183,63 @@ Note: Google Sheets integration not available - results not saved automatically.
     }
 
     function signInAndLoadDashboard() {
+      console.log('signInAndLoadDashboard called, googleApiReady:', googleApiReady);
+      
       if (!googleApiReady) {
         showMessage('Google API not ready', true);
         return;
       }
       
-      const authInstance = gapi.auth2.getAuthInstance();
-      if (authInstance.isSignedIn.get()) {
-        loadDashboard();
+      // For Google Identity Services approach
+      if (window.tokenClient) {
+        console.log('Requesting access token for dashboard via GIS...');
+        
+        // Set up the callback for this specific request
+        window.tokenClient.callback = (response) => {
+          console.log('Dashboard token response received:', response);
+          if (response.access_token) {
+            console.log('Access token received, loading dashboard...');
+            gapi.client.setToken(response);
+            updateSigninStatus(true);
+            loadDashboard();
+          } else {
+            console.error('No access token in response');
+            showMessage('Authentication failed', true);
+          }
+        };
+        
+        try {
+          // Request access token with user interaction
+          window.tokenClient.requestAccessToken({ prompt: 'consent' });
+        } catch (error) {
+          console.error('Error requesting access token:', error);
+          showMessage('Sign-in failed - please check popup blockers', true);
+        }
+        return;
+      }
+      
+      // Fallback for legacy auth (if available)
+      if (window.gapi && gapi.auth2) {
+        const authInstance = gapi.auth2.getAuthInstance();
+        if (authInstance) {
+          if (authInstance.isSignedIn.get()) {
+            loadDashboard();
+          } else {
+            authInstance.signIn({ 
+              prompt: 'consent',
+              ux_mode: 'popup'
+            }).then(() => {
+              loadDashboard();
+            }).catch(error => {
+              showMessage('Sign-in failed - please check popup blockers', true);
+              console.error('Sign-in error:', error);
+            });
+          }
+        } else {
+          showMessage('Google authentication not properly initialized', true);
+        }
       } else {
-        authInstance.signIn().then(() => {
-          loadDashboard();
-        }).catch(error => {
-          showMessage('Sign-in failed', true);
-          console.error('Sign-in error:', error);
-        });
+        showMessage('Google authentication not available', true);
       }
     }
 
