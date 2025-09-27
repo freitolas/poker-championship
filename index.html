@@ -1440,87 +1440,109 @@ Note: Google Sheets integration not available - results not saved automatically.
       document.getElementById(tabName + '-panel').classList.add('active');
     };
 
-    function calculatePlayerStats(rows) {
-      const stats = {};
-      
-      // Skip header row if it exists
-      const dataRows = rows.length > 0 && rows[0][0] === 'Date' ? rows.slice(1) : rows;
-      
-      dataRows.forEach((row, index) => {
-        if (row.length < 8) return;
-        
-        const [date, time, tournamentId, playerName, position, fieldSize, amountPaid, earnings, rebuys, addons, roi, eliminatedBy] = row;
-        
-        if (!playerName) return;
-        
-        const player = playerName.trim();
-        
-        // Initialize player stats
-        if (!stats[player]) {
-          stats[player] = {
-            played: 0,
-            wins: 0,
-            seconds: 0,
-            thirds: 0, // Track 3rd places for bubble boy
-            totalEarnings: 0,
-            totalSpent: 0,
-            totalRebuys: 0,
-            totalAddons: 0,
-            bestFinish: 999,
-            eliminations: 0, // Track how many people this player eliminated
-            firstOuts: 0, // Track first eliminations
-            cashes: 0
-          };
-        }
-        
-        const pos = parseInt(position) || 999;
-        const paid = parseFloat(amountPaid) || 0;
-        const earned = parseFloat(earnings) || 0;
-        const rebuyCount = parseInt(rebuys) || 0;
-        const addonCount = parseInt(addons) || 0;
-        const field = parseInt(fieldSize) || 0; // Changed variable name to avoid conflict
-        
-        // Update player statistics
-        stats[player].played++;
-        stats[player].totalSpent += paid;
-        stats[player].totalEarnings += earned;
-        stats[player].totalRebuys += rebuyCount;
-        stats[player].totalAddons += addonCount;
-        
-        // Track positions
-        if (pos === 1) stats[player].wins++;
-        if (pos === 2) stats[player].seconds++;
-        if (pos === 3) stats[player].thirds++; // Track 3rd place for bubble boy
-        if (pos <= 2) stats[player].cashes++;
-        if (pos === field) stats[player].firstOuts++; // Last position = first out
-        
-        if (pos < stats[player].bestFinish) stats[player].bestFinish = pos;
-        
-        // Track eliminations caused by this player
-        if (eliminatedBy && eliminatedBy === player) {
-          if (!stats[eliminatedBy]) {
-            stats[eliminatedBy] = {
-              played: 0, wins: 0, seconds: 0, thirds: 0, totalEarnings: 0, totalSpent: 0,
-              totalRebuys: 0, totalAddons: 0, bestFinish: 999, eliminations: 0,
-              firstOuts: 0, cashes: 0
-            };
-          }
-          stats[eliminatedBy].eliminations++;
-        }
-      });
-      
-      // Calculate derived stats
-      Object.keys(stats).forEach(player => {
-        const s = stats[player];
-        s.avgROI = s.totalSpent > 0 ? ((s.totalEarnings - s.totalSpent) / s.totalSpent * 100).toFixed(1) : '0.0';
-        s.winRate = s.played > 0 ? ((s.wins / s.played) * 100).toFixed(1) : '0.0';
-        s.cashRate = s.played > 0 ? ((s.cashes / s.played) * 100).toFixed(1) : '0.0';
-        s.phoenixCount = s.totalRebuys + s.totalAddons; // Total second chances
-        if (s.bestFinish === 999) s.bestFinish = 'N/A';
-      });
-      
-      return stats;
+function calculatePlayerStats(rows) {
+  const stats = {};
+  const playerTournaments = {}; // Track unique tournaments per player
+  
+  // Skip header row if it exists
+  const dataRows = rows.length > 0 && rows[0][0] === 'Date' ? rows.slice(1) : rows;
+  
+  dataRows.forEach((row, index) => {
+    if (row.length < 8) return;
+    
+    const [date, time, tournamentId, playerName, position, fieldSize, amountPaid, earnings, rebuys, addons, roi, eliminatedBy] = row;
+    
+    if (!playerName) return;
+    
+    const player = playerName.trim();
+    
+    // Initialize player stats
+    if (!stats[player]) {
+      stats[player] = {
+        played: 0,
+        wins: 0,
+        seconds: 0,
+        thirds: 0,
+        totalEarnings: 0,
+        totalSpent: 0,
+        totalRebuys: 0,
+        totalAddons: 0,
+        bestFinish: 999,
+        eliminations: 0,
+        firstOuts: 0,
+        cashes: 0
+      };
+      playerTournaments[player] = new Set(); // Track unique tournament IDs
     }
+    
+    const pos = parseInt(position) || 999;
+    const paid = parseFloat(amountPaid) || 0;
+    const earned = parseFloat(earnings) || 0;
+    const rebuyCount = parseInt(rebuys) || 0;
+    const addonCount = parseInt(addons) || 0;
+    const field = parseInt(fieldSize) || 0;
+    
+// Count tournament attendance by unique tournament ID (regardless of position data)
+console.log(`Processing: ${player}, Tournament ID: "${tournamentId}", Type: ${typeof tournamentId}`);
+
+if (tournamentId && tournamentId.toString().trim() !== '') {
+  const tournamentKey = tournamentId.toString().trim();
+  
+  if (!playerTournaments[player].has(tournamentKey)) {
+    playerTournaments[player].add(tournamentKey);
+    stats[player].played++;
+    console.log(`Added tournament ${tournamentKey} for ${player}. Total played: ${stats[player].played}`);
+    console.log(`${player} tournaments so far:`, Array.from(playerTournaments[player]));
+    
+    // Update other stats only for this new tournament
+    stats[player].totalSpent += paid;
+    stats[player].totalEarnings += earned;
+    stats[player].totalRebuys += rebuyCount;
+    stats[player].totalAddons += addonCount;
+    
+    // Track positions (only if position data exists)
+    if (position && position !== '') {
+      if (pos === 1) stats[player].wins++;
+      if (pos === 2) stats[player].seconds++;
+      if (pos === 3) stats[player].thirds++;
+      if (pos <= 2) stats[player].cashes++;
+      if (pos === field) stats[player].firstOuts++;
+      
+      if (pos < stats[player].bestFinish) stats[player].bestFinish = pos;
+    }
+  } else {
+    console.log(`Skipped: ${player} already counted for tournament ${tournamentKey}`);
+  }
+} else {
+  console.log(`Invalid tournament ID for ${player}: "${tournamentId}"`);
+}
+    
+    // Track eliminations caused by this player (can happen multiple times across tournaments)
+    if (eliminatedBy && eliminatedBy === player) {
+      if (!stats[eliminatedBy]) {
+        stats[eliminatedBy] = {
+          played: 0, wins: 0, seconds: 0, thirds: 0, totalEarnings: 0, totalSpent: 0,
+          totalRebuys: 0, totalAddons: 0, bestFinish: 999, eliminations: 0,
+          firstOuts: 0, cashes: 0
+        };
+        playerTournaments[eliminatedBy] = new Set();
+      }
+      stats[eliminatedBy].eliminations++;
+    }
+  });
+  
+  // Calculate derived stats
+  Object.keys(stats).forEach(player => {
+    const s = stats[player];
+    s.avgROI = s.totalSpent > 0 ? ((s.totalEarnings - s.totalSpent) / s.totalSpent * 100).toFixed(1) : '0.0';
+    s.winRate = s.played > 0 ? ((s.wins / s.played) * 100).toFixed(1) : '0.0';
+    s.cashRate = s.played > 0 ? ((s.cashes / s.played) * 100).toFixed(1) : '0.0';
+    s.phoenixCount = s.totalRebuys + s.totalAddons;
+    if (s.bestFinish === 999) s.bestFinish = 'N/A';
+  });
+  
+  return stats;
+}
 
     function buildOverviewPanel(stats) {
       // Olympic-style sorting for leaderboard
