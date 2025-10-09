@@ -1520,7 +1520,7 @@ function calculatePlayerStats(rows) {
     s.avgROI = s.totalSpent > 0 ? ((s.totalEarnings - s.totalSpent) / s.totalSpent * 100).toFixed(1) : '0.0';
     s.winRate = s.played > 0 ? ((s.wins / s.played) * 100).toFixed(1) : '0.0';
     s.cashRate = s.played > 0 ? ((s.cashes / s.played) * 100).toFixed(1) : '0.0';
-    s.phoenixCount = s.totalRebuys + s.totalAddons;
+    s.phoenixCount = s.totalRebuys;
     if (s.bestFinish === 999) s.bestFinish = 'N/A';
   });
   
@@ -1642,96 +1642,135 @@ function calculatePlayerStats(rows) {
       html += '</tbody></table>';
       return html;
     }
-
-    function calculateTitles(stats) {
-      const sortedByWins = Object.entries(stats).sort((a, b) => b[1].wins - a[1].wins);
-      const sortedBySeconds = Object.entries(stats).sort((a, b) => b[1].seconds - a[1].seconds);
-      const sortedByEarnings = Object.entries(stats).sort((a, b) => (b[1].totalEarnings - b[1].totalSpent) - (a[1].totalEarnings - a[1].totalSpent));
-      const sortedByAttendance = Object.entries(stats).filter(([name]) => name !== 'Rafa').sort((a, b) => b[1].played - a[1].played);
-      const sortedByEliminations = Object.entries(stats).sort((a, b) => b[1].eliminations - a[1].eliminations);
-      const sortedByFirstOuts = Object.entries(stats).sort((a, b) => b[1].firstOuts - a[1].firstOuts);
-      const sortedByPhoenix = Object.entries(stats).sort((a, b) => b[1].phoenixCount - a[1].phoenixCount);
-      const sortedByBubbles = Object.entries(stats).sort((a, b) => b[1].thirds - a[1].thirds);
+function calculateTitles(stats) {
+  // Helper function to get all players tied for the top value
+  function getTopPlayers(sortedArray, getValue) {
+    if (sortedArray.length === 0) return [];
+    const topValue = getValue(sortedArray[0][1]);
+    if (topValue === 0) return []; // Don't show titles if value is 0
+    
+    // Get all players with the top value
+    return sortedArray
+      .filter(([name, s]) => getValue(s) === topValue)
+      .map(([name]) => name);
+  }
+  
+  const sortedByWins = Object.entries(stats).sort((a, b) => b[1].wins - a[1].wins);
+  const sortedBySeconds = Object.entries(stats).sort((a, b) => b[1].seconds - a[1].seconds);
+  const sortedByEarnings = Object.entries(stats).sort((a, b) => (b[1].totalEarnings - b[1].totalSpent) - (a[1].totalEarnings - a[1].totalSpent));
+  const sortedByAttendance = Object.entries(stats).filter(([name]) => name !== 'Rafa').sort((a, b) => b[1].played - a[1].played);
+  const sortedByEliminations = Object.entries(stats).sort((a, b) => b[1].eliminations - a[1].eliminations);
+  const sortedByFirstOuts = Object.entries(stats).sort((a, b) => b[1].firstOuts - a[1].firstOuts);
+  const sortedByPhoenix = Object.entries(stats).sort((a, b) => b[1].phoenixCount - a[1].phoenixCount);
+  const sortedByBubbles = Object.entries(stats).sort((a, b) => b[1].thirds - a[1].thirds);
+  
+  const titles = [];
+  
+  // The Champion
+  const champions = getTopPlayers(sortedByWins, s => s.wins);
+  if (champions.length > 0) {
+    const topWins = sortedByWins[0][1].wins;
+    titles.push({
+      emoji: '👑',
+      name: 'The Champion',
+      holder: champions.join(' & '),
+      stat: `${topWins} tournament win${topWins !== 1 ? 's' : ''}`
+    });
+  }
+  
+  // The Runner-up
+  const runnerups = getTopPlayers(sortedBySeconds, s => s.seconds);
+  if (runnerups.length > 0) {
+    const topSeconds = sortedBySeconds[0][1].seconds;
+    titles.push({
+      emoji: '🥈',
+      name: 'The Runner-up',
+      holder: runnerups.join(' & '),
+      stat: `${topSeconds} second place${topSeconds !== 1 ? 's' : ''}`
+    });
+  }
+  
+  // Elon Musk (Most Profitable)
+  if (sortedByEarnings.length > 0) {
+    const topProfit = sortedByEarnings[0][1].totalEarnings - sortedByEarnings[0][1].totalSpent;
+    if (topProfit > 0) {
+      const topEarners = sortedByEarnings
+        .filter(([name, s]) => (s.totalEarnings - s.totalSpent) === topProfit)
+        .map(([name]) => name);
       
-      const titles = [];
-      
-      if (sortedByWins.length > 0 && sortedByWins[0][1].wins > 0) {
-        titles.push({
-          emoji: '👑',
-          name: 'The Champion',
-          holder: sortedByWins[0][0],
-          stat: `${sortedByWins[0][1].wins} tournament wins`
-        });
-      }
-      
-      if (sortedBySeconds.length > 0 && sortedBySeconds[0][1].seconds > 0) {
-        titles.push({
-          emoji: '🥈',
-          name: 'The Runner-up',
-          holder: sortedBySeconds[0][0],
-          stat: `${sortedBySeconds[0][1].seconds} second places`
-        });
-      }
-      
-      if (sortedByEarnings.length > 0) {
-        const profit = sortedByEarnings[0][1].totalEarnings - sortedByEarnings[0][1].totalSpent;
-        if (profit > 0) {
-          titles.push({
-            emoji: '💰',
-            name: 'Elon Musk',
-            holder: sortedByEarnings[0][0],
-            stat: `£${profit.toFixed(2)} profit`
-          });
-        }
-      }
-      
-      if (sortedByAttendance.length > 0) {
-        titles.push({
-          emoji: '🏠',
-          name: 'The Permanent Fixture',
-          holder: sortedByAttendance[0][0],
-          stat: `${sortedByAttendance[0][1].played} tournaments`
-        });
-      }
-      
-      if (sortedByEliminations.length > 0 && sortedByEliminations[0][1].eliminations > 0) {
-        titles.push({
-          emoji: '💀',
-          name: 'The Killer',
-          holder: sortedByEliminations[0][0],
-          stat: `${sortedByEliminations[0][1].eliminations} eliminations`
-        });
-      }
-      
-      if (sortedByFirstOuts.length > 0 && sortedByFirstOuts[0][1].firstOuts > 0) {
-        titles.push({
-          emoji: '🐦',
-          name: 'The Early Bird',
-          holder: sortedByFirstOuts[0][0],
-          stat: `${sortedByFirstOuts[0][1].firstOuts} first eliminations`
-        });
-      }
-      
-      if (sortedByPhoenix.length > 0 && sortedByPhoenix[0][1].phoenixCount > 0) {
-        titles.push({
-          emoji: '🔥',
-          name: 'The Phoenix',
-          holder: sortedByPhoenix[0][0],
-          stat: `${sortedByPhoenix[0][1].phoenixCount} second chances`
-        });
-      }
-      
-      if (sortedByBubbles.length > 0 && sortedByBubbles[0][1].thirds > 0) {
-        titles.push({
-          emoji: '🫧',
-          name: 'Bubble Boy',
-          holder: sortedByBubbles[0][0],
-          stat: `${sortedByBubbles[0][1].thirds} third place finishes`
-        });
-      }
-      
-      return titles;
+      titles.push({
+        emoji: '💰',
+        name: 'Elon Musk',
+        holder: topEarners.join(' & '),
+        stat: `£${topProfit.toFixed(2)} profit`
+      });
     }
+  }
+  
+  // The Permanent Fixture (Most Attendance, excluding Rafa)
+  const fixtures = getTopPlayers(sortedByAttendance, s => s.played);
+  if (fixtures.length > 0) {
+    const topAttendance = sortedByAttendance[0][1].played;
+    titles.push({
+      emoji: '🏠',
+      name: 'The Permanent Fixture',
+      holder: fixtures.join(' & '),
+      stat: `${topAttendance} tournament${topAttendance !== 1 ? 's' : ''}`
+    });
+  }
+  
+  // The Killer
+  const killers = getTopPlayers(sortedByEliminations, s => s.eliminations);
+  if (killers.length > 0) {
+    const topElims = sortedByEliminations[0][1].eliminations;
+    titles.push({
+      emoji: '💀',
+      name: 'The Killer',
+      holder: killers.join(' & '),
+      stat: `${topElims} elimination${topElims !== 1 ? 's' : ''}`
+    });
+  }
+  
+  // The Early Bird
+  const earlyBirds = getTopPlayers(sortedByFirstOuts, s => s.firstOuts);
+  if (earlyBirds.length > 0) {
+    const topFirstOuts = sortedByFirstOuts[0][1].firstOuts;
+    titles.push({
+      emoji: '🐦',
+      name: 'The Early Bird',
+      holder: earlyBirds.join(' & '),
+      stat: `${topFirstOuts} first elimination${topFirstOuts !== 1 ? 's' : ''}`
+    });
+  }
+  
+  // The Phoenix (Only Rebuys)
+  const phoenixes = getTopPlayers(sortedByPhoenix, s => s.phoenixCount);
+  if (phoenixes.length > 0) {
+    const topRebuys = sortedByPhoenix[0][1].phoenixCount;
+    titles.push({
+      emoji: '🔥',
+      name: 'The Phoenix',
+      holder: phoenixes.join(' & '),
+      stat: `${topRebuys} rebuy${topRebuys !== 1 ? 's' : ''}`
+    });
+  }
+  
+  // Bubble Boy
+  const bubbleBoys = getTopPlayers(sortedByBubbles, s => s.thirds);
+  if (bubbleBoys.length > 0) {
+    const topThirds = sortedByBubbles[0][1].thirds;
+    titles.push({
+      emoji: '🫧',
+      name: 'Bubble Boy',
+      holder: bubbleBoys.join(' & '),
+      stat: `${topThirds} third place finish${topThirds !== 1 ? 'es' : ''}`
+    });
+  }
+  
+  return titles;
+}
+
+
 
     // Player management
     function updatePlayerTable() {
