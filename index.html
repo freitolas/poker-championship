@@ -1447,7 +1447,7 @@ function calculatePlayerStats(rows) {
   const dataRows = rows.length > 0 && rows[0][0] === 'Date' ? rows.slice(1) : rows;
   
   dataRows.forEach((row, index) => {
-    if (row.length < 8) return;
+    if (row.length < 4) return;
     
     const [date, time, tournamentId, playerName, position, fieldSize, amountPaid, earnings, rebuys, addons, roi, eliminatedBy] = row;
     
