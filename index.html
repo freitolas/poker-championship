@@ -593,7 +593,7 @@
   <div class="timer-panel">
     <div class="timer-header">ROUND TIMER</div>
     <div id="roundInfo" class="round-info"></div>
-    <div id="timeRemaining" class="time-remaining">20:00</div>
+    <div id="timeRemaining" class="time-remaining">00:05</div>
     
     <div class="timer-controls">
       <button id="timerStartBtn" onclick="startTimer()">START</button>
@@ -626,7 +626,7 @@
     // Debug logging
     console.log('Script starting...');
 
-    // MISSING DECLARATION - ADD THIS:
+    // Global state variables
     let players = [];
 
     // Configuration - REPLACE WITH YOUR ACTUAL VALUES
@@ -650,11 +650,14 @@
     ];
 
     console.log('Rounds defined:', rounds);
+    console.log('Test round should be:', rounds[0]);
 
     // Pre-populated player list - add your regular players here
     const regularPlayers = [
       'Andre', 'Craig', 'Dale', 'Declan', 'Elton', 'Graham', 'Jacques', 'James', 'Lachy', 'Luciano', 'Malzo', 'Matt', 'Nick', 'Rafa', 'Rhys', 'Roberto'
     ].sort();
+
+    console.log('Regular players defined:', regularPlayers);
 
     let customPlayers = []; // For new players added during session
     let currentRound = 0;
@@ -668,10 +671,11 @@
     let googleApiReady = false;
     let actionHistory = []; // For undo functionality
 
-    console.log('Global state initialized');
+    console.log('Global state initialized, currentRound:', currentRound);
 
-    // ADD THE MISSING FUNCTION:
+    // Populate player dropdown
     function populatePlayerDropdown() {
+      console.log('populatePlayerDropdown called');
       const playerSelect = document.getElementById('playerSelect');
       if (!playerSelect) {
         console.error('Player select element not found');
@@ -698,6 +702,7 @@
       });
       
       console.log('Player dropdown populated with', regularPlayers.length + customPlayers.length, 'players');
+      console.log('Player select now has', playerSelect.options.length, 'options');
     }
 
     // Undo functionality
@@ -707,7 +712,6 @@
         data: data,
         timestamp: Date.now()
       });
-      // Keep only last 10 actions
       if (actionHistory.length > 10) {
         actionHistory.shift();
       }
@@ -727,10 +731,9 @@
           const eliminatedPlayer = players.find(p => p.name === lastAction.data.name);
           if (eliminatedPlayer) {
             eliminatedPlayer.eliminated = false;
-            eliminatedPlayer.eliminatedBy = undefined; // Clear elimination data
+            eliminatedPlayer.eliminatedBy = undefined;
             eliminatedPlayer.eliminationTime = lastAction.data.previousEliminationTime;
             
-            // Re-enable timer controls if they were disabled due to winner state
             if (tournamentStarted && !tournamentEnded) {
               document.getElementById('timerStartBtn').disabled = false;
               document.getElementById('timerPauseBtn').disabled = !timerRunning;
@@ -778,6 +781,7 @@
         }
       }
     }
+
     // Make functions globally accessible
     window.addPlayer = addPlayer;
     window.removePlayer = removePlayer;
@@ -808,7 +812,6 @@
       const statusEl = document.getElementById('statusMessage');
       const errorEl = document.getElementById('errorMessage');
       
-      // Reset both messages first
       statusEl.classList.remove('show');
       errorEl.classList.remove('show');
       
@@ -821,7 +824,6 @@
           statusEl.classList.add('show');
         }
         
-        // Auto-hide after 5 seconds
         setTimeout(() => {
           statusEl.classList.remove('show');
           errorEl.classList.remove('show');
@@ -832,10 +834,8 @@
     function playAlarm() {
       console.log('Playing alarm...');
       
-      // Primary method: Play your alarm.mp3 file
       const audio = document.getElementById('roundAlarm');
       if (audio) {
-        // Reset audio to beginning
         audio.currentTime = 0;
         
         const playPromise = audio.play();
@@ -845,28 +845,22 @@
             console.log('alarm.mp3 played successfully');
           }).catch(error => {
             console.log('alarm.mp3 playback failed:', error.message);
-            console.log('Trying fallback audio methods...');
             playFallbackAlarm();
           });
         } else {
-          console.log('Audio play() returned undefined, trying fallback...');
           playFallbackAlarm();
         }
       } else {
-        console.log('Audio element not found, trying fallback...');
         playFallbackAlarm();
       }
       
-      // Always show visual indicators regardless of audio success
       showVisualAlarm();
     }
 
     function playFallbackAlarm() {
-      // Web Audio API beep as backup
       try {
         const audioContext = new (window.AudioContext || window.webkitAudioContext)();
         
-        // Create 3 beeps
         for (let i = 0; i < 3; i++) {
           setTimeout(() => {
             const oscillator = audioContext.createOscillator();
@@ -892,7 +886,6 @@
     }
 
     function showVisualAlarm() {
-      // Visual alarm (timer flashing)
       const timerDisplay = document.getElementById('timeRemaining');
       let flashCount = 0;
       const flashInterval = setInterval(() => {
@@ -907,13 +900,10 @@
         }
       }, 300);
       
-      // Vibration on mobile
       if (navigator.vibrate) {
         navigator.vibrate([200, 100, 200, 100, 200]);
-        console.log('Vibration triggered');
       }
       
-      // Browser notification
       if (Notification.permission === 'granted') {
         new Notification('Poker Tournament', {
           body: 'Round finished! Time to advance.',
@@ -922,7 +912,6 @@
       }
     }
 
-    // Request notification permission on app load
     function requestNotificationPermission() {
       if ('Notification' in window && Notification.permission === 'default') {
         Notification.requestPermission().then(permission => {
@@ -935,7 +924,6 @@
     function handleClientLoad() {
       console.log('Loading Google API client...');
       
-      // Try the newer Google Identity Services approach first
       if (window.google && window.google.accounts) {
         console.log('Using Google Identity Services (new approach)');
         initWithGIS();
@@ -953,13 +941,11 @@
 
     function initWithGIS() {
       try {
-        // Initialize the Google Identity Services
         google.accounts.id.initialize({
           client_id: CLIENT_ID,
           callback: handleCredentialResponse
         });
 
-        // Load the Google API client for Sheets
         gapi.load('client', () => {
           gapi.client.init({
             discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4']
@@ -967,7 +953,6 @@
             console.log('Google Identity Services initialized successfully');
             googleApiReady = true;
             
-            // Set up token client for authorization
             window.tokenClient = google.accounts.oauth2.initTokenClient({
               client_id: CLIENT_ID,
               scope: SCOPES,
@@ -979,7 +964,7 @@
               }
             });
             
-            updateSigninStatus(false); // Initially not signed in
+            updateSigninStatus(false);
           }).catch(error => {
             console.error('GIS client init failed:', error);
             enableFallbackMode();
@@ -1022,9 +1007,8 @@
         return Promise.reject('Invalid CLIENT_ID');
       }
       
-      // Try the legacy approach first, then fall back to newer method
       return gapi.client.init({
-        apiKey: '', // We don't need API key for OAuth-only requests
+        apiKey: '',
         clientId: CLIENT_ID,
         discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4'],
         scope: SCOPES
@@ -1035,9 +1019,8 @@
         updateSigninStatus(authInstance.isSignedIn.get());
         authInstance.isSignedIn.listen(updateSigninStatus);
       }).catch(error => {
-        console.error('Standard init failed, trying alternative approach:', error);
+        console.error('Standard init failed:', error);
         
-        // Alternative initialization approach
         return gapi.auth2.init({
           client_id: CLIENT_ID,
           scope: SCOPES
@@ -1052,19 +1035,7 @@
         }).catch(altError => {
           console.error('Alternative init also failed:', altError);
           showMessage('Google Sheets integration unavailable - OAuth configuration issue', true);
-          
-          // Enable buttons anyway for testing, but show different text
-          setTimeout(() => {
-            const exportBtn = document.getElementById('exportBtn');
-            const dashboardBtn = document.getElementById('loadDashboardBtn');
-            
-            if (tournamentEnded) {
-              exportBtn.disabled = false;
-              dashboardBtn.disabled = true;
-              exportBtn.textContent = 'Show Results (Google API Failed)';
-              dashboardBtn.textContent = 'Google API Failed';
-            }
-          }, 1000);
+          enableFallbackMode();
         });
       });
     }
@@ -1075,7 +1046,6 @@
       
       console.log('updateSigninStatus called:', { isSignedIn, tournamentEnded, googleApiReady });
       
-      // Dashboard button is always available when Google API is ready
       if (googleApiReady) {
         dashboardBtn.disabled = false;
         
@@ -1091,7 +1061,6 @@
         dashboardBtn.textContent = 'Google API Loading...';
       }
       
-      // Export button only for ended tournaments
       if (tournamentEnded && googleApiReady) {
         exportBtn.disabled = false;
         
@@ -1117,15 +1086,12 @@
       console.log('signInAndExport called, googleApiReady:', googleApiReady);
       
       if (!googleApiReady) {
-        // Fallback: show results without saving to Google Sheets
         showTournamentSummary();
         return;
       }
       
-      // For Google Identity Services approach
       if (window.tokenClient) {
         console.log('Requesting access token via GIS...');
-        // Set up the callback for this specific request
         window.tokenClient.callback = (response) => {
           console.log('Token response received:', response);
           if (response.access_token) {
@@ -1148,7 +1114,6 @@
         return;
       }
       
-      // For legacy approach fallback
       const authInstance = gapi.auth2.getAuthInstance();
       if (authInstance && authInstance.isSignedIn.get()) {
         exportTournamentData();
@@ -1169,10 +1134,9 @@
       const data = collectCurrentTournamentData();
       const summary = `
 Tournament Results Summary:
-Date: ${data.date}
-Winner: ${data.first}
-2nd Place: ${data.second}
-All Players: ${data.results.join(', ')}
+Date: ${data.summary.date}
+Winner: ${data.summary.winner}
+2nd Place: ${data.summary.second}
 
 Note: Google Sheets integration not available - results not saved automatically.
       `;
@@ -1190,11 +1154,9 @@ Note: Google Sheets integration not available - results not saved automatically.
         return;
       }
       
-      // For Google Identity Services approach
       if (window.tokenClient) {
         console.log('Requesting access token for dashboard via GIS...');
         
-        // Set up the callback for this specific request
         window.tokenClient.callback = (response) => {
           console.log('Dashboard token response received:', response);
           if (response.access_token) {
@@ -1209,7 +1171,6 @@ Note: Google Sheets integration not available - results not saved automatically.
         };
         
         try {
-          // Request access token with user interaction
           window.tokenClient.requestAccessToken({ prompt: 'consent' });
         } catch (error) {
           console.error('Error requesting access token:', error);
@@ -1218,7 +1179,6 @@ Note: Google Sheets integration not available - results not saved automatically.
         return;
       }
       
-      // Fallback for legacy auth (if available)
       if (window.gapi && gapi.auth2) {
         const authInstance = gapi.auth2.getAuthInstance();
         if (authInstance) {
@@ -1251,27 +1211,14 @@ Note: Google Sheets integration not available - results not saved automatically.
       
       console.log('=== TOURNAMENT DATA COLLECTION START ===');
       console.log('Tournament ID:', tournamentId);
-      console.log('Raw players data:', players.map(p => ({
-        name: p.name, 
-        eliminated: p.eliminated, 
-        eliminationTime: p.eliminationTime,
-        stacks: p.stacks,
-        totalPaid: p.totalPaid
-      })));
       
-      // Sort players by elimination time (most recent elimination = highest finish)
       const allPlayersSorted = [...players].sort((a, b) => {
         if (!a.eliminated && !b.eliminated) return 0;
-        if (!a.eliminated) return -1; // a is active (winner)
-        if (!b.eliminated) return 1; // b is active (winner)
-        
-        // Both eliminated - most recent elimination time = better finish
+        if (!a.eliminated) return -1;
+        if (!b.eliminated) return 1;
         return (b.eliminationTime || 0) - (a.eliminationTime || 0);
       });
       
-      console.log('All players sorted by finish:', allPlayersSorted.map(p => `${p.name}: ${p.eliminated ? 'eliminated at ' + new Date(p.eliminationTime).toLocaleTimeString() : 'WINNER'}`));
-      
-      // Calculate prize pool with £5 rounding for easier cash handling
       const totalPaid = players.reduce((sum, p) => sum + p.totalPaid, 0);
       const houseFee = totalPaid > 100 ? 10 : 5;
       const prizePool = totalPaid - houseFee;
@@ -1281,73 +1228,57 @@ Note: Google Sheets integration not available - results not saved automatically.
       const firstPrize = Math.round(rawFirstPrize / 5) * 5;
       const secondPrize = Math.round(rawSecondPrize / 5) * 5;
       
-      console.log('Prize calculations:', { totalPaid, houseFee, prizePool, firstPrize, secondPrize });
-      
-      // Create individual player records
       const playerRecords = [];
       
-allPlayersSorted.forEach((player, index) => {
-  const finishPosition = player.eliminated ? (allPlayersSorted.filter(p => !p.eliminated).length + index) : 1;
-  let earnings = 0;
-  
-  // Award prize money
-  if (finishPosition === 1) earnings = firstPrize;
-  else if (finishPosition === 2) earnings = secondPrize;
-  
-  // Calculate rebuys and addons from total paid
-  const baseStacks = 1;
-  const additionalStacks = player.stacks - baseStacks;
-  const baseCost = 5;
-  const additionalCost = player.totalPaid - baseCost;
-  const rebuys = player.eliminated ? Math.max(0, additionalStacks - (player.hasAddon ? 1 : 0)) : additionalStacks - (player.hasAddon ? 1 : 0);
-  const addons = player.hasAddon ? 1 : 0;
-  
-  // Main player record (final position)
-  const playerRecord = {
-    date,
-    timestamp,
-    tournamentId,
-    playerName: player.name,
-    finishPosition,
-    fieldSize: players.length,
-    amountPaid: player.totalPaid,
-    earnings,
-    rebuys: Math.max(0, rebuys),
-    addons,
-    roi: player.totalPaid > 0 ? ((earnings - player.totalPaid) / player.totalPaid * 100).toFixed(1) : 0,
-    eliminatedBy: player.eliminated ? (player.eliminatedBy || 'N/A') : '' // Only set for eliminated players
-  };
-  
-  playerRecords.push(playerRecord);
-  console.log(`Player record: ${player.name} - Position: ${finishPosition}, Paid: £${player.totalPaid}, Earned: £${earnings}, ROI: ${playerRecord.roi}%`);
-  
-  // Add separate rows for each rebuy elimination
-  if (player.rebuyEliminations && player.rebuyEliminations.length > 0) {
-    player.rebuyEliminations.forEach((rebuy, rebuyIndex) => {
-      const rebuyRecord = {
-        date,
-        timestamp,
-        tournamentId,
-        playerName: player.name,
-        finishPosition: 0,  // Rebuy rows have position 0
-        fieldSize: players.length,
-        amountPaid: 0,
-        earnings: 0,
-        rebuys: 0,
-        addons: 0,
-        roi: 0,
-        eliminatedBy: rebuy.eliminatedBy
-      };
-      playerRecords.push(rebuyRecord);
-      console.log(`Rebuy record: ${player.name} - Rebuy #${rebuyIndex + 1}, Eliminated by: ${rebuy.eliminatedBy}`);
-    });
-  }
-});
-      
-      console.log('=== FINAL TOURNAMENT DATA ===');
-      console.log('Total player records:', playerRecords.length);
-      console.log('Tournament ID:', tournamentId);
-      console.log('=== END COLLECTION ===');
+      allPlayersSorted.forEach((player, index) => {
+        const finishPosition = player.eliminated ? (allPlayersSorted.filter(p => !p.eliminated).length + index) : 1;
+        let earnings = 0;
+        
+        if (finishPosition === 1) earnings = firstPrize;
+        else if (finishPosition === 2) earnings = secondPrize;
+        
+        const baseStacks = 1;
+        const additionalStacks = player.stacks - baseStacks;
+        const rebuys = player.eliminated ? Math.max(0, additionalStacks - (player.hasAddon ? 1 : 0)) : additionalStacks - (player.hasAddon ? 1 : 0);
+        const addons = player.hasAddon ? 1 : 0;
+        
+        const playerRecord = {
+          date,
+          timestamp,
+          tournamentId,
+          playerName: player.name,
+          finishPosition,
+          fieldSize: players.length,
+          amountPaid: player.totalPaid,
+          earnings,
+          rebuys: Math.max(0, rebuys),
+          addons,
+          roi: player.totalPaid > 0 ? ((earnings - player.totalPaid) / player.totalPaid * 100).toFixed(1) : 0,
+          eliminatedBy: player.eliminated ? (player.eliminatedBy || 'N/A') : ''
+        };
+        
+        playerRecords.push(playerRecord);
+        
+        if (player.rebuyEliminations && player.rebuyEliminations.length > 0) {
+          player.rebuyEliminations.forEach((rebuy, rebuyIndex) => {
+            const rebuyRecord = {
+              date,
+              timestamp,
+              tournamentId,
+              playerName: player.name,
+              finishPosition: 0,
+              fieldSize: players.length,
+              amountPaid: 0,
+              earnings: 0,
+              rebuys: 0,
+              addons: 0,
+              roi: 0,
+              eliminatedBy: rebuy.eliminatedBy
+            };
+            playerRecords.push(rebuyRecord);
+          });
+        }
+      });
       
       return {
         tournamentId,
@@ -1372,7 +1303,6 @@ allPlayersSorted.forEach((player, index) => {
       const data = collectCurrentTournamentData();
       console.log('About to export tournament data:', data);
       
-      // Prepare rows for Google Sheets - each player gets their own row
       const rows = data.playerRecords.map(record => [
         record.date,
         record.timestamp,
@@ -1392,7 +1322,7 @@ allPlayersSorted.forEach((player, index) => {
       
       gapi.client.sheets.spreadsheets.values.append({
         spreadsheetId: SPREADSHEET_ID,
-        range: 'PlayerResults!A:L', // Updated to include new EliminatedBy column
+        range: 'PlayerResults!A:L',
         valueInputOption: 'USER_ENTERED',
         resource: {
           values: rows
@@ -1409,7 +1339,7 @@ allPlayersSorted.forEach((player, index) => {
     function loadDashboard() {
       gapi.client.sheets.spreadsheets.values.get({
         spreadsheetId: SPREADSHEET_ID,
-        range: 'PlayerResults!A:L'  // Updated to include EliminatedBy column
+        range: 'PlayerResults!A:L'
       }).then(response => {
         const rows = response.result.values || [];
         buildDashboardWithTabs(rows);
@@ -1428,7 +1358,6 @@ allPlayersSorted.forEach((player, index) => {
         return;
       }
       
-      // Calculate player stats (reuse existing logic)
       const stats = calculatePlayerStats(rows);
       
       section.innerHTML = `
@@ -1452,109 +1381,98 @@ allPlayersSorted.forEach((player, index) => {
       `;
     }
 
-    // Add tab switching function to global scope
     window.switchDashboardTab = function(tabName) {
-      // Remove active class from all tabs and panels
       document.querySelectorAll('.dashboard-tab').forEach(tab => tab.classList.remove('active'));
       document.querySelectorAll('.dashboard-tab-panel').forEach(panel => panel.classList.remove('active'));
       
-      // Add active class to selected tab and panel
       event.target.classList.add('active');
       document.getElementById(tabName + '-panel').classList.add('active');
     };
 
-function calculatePlayerStats(rows) {
-  const stats = {};
-  const playerTournaments = {};
-  
-  const dataRows = rows.length > 0 && rows[0][0] === 'Date' ? rows.slice(1) : rows;
-  
-  dataRows.forEach((row, index) => {
-    if (row.length < 4) return;
-    
-    const [date, time, tournamentId, playerName, position, fieldSize, amountPaid, earnings, rebuys, addons, roi, eliminatedBy] = row;
-    
-    if (!playerName) return;
-    
-    const player = playerName.trim();
-    
-    if (!stats[player]) {
-      stats[player] = {
-        played: 0, wins: 0, seconds: 0, thirds: 0,
-        totalEarnings: 0, totalSpent: 0, totalRebuys: 0, totalAddons: 0,
-        bestFinish: 999, eliminations: 0, firstOuts: 0, cashes: 0
-      };
-      playerTournaments[player] = new Set();
-    }
-    
-    // ✅ KEY FIX #1: Change default from 999 to 0 for missing position data
-    const pos = parseInt(position) || 0;
-    const paid = parseFloat(amountPaid) || 0;
-    const earned = parseFloat(earnings) || 0;
-    const rebuyCount = parseInt(rebuys) || 0;
-    const addonCount = parseInt(addons) || 0;
-    const field = parseInt(fieldSize) || 0;
-    
-    // Count attendance regardless of position data
-    if (tournamentId && tournamentId.toString().trim() !== '') {
-      const tournamentKey = tournamentId.toString().trim();
+    function calculatePlayerStats(rows) {
+      const stats = {};
+      const playerTournaments = {};
       
-      if (!playerTournaments[player].has(tournamentKey)) {
-        playerTournaments[player].add(tournamentKey);
-        stats[player].played++;
+      const dataRows = rows.length > 0 && rows[0][0] === 'Date' ? rows.slice(1) : rows;
+      
+      dataRows.forEach((row, index) => {
+        if (row.length < 4) return;
         
-        // Update financial stats
-        stats[player].totalSpent += paid;
-        stats[player].totalEarnings += earned;
-        stats[player].totalRebuys += rebuyCount;
-        stats[player].totalAddons += addonCount;
+        const [date, time, tournamentId, playerName, position, fieldSize, amountPaid, earnings, rebuys, addons, roi, eliminatedBy] = row;
         
-        // ✅ KEY FIX #2: Only track positions if we have valid data (pos > 0)
-        if (pos > 0) {
-          if (pos === 1) stats[player].wins++;
-          if (pos === 2) stats[player].seconds++;
-          if (pos === 3) stats[player].thirds++;
-          if (pos <= 2) stats[player].cashes++;
-          if (pos === field) stats[player].firstOuts++;
-          
-          if (pos < stats[player].bestFinish) stats[player].bestFinish = pos;
+        if (!playerName) return;
+        
+        const player = playerName.trim();
+        
+        if (!stats[player]) {
+          stats[player] = {
+            played: 0, wins: 0, seconds: 0, thirds: 0,
+            totalEarnings: 0, totalSpent: 0, totalRebuys: 0, totalAddons: 0,
+            bestFinish: 999, eliminations: 0, firstOuts: 0, cashes: 0
+          };
+          playerTournaments[player] = new Set();
         }
-        // For pos = 0 (old data), we still count attendance but skip position stats
-      }
+        
+        const pos = parseInt(position) || 0;
+        const paid = parseFloat(amountPaid) || 0;
+        const earned = parseFloat(earnings) || 0;
+        const rebuyCount = parseInt(rebuys) || 0;
+        const addonCount = parseInt(addons) || 0;
+        const field = parseInt(fieldSize) || 0;
+        
+        if (tournamentId && tournamentId.toString().trim() !== '') {
+          const tournamentKey = tournamentId.toString().trim();
+          
+          if (!playerTournaments[player].has(tournamentKey)) {
+            playerTournaments[player].add(tournamentKey);
+            stats[player].played++;
+            
+            stats[player].totalSpent += paid;
+            stats[player].totalEarnings += earned;
+            stats[player].totalRebuys += rebuyCount;
+            stats[player].totalAddons += addonCount;
+            
+            if (pos > 0) {
+              if (pos === 1) stats[player].wins++;
+              if (pos === 2) stats[player].seconds++;
+              if (pos === 3) stats[player].thirds++;
+              if (pos <= 2) stats[player].cashes++;
+              if (pos === field) stats[player].firstOuts++;
+              
+              if (pos < stats[player].bestFinish) stats[player].bestFinish = pos;
+            }
+          }
+        }
+        
+        if (eliminatedBy && eliminatedBy.trim() !== '') {
+          const eliminator = eliminatedBy.trim();
+          
+          if (!stats[eliminator]) {
+            stats[eliminator] = {
+              played: 0, wins: 0, seconds: 0, thirds: 0, totalEarnings: 0, totalSpent: 0,
+              totalRebuys: 0, totalAddons: 0, bestFinish: 999, eliminations: 0,
+              firstOuts: 0, cashes: 0
+            };
+            playerTournaments[eliminator] = new Set();
+          }
+          
+          stats[eliminator].eliminations++;
+        }
+      });
+      
+      Object.keys(stats).forEach(player => {
+        const s = stats[player];
+        s.avgROI = s.totalSpent > 0 ? ((s.totalEarnings - s.totalSpent) / s.totalSpent * 100).toFixed(1) : '0.0';
+        s.winRate = s.played > 0 ? ((s.wins / s.played) * 100).toFixed(1) : '0.0';
+        s.cashRate = s.played > 0 ? ((s.cashes / s.played) * 100).toFixed(1) : '0.0';
+        s.phoenixCount = s.totalRebuys;
+        if (s.bestFinish === 999) s.bestFinish = 'N/A';
+      });
+      
+      return stats;
     }
-    
-// Track eliminations - count EVERY row where someone was eliminated (including rebuys)
-if (eliminatedBy && eliminatedBy.trim() !== '') {
-  const eliminator = eliminatedBy.trim();
-  
-  if (!stats[eliminator]) {
-    stats[eliminator] = {
-      played: 0, wins: 0, seconds: 0, thirds: 0, totalEarnings: 0, totalSpent: 0,
-      totalRebuys: 0, totalAddons: 0, bestFinish: 999, eliminations: 0,
-      firstOuts: 0, cashes: 0
-    };
-    playerTournaments[eliminator] = new Set();
-  }
-  
-  // Count EVERY elimination (including rebuys) - no uniqueness check needed
-  stats[eliminator].eliminations++;
-}  });
-  
-  // Calculate derived stats
-  Object.keys(stats).forEach(player => {
-    const s = stats[player];
-    s.avgROI = s.totalSpent > 0 ? ((s.totalEarnings - s.totalSpent) / s.totalSpent * 100).toFixed(1) : '0.0';
-    s.winRate = s.played > 0 ? ((s.wins / s.played) * 100).toFixed(1) : '0.0';
-    s.cashRate = s.played > 0 ? ((s.cashes / s.played) * 100).toFixed(1) : '0.0';
-    s.phoenixCount = s.totalRebuys;
-    if (s.bestFinish === 999) s.bestFinish = 'N/A';
-  });
-  
-  return stats;
-}
 
     function buildOverviewPanel(stats) {
-      // Olympic-style sorting for leaderboard
       const sortedStats = Object.entries(stats)
         .sort((a, b) => {
           if (b[1].wins !== a[1].wins) return b[1].wins - a[1].wins;
@@ -1668,142 +1586,130 @@ if (eliminatedBy && eliminatedBy.trim() !== '') {
       html += '</tbody></table>';
       return html;
     }
-function calculateTitles(stats) {
-  // Helper function to get all players tied for the top value
-  function getTopPlayers(sortedArray, getValue) {
-    if (sortedArray.length === 0) return [];
-    const topValue = getValue(sortedArray[0][1]);
-    if (topValue === 0) return []; // Don't show titles if value is 0
-    
-    // Get all players with the top value
-    return sortedArray
-      .filter(([name, s]) => getValue(s) === topValue)
-      .map(([name]) => name);
-  }
-  
-  const sortedByWins = Object.entries(stats).sort((a, b) => b[1].wins - a[1].wins);
-  const sortedBySeconds = Object.entries(stats).sort((a, b) => b[1].seconds - a[1].seconds);
-  const sortedByEarnings = Object.entries(stats).sort((a, b) => (b[1].totalEarnings - b[1].totalSpent) - (a[1].totalEarnings - a[1].totalSpent));
-  const sortedByAttendance = Object.entries(stats).filter(([name]) => name !== 'Rafa').sort((a, b) => b[1].played - a[1].played);
-  const sortedByEliminations = Object.entries(stats).sort((a, b) => b[1].eliminations - a[1].eliminations);
-  const sortedByFirstOuts = Object.entries(stats).sort((a, b) => b[1].firstOuts - a[1].firstOuts);
-  const sortedByPhoenix = Object.entries(stats).sort((a, b) => b[1].phoenixCount - a[1].phoenixCount);
-  const sortedByBubbles = Object.entries(stats).sort((a, b) => b[1].thirds - a[1].thirds);
-  
-  const titles = [];
-  
-  // The Champion
-  const champions = getTopPlayers(sortedByWins, s => s.wins);
-  if (champions.length > 0) {
-    const topWins = sortedByWins[0][1].wins;
-    titles.push({
-      emoji: '👑',
-      name: 'The Champion',
-      holder: champions.join(' & '),
-      stat: `${topWins} tournament win${topWins !== 1 ? 's' : ''}`
-    });
-  }
-  
-  // The Runner-up
-  const runnerups = getTopPlayers(sortedBySeconds, s => s.seconds);
-  if (runnerups.length > 0) {
-    const topSeconds = sortedBySeconds[0][1].seconds;
-    titles.push({
-      emoji: '🥈',
-      name: 'The Runner-up',
-      holder: runnerups.join(' & '),
-      stat: `${topSeconds} second place${topSeconds !== 1 ? 's' : ''}`
-    });
-  }
-  
-  // Elon Musk (Most Profitable)
-  if (sortedByEarnings.length > 0) {
-    const topProfit = sortedByEarnings[0][1].totalEarnings - sortedByEarnings[0][1].totalSpent;
-    if (topProfit > 0) {
-      const topEarners = sortedByEarnings
-        .filter(([name, s]) => (s.totalEarnings - s.totalSpent) === topProfit)
-        .map(([name]) => name);
+
+    function calculateTitles(stats) {
+      function getTopPlayers(sortedArray, getValue) {
+        if (sortedArray.length === 0) return [];
+        const topValue = getValue(sortedArray[0][1]);
+        if (topValue === 0) return [];
+        
+        return sortedArray
+          .filter(([name, s]) => getValue(s) === topValue)
+          .map(([name]) => name);
+      }
       
-      titles.push({
-        emoji: '💰',
-        name: 'Elon Musk',
-        holder: topEarners.join(' & '),
-        stat: `£${topProfit.toFixed(2)} profit`
-      });
+      const sortedByWins = Object.entries(stats).sort((a, b) => b[1].wins - a[1].wins);
+      const sortedBySeconds = Object.entries(stats).sort((a, b) => b[1].seconds - a[1].seconds);
+      const sortedByEarnings = Object.entries(stats).sort((a, b) => (b[1].totalEarnings - b[1].totalSpent) - (a[1].totalEarnings - a[1].totalSpent));
+      const sortedByAttendance = Object.entries(stats).filter(([name]) => name !== 'Rafa').sort((a, b) => b[1].played - a[1].played);
+      const sortedByEliminations = Object.entries(stats).sort((a, b) => b[1].eliminations - a[1].eliminations);
+      const sortedByFirstOuts = Object.entries(stats).sort((a, b) => b[1].firstOuts - a[1].firstOuts);
+      const sortedByPhoenix = Object.entries(stats).sort((a, b) => b[1].phoenixCount - a[1].phoenixCount);
+      const sortedByBubbles = Object.entries(stats).sort((a, b) => b[1].thirds - a[1].thirds);
+      
+      const titles = [];
+      
+      const champions = getTopPlayers(sortedByWins, s => s.wins);
+      if (champions.length > 0) {
+        const topWins = sortedByWins[0][1].wins;
+        titles.push({
+          emoji: '👑',
+          name: 'The Champion',
+          holder: champions.join(' & '),
+          stat: `${topWins} tournament win${topWins !== 1 ? 's' : ''}`
+        });
+      }
+      
+      const runnerups = getTopPlayers(sortedBySeconds, s => s.seconds);
+      if (runnerups.length > 0) {
+        const topSeconds = sortedBySeconds[0][1].seconds;
+        titles.push({
+          emoji: '🥈',
+          name: 'The Runner-up',
+          holder: runnerups.join(' & '),
+          stat: `${topSeconds} second place${topSeconds !== 1 ? 's' : ''}`
+        });
+      }
+      
+      if (sortedByEarnings.length > 0) {
+        const topProfit = sortedByEarnings[0][1].totalEarnings - sortedByEarnings[0][1].totalSpent;
+        if (topProfit > 0) {
+          const topEarners = sortedByEarnings
+            .filter(([name, s]) => (s.totalEarnings - s.totalSpent) === topProfit)
+            .map(([name]) => name);
+          
+          titles.push({
+            emoji: '💰',
+            name: 'Elon Musk',
+            holder: topEarners.join(' & '),
+            stat: `£${topProfit.toFixed(2)} profit`
+          });
+        }
+      }
+      
+      const fixtures = getTopPlayers(sortedByAttendance, s => s.played);
+      if (fixtures.length > 0) {
+        const topAttendance = sortedByAttendance[0][1].played;
+        titles.push({
+          emoji: '🏠',
+          name: 'The Permanent Fixture',
+          holder: fixtures.join(' & '),
+          stat: `${topAttendance} tournament${topAttendance !== 1 ? 's' : ''}`
+        });
+      }
+      
+      const killers = getTopPlayers(sortedByEliminations, s => s.eliminations);
+      if (killers.length > 0) {
+        const topElims = sortedByEliminations[0][1].eliminations;
+        titles.push({
+          emoji: '💀',
+          name: 'The Killer',
+          holder: killers.join(' & '),
+          stat: `${topElims} elimination${topElims !== 1 ? 's' : ''}`
+        });
+      }
+      
+      const earlyBirds = getTopPlayers(sortedByFirstOuts, s => s.firstOuts);
+      if (earlyBirds.length > 0) {
+        const topFirstOuts = sortedByFirstOuts[0][1].firstOuts;
+        titles.push({
+          emoji: '🦅',
+          name: 'The Early Bird',
+          holder: earlyBirds.join(' & '),
+          stat: `${topFirstOuts} first elimination${topFirstOuts !== 1 ? 's' : ''}`
+        });
+      }
+      
+      const phoenixes = getTopPlayers(sortedByPhoenix, s => s.phoenixCount);
+      if (phoenixes.length > 0) {
+        const topRebuys = sortedByPhoenix[0][1].phoenixCount;
+        titles.push({
+          emoji: '🔥',
+          name: 'The Phoenix',
+          holder: phoenixes.join(' & '),
+          stat: `${topRebuys} rebuy${topRebuys !== 1 ? 's' : ''}`
+        });
+      }
+      
+      const bubbleBoys = getTopPlayers(sortedByBubbles, s => s.thirds);
+      if (bubbleBoys.length > 0) {
+        const topThirds = sortedByBubbles[0][1].thirds;
+        titles.push({
+          emoji: '🫧',
+          name: 'Bubble Boy',
+          holder: bubbleBoys.join(' & '),
+          stat: `${topThirds} third place finish${topThirds !== 1 ? 'es' : ''}`
+        });
+      }
+      
+      return titles;
     }
-  }
-  
-  // The Permanent Fixture (Most Attendance, excluding Rafa)
-  const fixtures = getTopPlayers(sortedByAttendance, s => s.played);
-  if (fixtures.length > 0) {
-    const topAttendance = sortedByAttendance[0][1].played;
-    titles.push({
-      emoji: '🏠',
-      name: 'The Permanent Fixture',
-      holder: fixtures.join(' & '),
-      stat: `${topAttendance} tournament${topAttendance !== 1 ? 's' : ''}`
-    });
-  }
-  
-  // The Killer
-  const killers = getTopPlayers(sortedByEliminations, s => s.eliminations);
-  if (killers.length > 0) {
-    const topElims = sortedByEliminations[0][1].eliminations;
-    titles.push({
-      emoji: '💀',
-      name: 'The Killer',
-      holder: killers.join(' & '),
-      stat: `${topElims} elimination${topElims !== 1 ? 's' : ''}`
-    });
-  }
-  
-  // The Early Bird
-  const earlyBirds = getTopPlayers(sortedByFirstOuts, s => s.firstOuts);
-  if (earlyBirds.length > 0) {
-    const topFirstOuts = sortedByFirstOuts[0][1].firstOuts;
-    titles.push({
-      emoji: '🐦',
-      name: 'The Early Bird',
-      holder: earlyBirds.join(' & '),
-      stat: `${topFirstOuts} first elimination${topFirstOuts !== 1 ? 's' : ''}`
-    });
-  }
-  
-  // The Phoenix (Only Rebuys)
-  const phoenixes = getTopPlayers(sortedByPhoenix, s => s.phoenixCount);
-  if (phoenixes.length > 0) {
-    const topRebuys = sortedByPhoenix[0][1].phoenixCount;
-    titles.push({
-      emoji: '🔥',
-      name: 'The Phoenix',
-      holder: phoenixes.join(' & '),
-      stat: `${topRebuys} rebuy${topRebuys !== 1 ? 's' : ''}`
-    });
-  }
-  
-  // Bubble Boy
-  const bubbleBoys = getTopPlayers(sortedByBubbles, s => s.thirds);
-  if (bubbleBoys.length > 0) {
-    const topThirds = sortedByBubbles[0][1].thirds;
-    titles.push({
-      emoji: '🫧',
-      name: 'Bubble Boy',
-      holder: bubbleBoys.join(' & '),
-      stat: `${topThirds} third place finish${topThirds !== 1 ? 'es' : ''}`
-    });
-  }
-  
-  return titles;
-}
-
-
 
     // Player management
     function updatePlayerTable() {
       const tbody = document.getElementById('playerTableBody');
       tbody.innerHTML = '';
       
-      // Check if we have a winner (only one active player left)
       const activePlayers = players.filter(p => !p.eliminated);
       const hasWinner = tournamentStarted && !tournamentEnded && activePlayers.length === 1;
       
@@ -1817,7 +1723,6 @@ function calculateTitles(stats) {
         if (!tournamentStarted && !tournamentEnded) {
           actions = `<button onclick="removePlayer(${index})">Remove</button>`;
         } else if (tournamentStarted && !tournamentEnded) {
-          // If this is the winner, show winner banner
           if (hasWinner && !player.eliminated) {
             actions = `<div style="background: linear-gradient(90deg, #ffd700, #ffed4e); 
                               color: #e65100; 
@@ -1830,17 +1735,14 @@ function calculateTitles(stats) {
                         🏆 WINNER 🏆
                       </div>`;
           } else {
-            // Show eliminate button for active players (including during breaks)
             if (!player.eliminated) {
               actions += `<button onclick="eliminatePlayer(${index})">Eliminate</button>`;
             }
             
-            // Re-buy available for eliminated players BEFORE final stage (including during break)
             if (player.eliminated && !isFinalStage) {
               actions += `<button class="rebuy-btn" onclick="rebuyPlayer(${index})">Re-buy £5</button>`;
             }
             
-            // Add-on available for ALL players ONLY during breaks (before final stage) and only once per player
             if (isBreak && !isFinalStage && !player.hasAddon) {
               actions += `<button class="addon-btn" onclick="addonPlayer(${index})">Add-on £5</button>`;
             }
@@ -1867,7 +1769,6 @@ function calculateTitles(stats) {
       const activePlayers = players.filter(p => !p.eliminated);
       
       if (activePlayers.length === 1) {
-        // Stop the timer immediately
         if (timer) {
           clearInterval(timer);
         }
@@ -1879,7 +1780,6 @@ function calculateTitles(stats) {
         
         showMessage(`🏆 ${activePlayers[0].name} is the winner! Click "End Tournament" to finish and save results.`);
         
-        // Force table update to show winner state
         setTimeout(() => {
           updatePlayerTable();
         }, 100);
@@ -1891,7 +1791,6 @@ function calculateTitles(stats) {
       const houseFee = totalPaid > 100 ? 10 : 5;
       const prizePool = Math.max(0, totalPaid - houseFee);
       
-      // Round prizes to nearest £5 for easier cash handling
       const rawFirstPrize = prizePool * 0.8;
       const rawSecondPrize = prizePool * 0.2;
       
@@ -1905,12 +1804,10 @@ function calculateTitles(stats) {
       document.getElementById('secondPrize').textContent = secondPrize;
     }
 
-    // FIXED addPlayer function to handle dropdown:
     function addPlayer() {
       const input = document.getElementById('playerNameInput');
       const select = document.getElementById('playerSelect');
       
-      // Check if a player was selected from dropdown or typed in input
       const name = (select.value || input.value).trim();
       
       if (!name) {
@@ -1928,12 +1825,11 @@ function calculateTitles(stats) {
         return;
       }
       
-      // If the name was typed (not in regularPlayers), add to customPlayers
       if (!regularPlayers.includes(name)) {
         if (!customPlayers.includes(name)) {
           customPlayers.push(name);
-          customPlayers.sort(); // Keep sorted
-          populatePlayerDropdown(); // Update dropdown with new custom player
+          customPlayers.sort();
+          populatePlayerDropdown();
         }
       }
       
@@ -1942,12 +1838,11 @@ function calculateTitles(stats) {
         stacks: 1,
         totalPaid: 5,
         eliminated: false,
-        hasAddon: false, // Track if player has used their one add-on
-        eliminationTime: null // Track when they were eliminated
- 	rebuyEliminations: []
+        hasAddon: false,
+        eliminationTime: null,
+        rebuyEliminations: []
       });
       
-      // Clear both input and select
       input.value = '';
       select.value = '';
       input.focus();
@@ -1972,12 +1867,10 @@ function calculateTitles(stats) {
       
       const player = players[index];
       
-      // Get list of all players (including eliminated ones) for the elimination dropdown
       const availablePlayers = players.map(p => p.name);
       
-      // Create dropdown for who eliminated this player
       const eliminatorOptions = availablePlayers
-        .filter(name => name !== player.name) // Can't eliminate yourself
+        .filter(name => name !== player.name)
         .map(name => `<option value="${name}">${name}</option>`)
         .join('');
       
@@ -1991,7 +1884,6 @@ function calculateTitles(stats) {
         </div>
       `;
       
-      // Show a custom dialog for elimination
       const eliminationDialog = document.createElement('div');
       eliminationDialog.style.cssText = `
         position: fixed;
@@ -2016,7 +1908,6 @@ function calculateTitles(stats) {
         </div>
       `;
       
-      // Add backdrop
       const backdrop = document.createElement('div');
       backdrop.style.cssText = `
         position: fixed;
@@ -2032,18 +1923,15 @@ function calculateTitles(stats) {
       document.body.appendChild(backdrop);
       document.body.appendChild(eliminationDialog);
       
-      // Store references for cleanup
       window.currentEliminationDialog = eliminationDialog;
       window.currentEliminationBackdrop = backdrop;
     }
 
-    // Add these new global functions
     window.confirmElimination = function(index) {
       const player = players[index];
       const eliminatorSelect = document.getElementById('eliminatorSelect');
       const eliminatedBy = eliminatorSelect.value;
       
-      // Get the current timestamp for elimination order
       player.eliminationTime = Date.now();
       
       recordAction('eliminate', {
@@ -2054,16 +1942,13 @@ function calculateTitles(stats) {
       });
       
       player.eliminated = true;
-      player.eliminatedBy = eliminatedBy; // Store who eliminated them
+      player.eliminatedBy = eliminatedBy;
       
-      // Calculate current position based on how many are left
       const remainingPlayers = players.filter(p => !p.eliminated).length;
-      const position = remainingPlayers + 1; // +1 because this player just got eliminated
+      const position = remainingPlayers + 1;
       
-      // Clean up dialog
       cancelElimination();
       
-      // Update table and check for winner
       updatePlayerTable();
       
       const eliminationMsg = eliminatedBy === 'N/A' ? 
@@ -2072,7 +1957,6 @@ function calculateTitles(stats) {
       
       showMessage(eliminationMsg);
       
-      // Force winner check after a brief delay to ensure table is updated
       setTimeout(() => {
         console.log('Forcing winner check after elimination...');
         checkForWinner();
@@ -2097,43 +1981,41 @@ function calculateTitles(stats) {
       return 'th';
     }
 
-function rebuyPlayer(index) {
-  if (tournamentEnded || isFinalStage) {
-    showMessage('Re-buys not available in final stage', true);
-    return;
-  }
-  
-  const player = players[index];
-  if (!player.eliminated) {
-    showMessage('Player must be eliminated to re-buy', true);
-    return;
-  }
-  
-  // Store who eliminated them for the rebuy record
-  const eliminatedBy = player.eliminatedBy || 'N/A';
-  
-  recordAction('rebuy', {
-    name: player.name,
-    previousStacks: player.stacks,
-    previousPaid: player.totalPaid,
-    eliminatedBy: eliminatedBy  // Store for export
-  });
-  
-  // Track this rebuy elimination separately
-  if (!player.rebuyEliminations) {
-    player.rebuyEliminations = [];
-  }
-  player.rebuyEliminations.push({
-    eliminatedBy: eliminatedBy,
-    timestamp: Date.now()
-  });
-  
-  player.eliminated = false;
-  player.stacks++;
-  player.totalPaid += 5;
-  updatePlayerTable();
-  showMessage(`${player.name} re-bought for £5`);
-}
+    function rebuyPlayer(index) {
+      if (tournamentEnded || isFinalStage) {
+        showMessage('Re-buys not available in final stage', true);
+        return;
+      }
+      
+      const player = players[index];
+      if (!player.eliminated) {
+        showMessage('Player must be eliminated to re-buy', true);
+        return;
+      }
+      
+      const eliminatedBy = player.eliminatedBy || 'N/A';
+      
+      recordAction('rebuy', {
+        name: player.name,
+        previousStacks: player.stacks,
+        previousPaid: player.totalPaid,
+        eliminatedBy: eliminatedBy
+      });
+      
+      if (!player.rebuyEliminations) {
+        player.rebuyEliminations = [];
+      }
+      player.rebuyEliminations.push({
+        eliminatedBy: eliminatedBy,
+        timestamp: Date.now()
+      });
+      
+      player.eliminated = false;
+      player.stacks++;
+      player.totalPaid += 5;
+      updatePlayerTable();
+      showMessage(`${player.name} re-bought for £5`);
+    }
 
     function addonPlayer(index) {
       if (!isBreak || tournamentEnded || isFinalStage) {
@@ -2192,7 +2074,6 @@ function rebuyPlayer(index) {
       document.getElementById('exportBtn').disabled = true;
       document.getElementById('loadDashboardBtn').disabled = true;
       
-      // Start the timer automatically
       currentRound = 0;
       updateRoundDisplay();
       startTimer();
@@ -2218,11 +2099,8 @@ function rebuyPlayer(index) {
       
       const activePlayers = players.filter(p => !p.eliminated);
       
-      // Update buttons based on Google API status
       if (googleApiReady) {
-        // For Google Identity Services, we don't have a persistent isSignedIn state
-        // So we enable the buttons and let the sign-in happen when clicked
-        updateSigninStatus(false); // Start as not signed in, will prompt when clicked
+        updateSigninStatus(false);
       } else {
         const exportBtn = document.getElementById('exportBtn');
         const dashboardBtn = document.getElementById('loadDashboardBtn');
@@ -2248,20 +2126,15 @@ function rebuyPlayer(index) {
       const houseFee = totalPaid > 100 ? 10 : 5;
       const prizePool = totalPaid - houseFee;
       
-      // Round prizes to nearest £5 for easier cash handling
       const rawFirstPrize = prizePool * 0.8;
       const rawSecondPrize = prizePool * 0.2;
       const firstPrize = Math.round(rawFirstPrize / 5) * 5;
       const secondPrize = Math.round(rawSecondPrize / 5) * 5;
       
-      // Sort players by elimination time (most recent elimination = highest finish)
-      // Active players (not eliminated) come first
       const allPlayersSorted = [...players].sort((a, b) => {
-        if (!a.eliminated && !b.eliminated) return 0; // Both active - doesn't matter
-        if (!a.eliminated) return -1; // a is active (winner)
-        if (!b.eliminated) return 1; // b is active (winner)
-        
-        // Both eliminated - most recent elimination time = better finish (2nd place)
+        if (!a.eliminated && !b.eliminated) return 0;
+        if (!a.eliminated) return -1;
+        if (!b.eliminated) return 1;
         return (b.eliminationTime || 0) - (a.eliminationTime || 0);
       });
       
@@ -2269,7 +2142,6 @@ function rebuyPlayer(index) {
       
       let resultsHTML = '<div class="prize-info"><h3>Final Results</h3>';
       
-      // 1st Place (active player)
       const winner = allPlayersSorted.find(p => !p.eliminated);
       if (winner) {
         resultsHTML += `<div style="font-size: 1.4rem; color: #d84315; margin: 10px 0;">
@@ -2277,7 +2149,6 @@ function rebuyPlayer(index) {
         </div>`;
       }
       
-      // 2nd Place (most recently eliminated player)
       const secondPlace = allPlayersSorted.find(p => p.eliminated);
       if (secondPlace) {
         resultsHTML += `<div style="font-size: 1.2rem; color: #d84315; margin: 10px 0;">
@@ -2289,7 +2160,6 @@ function rebuyPlayer(index) {
         </div>`;
       }
       
-      // Other finalists (remaining eliminated players in order)
       const otherFinalists = allPlayersSorted.filter(p => p.eliminated && p !== secondPlace);
       if (otherFinalists.length > 0) {
         resultsHTML += '<div style="margin-top: 15px;"><strong>Other Finalists:</strong><br>';
@@ -2327,7 +2197,11 @@ function rebuyPlayer(index) {
 
     // Timer management
     function updateRoundDisplay() {
+      console.log('updateRoundDisplay called, currentRound:', currentRound);
+      
       const round = rounds[currentRound];
+      console.log('Current round object:', round);
+      
       let roundInfoHTML = `<div style="font-size: 1.6rem; margin-bottom: 15px;">${round.name}</div>`;
       
       if (!round.isBreak && !round.isTest) {
@@ -2349,20 +2223,19 @@ function rebuyPlayer(index) {
       
       document.getElementById('roundInfo').innerHTML = roundInfoHTML;
       
-      // Set time left - test rounds use seconds, others use minutes
       timeLeft = round.isTest ? round.duration : round.duration * 60;
+      console.log('timeLeft set to:', timeLeft, 'seconds');
+      
       document.getElementById('timeRemaining').textContent = formatTime(timeLeft);
       
-      // Update break and final stage indicators
       isBreak = !!round.isBreak;
-      isFinalStage = currentRound > 5; // Final stage starts AFTER break (Round 6+)
+      isFinalStage = currentRound > 5;
       
       document.getElementById('breakNotice').style.display = isBreak ? 'block' : 'none';
       document.getElementById('finalStage').style.display = isFinalStage ? 'block' : 'none';
       
-      console.log(`Round ${currentRound}: ${round.name}, isBreak: ${isBreak}, isFinalStage: ${isFinalStage}`);
+      console.log(`Round ${currentRound}: ${round.name}, isBreak: ${isBreak}, isFinalStage: ${isFinalStage}, isTest: ${round.isTest}`);
       
-      // Update player table to reflect break/final stage
       if (tournamentStarted) {
         updatePlayerTable();
       }
@@ -2373,15 +2246,12 @@ function rebuyPlayer(index) {
         timeLeft--;
         document.getElementById('timeRemaining').textContent = formatTime(timeLeft);
       } else {
-        // Time's up - auto advance to next round
         console.log('Timer finished, playing alarm...');
         clearInterval(timer);
         timerRunning = false;
         
-        // Play alarm immediately
         playAlarm();
         
-        // Show message and auto-advance after 3 seconds
         showMessage('⏰ ROUND FINISHED! Advancing to next round...');
         
         setTimeout(() => {
@@ -2438,14 +2308,12 @@ function rebuyPlayer(index) {
         currentRound++;
         updateRoundDisplay();
         
-        // Auto-start next round if tournament is still active
         if (tournamentStarted && !tournamentEnded) {
           setTimeout(() => {
             startTimer();
-          }, 1000); // Small delay to allow players to see the round change
+          }, 1000);
         }
       } else {
-        // Tournament structure complete
         showMessage('All rounds complete! Consider ending the tournament.');
       }
     }
@@ -2472,17 +2340,15 @@ function rebuyPlayer(index) {
           }
         });
         
-        // When a player is selected, clear the input field
         playerSelect.addEventListener('change', () => {
           if (playerSelect.value) {
-            nameInput.value = ''; // Clear the input if dropdown is selected
+            nameInput.value = '';
           }
         });
         
-        // When input is typed, clear the dropdown selection
         nameInput.addEventListener('input', () => {
           if (nameInput.value) {
-            playerSelect.value = ''; // Clear dropdown if typing in input
+            playerSelect.value = '';
           }
         });
       }
@@ -2490,33 +2356,52 @@ function rebuyPlayer(index) {
 
     // Initialize application
     function initializeApp() {
+      console.log('=== INITIALIZATION START ===');
       console.log('Initializing app...');
+      
       setupEventHandlers();
+      
+      console.log('About to populate player dropdown...');
+      populatePlayerDropdown();
+      console.log('Player dropdown populated');
+      
+      console.log('Updating player table...');
       updatePlayerTable();
+      
+      console.log('Updating round display...');
       updateRoundDisplay();
+      
+      console.log('Requesting notification permission...');
       requestNotificationPermission();
       
-      // Populate dropdown after a short delay to ensure DOM is ready
-      setTimeout(() => {
-        populatePlayerDropdown();
-      }, 100);
-      
-      // Initialize Google API
+      console.log('Checking for Google API...');
       if (typeof gapi !== 'undefined') {
+        console.log('Google API found, loading client...');
         handleClientLoad();
       } else {
         console.warn('Google API not available');
         showMessage('Google Sheets integration not available', true);
       }
       
-      console.log('App initialized');
+      console.log('=== INITIALIZATION COMPLETE ===');
+      console.log('App initialized successfully');
+      console.log('Current round:', currentRound);
+      console.log('Test round:', rounds[0]);
     }
 
     // Run initialization when page loads
-    window.addEventListener('load', initializeApp);
+    window.addEventListener('load', () => {
+      console.log('Window load event fired');
+      initializeApp();
+    });
     
     // Also run when DOM is ready (fallback)
-    document.addEventListener('DOMContentLoaded', initializeApp);
+    document.addEventListener('DOMContentLoaded', () => {
+      console.log('DOM content loaded event fired');
+      initializeApp();
+    });
+    
+    console.log('Script loaded, waiting for page load...');
   </script>
 </body>
 </html>
