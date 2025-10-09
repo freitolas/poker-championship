@@ -1442,9 +1442,8 @@ Note: Google Sheets integration not available - results not saved automatically.
 
 function calculatePlayerStats(rows) {
   const stats = {};
-  const playerTournaments = {}; // Track unique tournaments per player
+  const playerTournaments = {};
   
-  // Skip header row if it exists
   const dataRows = rows.length > 0 && rows[0][0] === 'Date' ? rows.slice(1) : rows;
   
   dataRows.forEach((row, index) => {
@@ -1456,68 +1455,52 @@ function calculatePlayerStats(rows) {
     
     const player = playerName.trim();
     
-    // Initialize player stats
     if (!stats[player]) {
       stats[player] = {
-        played: 0,
-        wins: 0,
-        seconds: 0,
-        thirds: 0,
-        totalEarnings: 0,
-        totalSpent: 0,
-        totalRebuys: 0,
-        totalAddons: 0,
-        bestFinish: 999,
-        eliminations: 0,
-        firstOuts: 0,
-        cashes: 0
+        played: 0, wins: 0, seconds: 0, thirds: 0,
+        totalEarnings: 0, totalSpent: 0, totalRebuys: 0, totalAddons: 0,
+        bestFinish: 999, eliminations: 0, firstOuts: 0, cashes: 0
       };
-      playerTournaments[player] = new Set(); // Track unique tournament IDs
+      playerTournaments[player] = new Set();
     }
     
-    const pos = parseInt(position) || 999;
+    // ✅ KEY FIX #1: Change default from 999 to 0 for missing position data
+    const pos = parseInt(position) || 0;
     const paid = parseFloat(amountPaid) || 0;
     const earned = parseFloat(earnings) || 0;
     const rebuyCount = parseInt(rebuys) || 0;
     const addonCount = parseInt(addons) || 0;
     const field = parseInt(fieldSize) || 0;
     
-// Count tournament attendance by unique tournament ID (regardless of position data)
-console.log(`Processing: ${player}, Tournament ID: "${tournamentId}", Type: ${typeof tournamentId}`);
-
-if (tournamentId && tournamentId.toString().trim() !== '') {
-  const tournamentKey = tournamentId.toString().trim();
-  
-  if (!playerTournaments[player].has(tournamentKey)) {
-    playerTournaments[player].add(tournamentKey);
-    stats[player].played++;
-    console.log(`Added tournament ${tournamentKey} for ${player}. Total played: ${stats[player].played}`);
-    console.log(`${player} tournaments so far:`, Array.from(playerTournaments[player]));
-    
-    // Update other stats only for this new tournament
-    stats[player].totalSpent += paid;
-    stats[player].totalEarnings += earned;
-    stats[player].totalRebuys += rebuyCount;
-    stats[player].totalAddons += addonCount;
-    
-    // Track positions (only if position data exists)
-    if (position && position !== '') {
-      if (pos === 1) stats[player].wins++;
-      if (pos === 2) stats[player].seconds++;
-      if (pos === 3) stats[player].thirds++;
-      if (pos <= 2) stats[player].cashes++;
-      if (pos === field) stats[player].firstOuts++;
+    // Count attendance regardless of position data
+    if (tournamentId && tournamentId.toString().trim() !== '') {
+      const tournamentKey = tournamentId.toString().trim();
       
-      if (pos < stats[player].bestFinish) stats[player].bestFinish = pos;
+      if (!playerTournaments[player].has(tournamentKey)) {
+        playerTournaments[player].add(tournamentKey);
+        stats[player].played++;
+        
+        // Update financial stats
+        stats[player].totalSpent += paid;
+        stats[player].totalEarnings += earned;
+        stats[player].totalRebuys += rebuyCount;
+        stats[player].totalAddons += addonCount;
+        
+        // ✅ KEY FIX #2: Only track positions if we have valid data (pos > 0)
+        if (pos > 0) {
+          if (pos === 1) stats[player].wins++;
+          if (pos === 2) stats[player].seconds++;
+          if (pos === 3) stats[player].thirds++;
+          if (pos <= 2) stats[player].cashes++;
+          if (pos === field) stats[player].firstOuts++;
+          
+          if (pos < stats[player].bestFinish) stats[player].bestFinish = pos;
+        }
+        // For pos = 0 (old data), we still count attendance but skip position stats
+      }
     }
-  } else {
-    console.log(`Skipped: ${player} already counted for tournament ${tournamentKey}`);
-  }
-} else {
-  console.log(`Invalid tournament ID for ${player}: "${tournamentId}"`);
-}
     
-    // Track eliminations caused by this player (can happen multiple times across tournaments)
+    // Track eliminations
     if (eliminatedBy && eliminatedBy === player) {
       if (!stats[eliminatedBy]) {
         stats[eliminatedBy] = {
