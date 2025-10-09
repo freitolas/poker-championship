@@ -1286,40 +1286,63 @@ Note: Google Sheets integration not available - results not saved automatically.
       // Create individual player records
       const playerRecords = [];
       
-      allPlayersSorted.forEach((player, index) => {
-        const finishPosition = player.eliminated ? (allPlayersSorted.filter(p => !p.eliminated).length + index) : 1;
-        let earnings = 0;
-        
-        // Award prize money
-        if (finishPosition === 1) earnings = firstPrize;
-        else if (finishPosition === 2) earnings = secondPrize;
-        
-        // Calculate rebuys and addons from total paid
-        const baseStacks = 1;
-        const additionalStacks = player.stacks - baseStacks;
-        const baseCost = 5;
-        const additionalCost = player.totalPaid - baseCost;
-        const rebuys = player.eliminated ? Math.max(0, additionalStacks - (player.hasAddon ? 1 : 0)) : additionalStacks - (player.hasAddon ? 1 : 0);
-        const addons = player.hasAddon ? 1 : 0;
-        
-        const playerRecord = {
-          date,
-          timestamp,
-          tournamentId,
-          playerName: player.name,
-          finishPosition,
-          fieldSize: players.length,
-          amountPaid: player.totalPaid,
-          earnings,
-          rebuys: Math.max(0, rebuys),
-          addons,
-          roi: player.totalPaid > 0 ? ((earnings - player.totalPaid) / player.totalPaid * 100).toFixed(1) : 0,
-          eliminatedBy: player.eliminated ? (player.eliminatedBy || 'N/A') : '' // Only set for eliminated players
-        };
-        
-        playerRecords.push(playerRecord);
-        console.log(`Player record: ${player.name} - Position: ${finishPosition}, Paid: £${player.totalPaid}, Earned: £${earnings}, ROI: ${playerRecord.roi}%`);
-      });
+allPlayersSorted.forEach((player, index) => {
+  const finishPosition = player.eliminated ? (allPlayersSorted.filter(p => !p.eliminated).length + index) : 1;
+  let earnings = 0;
+  
+  // Award prize money
+  if (finishPosition === 1) earnings = firstPrize;
+  else if (finishPosition === 2) earnings = secondPrize;
+  
+  // Calculate rebuys and addons from total paid
+  const baseStacks = 1;
+  const additionalStacks = player.stacks - baseStacks;
+  const baseCost = 5;
+  const additionalCost = player.totalPaid - baseCost;
+  const rebuys = player.eliminated ? Math.max(0, additionalStacks - (player.hasAddon ? 1 : 0)) : additionalStacks - (player.hasAddon ? 1 : 0);
+  const addons = player.hasAddon ? 1 : 0;
+  
+  // Main player record (final position)
+  const playerRecord = {
+    date,
+    timestamp,
+    tournamentId,
+    playerName: player.name,
+    finishPosition,
+    fieldSize: players.length,
+    amountPaid: player.totalPaid,
+    earnings,
+    rebuys: Math.max(0, rebuys),
+    addons,
+    roi: player.totalPaid > 0 ? ((earnings - player.totalPaid) / player.totalPaid * 100).toFixed(1) : 0,
+    eliminatedBy: player.eliminated ? (player.eliminatedBy || 'N/A') : '' // Only set for eliminated players
+  };
+  
+  playerRecords.push(playerRecord);
+  console.log(`Player record: ${player.name} - Position: ${finishPosition}, Paid: £${player.totalPaid}, Earned: £${earnings}, ROI: ${playerRecord.roi}%`);
+  
+  // Add separate rows for each rebuy elimination
+  if (player.rebuyEliminations && player.rebuyEliminations.length > 0) {
+    player.rebuyEliminations.forEach((rebuy, rebuyIndex) => {
+      const rebuyRecord = {
+        date,
+        timestamp,
+        tournamentId,
+        playerName: player.name,
+        finishPosition: 0,  // Rebuy rows have position 0
+        fieldSize: players.length,
+        amountPaid: 0,
+        earnings: 0,
+        rebuys: 0,
+        addons: 0,
+        roi: 0,
+        eliminatedBy: rebuy.eliminatedBy
+      };
+      playerRecords.push(rebuyRecord);
+      console.log(`Rebuy record: ${player.name} - Rebuy #${rebuyIndex + 1}, Eliminated by: ${rebuy.eliminatedBy}`);
+    });
+  }
+});
       
       console.log('=== FINAL TOURNAMENT DATA ===');
       console.log('Total player records:', playerRecords.length);
@@ -1500,19 +1523,22 @@ function calculatePlayerStats(rows) {
       }
     }
     
-    // Track eliminations
-    if (eliminatedBy && eliminatedBy === player) {
-      if (!stats[eliminatedBy]) {
-        stats[eliminatedBy] = {
-          played: 0, wins: 0, seconds: 0, thirds: 0, totalEarnings: 0, totalSpent: 0,
-          totalRebuys: 0, totalAddons: 0, bestFinish: 999, eliminations: 0,
-          firstOuts: 0, cashes: 0
-        };
-        playerTournaments[eliminatedBy] = new Set();
-      }
-      stats[eliminatedBy].eliminations++;
-    }
-  });
+// Track eliminations - count EVERY row where someone was eliminated (including rebuys)
+if (eliminatedBy && eliminatedBy.trim() !== '') {
+  const eliminator = eliminatedBy.trim();
+  
+  if (!stats[eliminator]) {
+    stats[eliminator] = {
+      played: 0, wins: 0, seconds: 0, thirds: 0, totalEarnings: 0, totalSpent: 0,
+      totalRebuys: 0, totalAddons: 0, bestFinish: 999, eliminations: 0,
+      firstOuts: 0, cashes: 0
+    };
+    playerTournaments[eliminator] = new Set();
+  }
+  
+  // Count EVERY elimination (including rebuys) - no uniqueness check needed
+  stats[eliminator].eliminations++;
+}  });
   
   // Calculate derived stats
   Object.keys(stats).forEach(player => {
@@ -1918,6 +1944,7 @@ function calculateTitles(stats) {
         eliminated: false,
         hasAddon: false, // Track if player has used their one add-on
         eliminationTime: null // Track when they were eliminated
+ 	rebuyEliminations: []
       });
       
       // Clear both input and select
@@ -2070,30 +2097,43 @@ function calculateTitles(stats) {
       return 'th';
     }
 
-    function rebuyPlayer(index) {
-      if (tournamentEnded || isFinalStage) {
-        showMessage('Re-buys not available in final stage', true);
-        return;
-      }
-      
-      const player = players[index];
-      if (!player.eliminated) {
-        showMessage('Player must be eliminated to re-buy', true);
-        return;
-      }
-      
-      recordAction('rebuy', {
-        name: player.name,
-        previousStacks: player.stacks,
-        previousPaid: player.totalPaid
-      });
-      
-      player.eliminated = false;
-      player.stacks++;
-      player.totalPaid += 5;
-      updatePlayerTable();
-      showMessage(`${player.name} re-bought for £5`);
-    }
+function rebuyPlayer(index) {
+  if (tournamentEnded || isFinalStage) {
+    showMessage('Re-buys not available in final stage', true);
+    return;
+  }
+  
+  const player = players[index];
+  if (!player.eliminated) {
+    showMessage('Player must be eliminated to re-buy', true);
+    return;
+  }
+  
+  // Store who eliminated them for the rebuy record
+  const eliminatedBy = player.eliminatedBy || 'N/A';
+  
+  recordAction('rebuy', {
+    name: player.name,
+    previousStacks: player.stacks,
+    previousPaid: player.totalPaid,
+    eliminatedBy: eliminatedBy  // Store for export
+  });
+  
+  // Track this rebuy elimination separately
+  if (!player.rebuyEliminations) {
+    player.rebuyEliminations = [];
+  }
+  player.rebuyEliminations.push({
+    eliminatedBy: eliminatedBy,
+    timestamp: Date.now()
+  });
+  
+  player.eliminated = false;
+  player.stacks++;
+  player.totalPaid += 5;
+  updatePlayerTable();
+  showMessage(`${player.name} re-bought for £5`);
+}
 
     function addonPlayer(index) {
       if (!isBreak || tournamentEnded || isFinalStage) {
