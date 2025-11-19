@@ -646,7 +646,10 @@
       { name: "Round 6", sb: 100, bb: 200, duration: 20 },
       { name: "Round 7", sb: 200, bb: 400, duration: 20 },
       { name: "Round 8", sb: 400, bb: 800, duration: 20 },
-      { name: "Round 9", sb: 1000, bb: 2000, duration: 20 }
+      { name: "Round 9", sb: 1000, bb: 2000, duration: 20 },
+      { name: "Round 10", sb: 2000, bb: 4000, duration: 20 },
+      { name: "Round 11", sb: 4000, bb: 8000, duration: 20 },
+      { name: "Round 12", sb: 8000, bb: 16000, duration: 20 }
     ];
 
     console.log('Rounds defined:', rounds);
@@ -1821,8 +1824,15 @@ Note: Google Sheets integration not available - results not saved automatically.
       }
       
       if (tournamentStarted) {
-        showMessage('Cannot add players after tournament has started', true);
-        return;
+        const breakIndex = rounds.findIndex(r => r.isBreak);
+        if (breakIndex !== -1 && currentRound > breakIndex) {
+          showMessage('Cannot add players after the break period', true);
+          return;
+        }
+        if (breakIndex === -1) {
+           showMessage('Cannot add players after tournament has started', true);
+           return;
+        }
       }
       
       if (!regularPlayers.includes(name)) {
