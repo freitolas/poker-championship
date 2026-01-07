@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Curupira's Head Poker 2026</title>
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8IS0tIFBva2VyIENoaXAgLS0+CiAgPGNpcmNsZSBjeD0iMzIiIGN5PSIzMiIgcj0iMzAiIGZpbGw9IiNGRjk4MDAiIHN0cm9rZT0iI0Q4NDMxNSIgc3Ryb2tlLXdpZHRoPSI0Ii8+CiAgPGNpcmNsZSBjeD0iMzIiIGN5PSIzMiIgcj0iMjQiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI0ZGRDc0MCIgc3Ryb2tlLXdpZHRoPSIyIi8+CiAgPGNpcmNsZSBjeD0iMzIiIGN5PSIzMiIgcj0iMTgiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI0Q4NDMxNSIgc3Ryb2tlLXdpZHRoPSIxIi8+CiAgCiAgPCEtLSBDZW50ZXIgVGV4dCAtLT4KICA8dGV4dCB4PSIzMiIgeT0iMzgiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxOCIgZm9udC13ZWlnaHQ9ImJvbGQiIGZpbGw9IndoaXRlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj41PC90ZXh0Pgo8L3N2Zz4K">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8Y2lyY2xlIGN4PSIzMiIgY3k9IjMyIiByPSIzMCIgZmlsbD0iI0RDMkI3MSIgc3Ryb2tlPSIjMkUwMDNFIiBzdHJva2Utd2lkdGg9IjQiLz4KICA8dGV4dCB4PSIzMiIgeT0iMzgiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxOCIgZm9udC13ZWlnaHQ9ImJvbGQiIGZpbGw9IndoaXRlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj4yNjwvdGV4dD4KPC9zdmc+">
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script src="https://apis.google.com/js/api.js"></script>
   <style>
@@ -18,8 +18,6 @@
     }
     .main-content { flex: 3; padding: 20px; min-width: 500px; overflow-y: auto; }
     h1 { text-align: center; color: #e65100; font-size: 2.2rem; margin-bottom: 15px; text-shadow: 2px 2px 4px rgba(0,0,0,0.1); position: relative; }
-    h1::before { content: "♠"; position: absolute; left: -40px; top: 50%; transform: translateY(-50%); color: #d84315; font-size: 1.8rem; }
-    h1::after { content: "♥"; position: absolute; right: -40px; top: 50%; transform: translateY(-50%); color: #d84315; font-size: 1.8rem; }
     
     .game-info { background: linear-gradient(90deg, #ffd740 0%, #ffa726 100%); padding: 15px; border-radius: 10px; text-align: center; color: #d84315; font-weight: 700; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(255, 152, 0, 0.2); }
     .player-setup { background: #fff3e0; padding: 20px; border: 2px solid #ffa726; border-radius: 10px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(255, 152, 0, 0.1); }
@@ -50,11 +48,16 @@
     .dashboard-tab { flex: 1; padding: 15px 20px; background: #ffe0b2; color: #e65100; border: none; font-weight: 700; cursor: pointer; border-right: 2px solid #ffa726; }
     .dashboard-tab.active { background: #ff9800; color: white; }
     .dashboard-tab-content { background: #fff3e0; padding: 25px; border-radius: 0 0 10px 10px; min-height: 400px; }
+    .dashboard-tab-panel { display: none; }
+    .dashboard-tab-panel.active { display: block; }
     
+    /* Title Cards */
     .titles-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
     .title-card { background: linear-gradient(135deg, #fff3e0 0%, #ffecb3 100%); border: 3px solid #ffa726; border-radius: 15px; padding: 20px; text-align: center; }
     .title-card-emoji { font-size: 3rem; display: block; margin-bottom: 10px; }
-    .title-card-holder { font-size: 1.8rem; font-weight: 900; color: #d84315; }
+    .title-card-name { font-size: 1.1rem; font-weight: bold; color: #e65100; margin-bottom: 5px; }
+    .title-card-holder { font-size: 1.4rem; font-weight: 900; color: #d84315; margin-bottom: 5px; }
+    .title-card-stat { color: #bf360c; font-weight: 600; }
     
     .status-message { background: #e8f5e8; border: 2px solid #4caf50; color: #2e7d32; padding: 12px; border-radius: 8px; margin: 15px 0; text-align: center; font-weight: 600; opacity: 0; transition: opacity 0.3s ease; }
     .status-message.show { opacity: 1; }
@@ -62,7 +65,7 @@
 </head>
 <body>
   <div class="main-content">
-    <h1>Curupira's Head Poker Championship 2026</h1>
+    <h1>Curupira's Head Poker 2026</h1>
     
     <div class="game-info" id="gameInfoDisplay">
       Buy-in: £5 per stack | 1st: 80% | 2nd: 20% | House Fee: £5
@@ -104,7 +107,7 @@
       <div id="playerCount">Players: 0 | Prize Pot: £0 | House Fee: £5</div>
       
       <div class="action-buttons">
-        <button onclick="signInAndExport()" id="exportBtn" disabled>Save Tournament Data</button>
+        <button onclick="signInAndExport()" id="exportBtn">Save Tournament Data</button>
         <button onclick="signInAndLoadDashboard()" id="loadDashboardBtn">Load Championship Dashboard</button>
       </div>
     </div>
@@ -199,11 +202,7 @@
         populatePlayerDropdown();
         updateRoundDisplay();
         updateGameSettings();
-        if(typeof gapi !== 'undefined') {
-            handleClientLoad();
-        } else {
-            console.log("GAPI not loaded yet.");
-        }
+        handleClientLoad(); // Load API immediately like 2025 version
     };
 
     function handleTournamentSelect() {
@@ -507,10 +506,6 @@
         tournamentEnded = true;
         pauseTimer();
         document.getElementById('endBtn').disabled = true;
-        // ALWAYS enable save button
-        document.getElementById('exportBtn').disabled = false;
-        document.getElementById('loadDashboardBtn').disabled = false;
-        document.getElementById('majorToggle').disabled = false;
         
         updatePlayerTable();
         
@@ -546,68 +541,65 @@
         if(!actionHistory.length) document.getElementById('undoBtn').disabled = true;
     }
 
-    // === API & DASHBOARD (Exact 2025 Logic) ===
-    
-    // Core Legacy Init
+    // === API & DASHBOARD (RESTORED 2025 LOGIC) ===
+    function handleClientLoad() {
+      if (window.google && window.google.accounts) {
+        initWithGIS();
+      } else {
+        gapi.load('client:auth2', {
+          callback: initClient,
+          onerror: function() {
+            console.error('Failed to load Google API client');
+          }
+        });
+      }
+    }
+
+    function initWithGIS() {
+      try {
+        google.accounts.id.initialize({
+          client_id: CLIENT_ID,
+          callback: (r) => {}
+        });
+
+        gapi.load('client', () => {
+          gapi.client.init({
+            discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4']
+          }).then(() => {
+            googleApiReady = true;
+            window.tokenClient = google.accounts.oauth2.initTokenClient({
+              client_id: CLIENT_ID,
+              scope: SCOPES,
+              callback: (response) => {
+                if (response.access_token) {
+                  gapi.client.setToken(response);
+                }
+              }
+            });
+          }).catch(error => {
+            console.error('GIS client init failed:', error);
+          });
+        });
+      } catch (error) {
+        console.error('GIS initialization failed:', error);
+      }
+    }
+
     function initClient() {
         gapi.client.init({
             clientId: CLIENT_ID,
             discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4'],
             scope: SCOPES
-        }).then(() => { 
-            googleApiReady = true; 
-            console.log("GAPI Client Initialized");
-        }).catch(err => {
-            console.error("GAPI Init Error:", err);
-        });
-    }
-
-    // Dynamic Loader
-    function handleClientLoad() {
-      // Try New GIS first
-      if (window.google && window.google.accounts) {
-        initWithGIS();
-      } else {
-        // Fallback
-        gapi.load('client:auth2', initClient);
-      }
-    }
-
-    function initWithGIS() {
-        try {
-            google.accounts.id.initialize({
-              client_id: CLIENT_ID,
-              callback: (r) => {} 
-            });
-            gapi.load('client', () => {
-              gapi.client.init({
-                discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4']
-              }).then(() => {
-                googleApiReady = true;
-                window.tokenClient = google.accounts.oauth2.initTokenClient({
-                  client_id: CLIENT_ID,
-                  scope: SCOPES,
-                  callback: (response) => {
-                    if (response.access_token) {
-                      gapi.client.setToken(response);
-                    }
-                  }
-                });
-              });
-            });
-        } catch(e) {
-            console.warn("GIS Init failed, falling back", e);
-            gapi.load('client:auth2', initClient);
-        }
+        }).then(() => { googleApiReady = true; });
     }
 
     window.signInAndExport = function() {
         if(!googleApiReady) {
-            // Lazy load if not ready
+            // Lazy try
             handleClientLoad();
             setTimeout(() => {
-               if(googleApiReady) executeExport();
-               else alert("Initializing connection... Click again in 5s");
+                if(googleApiReady) executeExport();
+                else alert("Connection initializing... Try again in 5s");
             }, 1000);
             return;
         }
@@ -662,7 +654,7 @@
             handleClientLoad();
             setTimeout(() => {
                 if(googleApiReady) executeLoadDash();
-                else alert("Initializing connection... Click again in 5s");
+                else alert("Connection initializing... Try again in 5s");
             }, 1000);
             return;
         }
@@ -710,14 +702,17 @@
         const stats2026 = calculate2026Points(rows2026);
         const detail2026 = calculateDetailedStats(rows2026);
         const allTime = calculateAllTime(rows);
-        const titles = calculateTitles(detail2026);
+        
+        // Use all-time stats for titles if 2026 is empty, or just use 2026
+        // Usually titles are for the season.
+        const titles = calculateTitles(calculateDetailedStats(rows2026, true)); // Pass true for raw stats
 
         section.innerHTML = `
             <div class="dashboard-tabs">
                 <button class="dashboard-tab active" onclick="switchTab('p2026')">📊 2026 Leaderboard</button>
-                <button class="dashboard-tab" onclick="switchTab('titles')">🏆 Titles (2026)</button>
-                <button class="dashboard-tab" onclick="switchTab('detailed')">📈 Detailed Stats (2026)</button>
-                <button class="dashboard-tab" onclick="switchTab('alltime')">📅 All-Time Overview</button>
+                <button class="dashboard-tab" onclick="switchTab('titles')">🏆 Titles</button>
+                <button class="dashboard-tab" onclick="switchTab('detailed')">📈 Detailed Stats</button>
+                <button class="dashboard-tab" onclick="switchTab('alltime')">📅 All-Time</button>
             </div>
             <div id="p2026" class="dashboard-tab-content">${render2026Leaderboard(stats2026)}</div>
             <div id="titles" class="dashboard-tab-content" style="display:none">${renderTitles(titles)}</div>
@@ -788,29 +783,40 @@
         return Object.entries(stats).sort((a,b) => b[1].points - a[1].points);
     }
 
-    function calculateDetailedStats(rows) {
+    function calculateDetailedStats(rows, returnRaw = false) {
         const s = {};
         rows.slice(1).forEach(r => {
-            const [d,t,id,name,rankStr,field,paid,earn,rebuy,addon,roi,killer] = r;
+            const [d,t,id,name,rankStr,fieldStr,paid,earn,rebuy,addon,roi,killer] = r;
             const rank = parseInt(rankStr);
+            const field = parseInt(fieldStr);
+            const cost = parseFloat(paid)||0;
+            const earnings = parseFloat(earn)||0; // assuming col H has earnings if saved
             
-            if(!s[name]) s[name] = { played:0, wins:0, sec:0, third:0, rebuys:0, addons:0, kills:0, deaths:0 };
+            if(!s[name]) s[name] = { 
+                played:0, wins:0, sec:0, third:0, 
+                rebuys:0, addons:0, kills:0, deaths:0, 
+                firstOuts:0, totalProfit:0 
+            };
             
             s[name].played++;
             s[name].rebuys += parseInt(rebuy)||0;
             s[name].addons += parseInt(addon)||0;
+            s[name].totalProfit += (earnings - cost);
             
             if(rank === 1) s[name].wins++;
             if(rank === 2) s[name].sec++;
             if(rank === 3) s[name].third++;
             if(rank > 1) s[name].deaths++;
+            if(rank === field) s[name].firstOuts++; // Early Bird Logic
             
             if(killer && killer !== 'N/A') {
-                if(!s[killer]) s[killer] = { played:0, wins:0, sec:0, third:0, rebuys:0, addons:0, kills:0, deaths:0 };
+                if(!s[killer]) s[killer] = { played:0, wins:0, sec:0, third:0, rebuys:0, addons:0, kills:0, deaths:0, firstOuts:0, totalProfit:0 };
                 s[killer].kills++;
             }
         });
         
+        if (returnRaw) return s;
+
         return Object.entries(s).map(([name, d]) => {
             d.winRate = d.played > 0 ? ((d.wins / d.played)*100).toFixed(0) + '%' : '0%';
             d.cashRate = d.played > 0 ? (((d.wins + d.sec)/d.played)*100).toFixed(0) + '%' : '0%';
@@ -836,17 +842,31 @@
         return Object.entries(s).sort((a,b) => b[1].wins - a[1].wins);
     }
     
-    function calculateTitles(statsArray) {
-        let maxK = {n:'-', v:0}, maxR = {n:'-', v:0}, max3 = {n:'-', v:0};
+    function calculateTitles(statsObj) {
+        // StatsObj is { name: {wins, sec, third, kills, rebuys, played, firstOuts, totalProfit}... }
         
-        if (statsArray.length > 0) {
-            statsArray.forEach(([n, d]) => {
-                if(d.kills > maxK.v) maxK = {n:n, v:d.kills};
-                if(d.rebuys > maxR.v) maxR = {n:n, v:d.rebuys};
-                if(d.third > max3.v) max3 = {n:n, v:d.third};
-            });
-        }
-        return { killer: maxK, phoenix: maxR, bubble: max3 };
+        let t = {
+            champion: {n:'-', v:0},
+            runnerup: {n:'-', v:0},
+            musk: {n:'-', v:0},
+            fixture: {n:'-', v:0},
+            killer: {n:'-', v:0},
+            early: {n:'-', v:0},
+            phoenix: {n:'-', v:0},
+            bubble: {n:'-', v:0}
+        };
+        
+        Object.entries(statsObj).forEach(([n, d]) => {
+            if(d.wins > t.champion.v) t.champion = {n:n, v:d.wins};
+            if(d.sec > t.runnerup.v) t.runnerup = {n:n, v:d.sec};
+            if(d.totalProfit > t.musk.v) t.musk = {n:n, v:d.totalProfit};
+            if(d.played > t.fixture.v) t.fixture = {n:n, v:d.played};
+            if(d.kills > t.killer.v) t.killer = {n:n, v:d.kills};
+            if(d.firstOuts > t.early.v) t.early = {n:n, v:d.firstOuts};
+            if(d.rebuys > t.phoenix.v) t.phoenix = {n:n, v:d.rebuys};
+            if(d.third > t.bubble.v) t.bubble = {n:n, v:d.third};
+        });
+        return t;
     }
 
     function render2026Leaderboard(data) {
@@ -874,9 +894,14 @@
     
     function renderTitles(t) {
         return `<div class="titles-grid">
+            <div class="title-card"><span class="title-card-emoji">👑</span><div class="title-card-name">The Champion</div><div class="title-card-holder">${t.champion.n}</div><div class="title-card-stat">${t.champion.v} Wins</div></div>
+            <div class="title-card"><span class="title-card-emoji">🥈</span><div class="title-card-name">The Runner-up</div><div class="title-card-holder">${t.runnerup.n}</div><div class="title-card-stat">${t.runnerup.v} 2nds</div></div>
+            <div class="title-card"><span class="title-card-emoji">💰</span><div class="title-card-name">Elon Musk</div><div class="title-card-holder">${t.musk.n}</div><div class="title-card-stat">£${t.musk.v.toFixed(0)}</div></div>
+            <div class="title-card"><span class="title-card-emoji">🏠</span><div class="title-card-name">Permanent Fixture</div><div class="title-card-holder">${t.fixture.n}</div><div class="title-card-stat">${t.fixture.v} Games</div></div>
             <div class="title-card"><span class="title-card-emoji">💀</span><div class="title-card-name">The Killer</div><div class="title-card-holder">${t.killer.n}</div><div class="title-card-stat">${t.killer.v} Kills</div></div>
+            <div class="title-card"><span class="title-card-emoji">🦅</span><div class="title-card-name">Early Bird</div><div class="title-card-holder">${t.early.n}</div><div class="title-card-stat">${t.early.v} 1st Outs</div></div>
             <div class="title-card"><span class="title-card-emoji">🔥</span><div class="title-card-name">The Phoenix</div><div class="title-card-holder">${t.phoenix.n}</div><div class="title-card-stat">${t.phoenix.v} Rebuys</div></div>
-            <div class="title-card"><span class="title-card-emoji">🫧</span><div class="title-card-name">Bubble Boy</div><div class="title-card-holder">${t.bubble.n}</div><div class="title-card-stat">${t.bubble.v} 3rd Places</div></div>
+            <div class="title-card"><span class="title-card-emoji">🫧</span><div class="title-card-name">Bubble Boy</div><div class="title-card-holder">${t.bubble.n}</div><div class="title-card-stat">${t.bubble.v} 3rds</div></div>
         </div>`;
     }
 
