@@ -3,109 +3,550 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Curupira's Head Poker 2026</title>
+  <title>Curupira's Head Poker Championship 2026</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8IS0tIFBva2VyIENoaXAgLS0+CiAgPGNpcmNsZSBjeD0iMzIiIGN5PSIzMiIgcj0iMzAiIGZpbGw9IiNGRjk4MDAiIHN0cm9rZT0iI0Q4NDMxNSIgc3Ryb2tlLXdpZHRoPSI0Ii8+CiAgPGNpcmNsZSBjeD0iMzIiIGN5PSIzMiIgcj0iMjQiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI0ZGRDc0MCIgc3Ryb2tlLXdpZHRoPSIyIi8+CiAgPGNpcmNsZSBjeD0iMzIiIGN5PSIzMiIgcj0iMTgiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI0Q4NDMxNSIgc3Ryb2tlLXdpZHRoPSIxIi8+CiAgCiAgPCEtLSBDZW50ZXIgVGV4dCAtLT4KICA8dGV4dCB4PSIzMiIgeT0iMzgiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxOCIgZm9udC13ZWlnaHQ9ImJvbGQiIGZpbGw9IndoaXRlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj41PC90ZXh0Pgo8L3N2Zz4K">
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script src="https://apis.google.com/js/api.js"></script>
   <style>
-    * { box-sizing: border-box; }
+    * {
+      box-sizing: border-box;
+    }
     
     body {
-      margin: 0; padding: 0;
-      background: url('background.svg'), linear-gradient(135deg, #fff7e1 0%, #ffe0b2 100%);
+      margin: 0;
+      padding: 0;
+      background: url('background.svg'),
+                  linear-gradient(135deg, #fff7e1 0%, #ffe0b2 100%);
       background-size: 512px 512px, auto;
       background-repeat: repeat, no-repeat;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       color: #7a4800;
-      display: flex; min-height: 100vh;
+      display: flex;
+      min-height: 100vh;
     }
     
-    .main-content { flex: 3; padding: 20px; min-width: 500px; overflow-y: auto; }
+    .main-content {
+      flex: 3;
+      padding: 20px;
+      min-width: 500px;
+      overflow-y: auto;
+    }
     
     h1 {
-      text-align: center; color: #e65100; font-size: 2.2rem; margin-bottom: 15px;
-      text-shadow: 2px 2px 4px rgba(0,0,0,0.1); position: relative;
+      text-align: center;
+      color: #e65100;
+      font-size: 2.2rem;
+      margin-bottom: 15px;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+      position: relative;
+    }
+    
+    h1::before {
+      content: "♠";
+      position: absolute;
+      left: -40px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #d84315;
+      font-size: 1.8rem;
+    }
+    
+    h1::after {
+      content: "♥";
+      position: absolute;
+      right: -40px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #d84315;
+      font-size: 1.8rem;
     }
     
     .game-info {
       background: linear-gradient(90deg, #ffd740 0%, #ffa726 100%);
-      padding: 15px; border-radius: 10px; text-align: center; color: #d84315;
-      font-weight: 700; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(255, 152, 0, 0.2);
+      padding: 15px;
+      border-radius: 10px;
+      text-align: center;
+      color: #d84315;
+      font-weight: 700;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 8px rgba(255, 152, 0, 0.2);
+      position: relative;
+    }
+    
+    .game-info::before {
+      content: "🎰";
+      position: absolute;
+      left: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 1.5rem;
+    }
+    
+    .game-info::after {
+      content: "🃏";
+      position: absolute;
+      right: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 1.5rem;
     }
     
     .player-setup {
-      background: #fff3e0; padding: 20px; border: 2px solid #ffa726;
-      border-radius: 10px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(255, 152, 0, 0.1);
+      background: #fff3e0;
+      padding: 20px;
+      border: 2px solid #ffa726;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 8px rgba(255, 152, 0, 0.1);
     }
     
-    .major-controls {
-      display: flex; align-items: center; gap: 15px; margin-bottom: 15px;
-      background: #ffe0b2; padding: 10px; border-radius: 6px; border: 1px solid #ffcc80;
+    .player-setup h3 {
+      margin-top: 0;
+      color: #e65100;
+      font-size: 1.4rem;
     }
 
-    .player-input-row { display: flex; gap: 12px; margin-bottom: 15px; align-items: center; }
+    /* Major Controls Styling */
+    .major-controls {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      margin-bottom: 15px;
+      background: #ffe0b2;
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid #ffcc80;
+    }
+    
+    .player-input-row {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 15px;
+      align-items: center;
+    }
     
     #playerNameInput, #playerSelect, #tournamentNameSelect {
-      flex: 1; padding: 10px; border: 2px solid #ffa726; border-radius: 6px;
-      font-size: 16px; outline: none; transition: border-color 0.3s;
+      flex: 1;
+      padding: 10px;
+      border: 2px solid #ffa726;
+      border-radius: 6px;
+      font-size: 16px;
+      outline: none;
+      transition: border-color 0.3s;
+    }
+    
+    #playerNameInput:focus, #playerSelect:focus, #tournamentNameSelect:focus {
+      border-color: #ff9800;
+      box-shadow: 0 0 0 3px rgba(255, 152, 0, 0.2);
+    }
+    
+    .setup-buttons {
+      display: flex;
+      gap: 12px;
+      margin: 15px 0;
+      flex-wrap: wrap;
     }
     
     button {
-      padding: 10px 16px; border: 2px solid #ffa726; border-radius: 6px;
-      background: #ffb74d; color: #7a4800; font-weight: 700; cursor: pointer;
-      transition: all 0.3s ease; font-size: 14px;
+      padding: 10px 16px;
+      border: 2px solid #ffa726;
+      border-radius: 6px;
+      background: #ffb74d;
+      color: #7a4800;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 14px;
     }
-    button:hover:not(:disabled) { background: #ff9800; color: #fff; transform: translateY(-1px); }
-    button:disabled { background: #e0e0e0; color: #999; cursor: not-allowed; border-color: #bdbdbd; }
     
-    .rebuy-btn { background: #f44336 !important; color: white !important; border-color: #d32f2f !important; }
-    .addon-btn { background: #2196f3 !important; color: white !important; border-color: #1976d2 !important; }
+    button:hover:not(:disabled) {
+      background: #ff9800;
+      color: #fff;
+      transform: translateY(-1px);
+      box-shadow: 0 3px 8px rgba(255, 152, 0, 0.3);
+    }
     
-    .action-buttons { display: flex; gap: 12px; justify-content: center; margin-top: 15px; flex-wrap: wrap; }
+    button:disabled {
+      background: #e0e0e0;
+      color: #9e9e9e;
+      cursor: not-allowed;
+      border-color: #bdbdbd;
+      transform: none;
+      box-shadow: none;
+    }
+    
+    .rebuy-btn {
+      background: #f44336 !important;
+      color: white !important;
+      border-color: #d32f2f !important;
+    }
+    
+    .rebuy-btn:hover:not(:disabled) {
+      background: #d32f2f !important;
+    }
+    
+    .addon-btn {
+      background: #2196f3 !important;
+      color: white !important;
+      border-color: #1976d2 !important;
+    }
+    
+    .addon-btn:hover:not(:disabled) {
+      background: #1976d2 !important;
+    }
+    
+    .action-buttons {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      margin-top: 15px;
+      flex-wrap: wrap;
+    }
+    
+    #playerCount {
+      text-align: center;
+      font-weight: 600;
+      color: #e65100;
+      margin: 10px 0;
+      font-size: 1.1rem;
+    }
     
     table {
-      width: 100%; border-collapse: collapse; background: #fff3e0; border-radius: 10px;
-      overflow: hidden; box-shadow: 0 4px 12px rgba(255, 152, 0, 0.15); margin-bottom: 20px;
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff3e0;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(255, 152, 0, 0.15);
+      margin-bottom: 20px;
     }
-    th, td { padding: 12px 8px; text-align: center; border-bottom: 1px solid #eee; }
-    thead { background: linear-gradient(90deg, #ff9800 0%, #fb8c00 100%); color: white; font-weight: bold; }
-    tbody tr:nth-child(odd) { background: #fff9e5; }
-    tr.eliminated { background: #ffcdd2 !important; color: #c62828; opacity: 0.8; }
+    
+    th, td {
+      padding: 12px 8px;
+      text-align: center;
+      font-weight: 600;
+    }
+    
+    thead {
+      background: linear-gradient(90deg, #ff9800 0%, #fb8c00 100%);
+      color: white;
+    }
+    
+    tbody tr:nth-child(odd) {
+      background: #fff9e5;
+    }
+    
+    tbody tr:nth-child(even) {
+      background: #fff3e0;
+    }
+    
+    tbody tr.eliminated {
+      background: #ffcdd2 !important;
+      color: #c62828;
+      opacity: 0.8;
+    }
     
     .timer-panel {
-      flex: 1; background: linear-gradient(135deg, #ffecb3 0%, #ffd54f 100%);
-      border-left: 7px solid #ffa726; box-shadow: -2px 0 14px rgba(255, 152, 0, 0.13);
-      padding: 25px; display: flex; flex-direction: column; align-items: center;
-      height: 100vh; position: sticky; top: 0; overflow-y: auto;
+      flex: 1;
+      background: linear-gradient(135deg, #ffecb3 0%, #ffd54f 100%);
+      border-left: 7px solid #ffa726;
+      box-shadow: -2px 0 14px rgba(255, 152, 0, 0.13);
+      padding: 25px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      height: 100vh;
+      position: sticky;
+      top: 0;
+      overflow-y: auto;
+    }
+    
+    .timer-header {
+      font-size: 2.4rem;
+      font-weight: 900;
+      color: #e65100;
+      margin-bottom: 20px;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+      position: relative;
+    }
+    
+    .timer-header::before {
+      content: "⏰";
+      position: absolute;
+      left: -50px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 2rem;
+    }
+    
+    .timer-header::after {
+      content: "⏱️";
+      position: absolute;
+      right: -50px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 2rem;
+    }
+    
+    .round-info {
+      width: 100%;
+      background: #ffe0b2;
+      border-radius: 12px;
+      padding: 20px;
+      font-size: 1.4rem;
+      font-weight: 700;
+      text-align: center;
+      color: #e65100;
+      margin-bottom: 25px;
+      box-shadow: 0 2px 8px rgba(255, 152, 0, 0.2);
+    }
+    
+    .blind-display {
+      background: #ffd54f;
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-size: 1.6rem;
+      color: #e65100;
+      margin: 10px 0;
+      font-weight: 800;
     }
     
     .time-remaining {
-      font-size: 3.8rem; font-weight: 900; background: #ffd54f; color: #e65100;
-      border-radius: 15px; padding: 20px 35px; box-shadow: 0 4px 12px rgba(255, 152, 0, 0.25);
-      margin: 20px 0 30px; text-align: center;
+      font-size: 3.8rem;
+      font-weight: 900;
+      background: #ffd54f;
+      color: #e65100;
+      border-radius: 15px;
+      padding: 20px 35px;
+      box-shadow: 0 4px 12px rgba(255, 152, 0, 0.25);
+      margin: 20px 0 30px;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+      min-width: 200px;
+      text-align: center;
     }
-
-    .dashboard-tabs { display: flex; border-bottom: 3px solid #ffa726; margin-bottom: 20px; border-radius: 10px 10px 0 0; overflow: hidden; }
-    .dashboard-tab { flex: 1; padding: 15px; background: #ffe0b2; border: none; font-weight: bold; cursor: pointer; color: #e65100; }
-    .dashboard-tab.active { background: #ff9800; color: white; }
-    .dashboard-tab-content { background: #fff3e0; padding: 20px; border-radius: 0 0 10px 10px; min-height: 400px; }
-    .dashboard-tab-panel { display: none; }
-    .dashboard-tab-panel.active { display: block; }
     
-    .status-message {
-      background: #e8f5e8; border: 2px solid #4caf50; color: #2e7d32; padding: 10px;
-      border-radius: 8px; margin: 15px 0; text-align: center; opacity: 0; transition: opacity 0.3s;
+    .timer-controls {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 25px;
+      flex-wrap: wrap;
+      justify-content: center;
     }
-    .status-message.show { opacity: 1; }
-
-    /* Title Cards */
-    .titles-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+    
+    .timer-controls button {
+      min-width: 80px;
+    }
+    
+    .break-notice, .final-stage {
+      display: none;
+      width: 100%;
+      padding: 15px;
+      border-radius: 10px;
+      text-align: center;
+      font-weight: 700;
+      margin: 15px 0;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .break-notice {
+      background: #bbdefb;
+      color: #0d47a1;
+      border: 2px solid #2196f3;
+    }
+    
+    .final-stage {
+      background: #ffecb3;
+      color: #e65100;
+      border: 2px solid #ffa726;
+    }
+    
+    .prize-info {
+      background: #fff3e0;
+      padding: 20px;
+      border-radius: 10px;
+      text-align: center;
+      font-weight: 600;
+      color: #e65100;
+      margin-top: 20px;
+      width: 100%;
+      box-shadow: 0 2px 8px rgba(255, 152, 0, 0.2);
+    }
+    
+    .prize-info div {
+      margin: 8px 0;
+      font-size: 1.1rem;
+    }
+    
+    .prize-info div:first-child {
+      font-size: 1.3rem;
+      font-weight: 800;
+    }
+    
+    .charts-section {
+      margin-top: 30px;
+    }
+    
+    .charts-section h3 {
+      color: #e65100;
+      font-size: 1.8rem;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    
+    /* Dashboard Tab Styles */
+    .dashboard-tabs {
+      display: flex;
+      border-bottom: 3px solid #ffa726;
+      margin-bottom: 20px;
+      background: #fff3e0;
+      border-radius: 10px 10px 0 0;
+      overflow: hidden;
+    }
+    
+    .dashboard-tab {
+      flex: 1;
+      padding: 15px 20px;
+      background: #ffe0b2;
+      color: #e65100;
+      border: none;
+      font-weight: 700;
+      font-size: 1.1rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border-right: 2px solid #ffa726;
+    }
+    
+    .dashboard-tab:last-child {
+      border-right: none;
+    }
+    
+    .dashboard-tab:hover {
+      background: #ffcc02;
+      transform: translateY(-2px);
+    }
+    
+    .dashboard-tab.active {
+      background: #ff9800;
+      color: white;
+      transform: translateY(-2px);
+      box-shadow: 0 2px 8px rgba(255, 152, 0, 0.4);
+    }
+    
+    .dashboard-tab-content {
+      background: #fff3e0;
+      padding: 25px;
+      border-radius: 0 0 10px 10px;
+      min-height: 400px;
+      box-shadow: 0 4px 12px rgba(255, 152, 0, 0.15);
+    }
+    
+    .dashboard-tab-panel {
+      display: none;
+    }
+    
+    .dashboard-tab-panel.active {
+      display: block;
+    }
+    
+    /* Title Cards Styles */
+    .titles-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+      margin-top: 20px;
+    }
+    
     .title-card {
-      background: #fff; border: 2px solid #ffa726; border-radius: 10px; padding: 15px;
-      text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      background: linear-gradient(135deg, #fff3e0 0%, #ffecb3 100%);
+      border: 3px solid #ffa726;
+      border-radius: 15px;
+      padding: 20px;
+      text-align: center;
+      box-shadow: 0 4px 12px rgba(255, 152, 0, 0.2);
+      transition: transform 0.3s ease;
     }
-    .title-card-emoji { font-size: 2.5rem; display: block; margin-bottom: 5px; }
-    .title-card-holder { font-size: 1.4rem; font-weight: 800; color: #d84315; }
+    
+    .title-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 20px rgba(255, 152, 0, 0.3);
+    }
+    
+    .title-card-emoji {
+      font-size: 3rem;
+      margin-bottom: 10px;
+      display: block;
+    }
+    
+    .title-card-name {
+      font-size: 1.3rem;
+      font-weight: bold;
+      color: #e65100;
+      margin-bottom: 8px;
+    }
+    
+    .title-card-holder {
+      font-size: 1.8rem;
+      font-weight: 900;
+      color: #d84315;
+      margin-bottom: 8px;
+    }
+    
+    .title-card-stat {
+      font-size: 1.1rem;
+      color: #bf360c;
+      font-weight: 600;
+    }
+    
+    .status-message, .error-message {
+      background: #e8f5e8;
+      border: 2px solid #4caf50;
+      color: #2e7d32;
+      padding: 12px;
+      border-radius: 8px;
+      margin: 15px 0;
+      text-align: center;
+      font-weight: 600;
+      height: 20px;
+      min-height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    
+    .error-message {
+      background: #ffebee;
+      border: 2px solid #f44336;
+      color: #c62828;
+    }
+    
+    .status-message.show, .error-message.show {
+      opacity: 1;
+    }
+    
+    @media (max-width: 768px) {
+      body {
+        flex-direction: column;
+      }
+      
+      .main-content {
+        min-width: auto;
+      }
+      
+      .timer-panel {
+        height: auto;
+        position: relative;
+      }
+      
+      .timer-header {
+        font-size: 2rem;
+      }
+      
+      .time-remaining {
+        font-size: 3rem;
+      }
+    }
   </style>
 </head>
 <body>
@@ -117,7 +558,7 @@
     </div>
     
     <div class="status-message" id="statusMessage"></div>
-    <div class="status-message" id="errorMessage" style="background:#ffebee; border-color:#f44336; color:#c62828;"></div>
+    <div class="error-message" id="errorMessage"></div>
     
     <div class="player-setup">
       <div class="major-controls">
@@ -150,7 +591,7 @@
         <button onclick="undoLastAction()" id="undoBtn" disabled>Undo</button>
       </div>
       
-      <div id="playerCount" style="text-align: center; font-weight: bold; color: #e65100;">Players: 0 | Prize Pot: £0 | House Fee: £5</div>
+      <div id="playerCount">Players: 0 | Prize Pot: £0 | House Fee: £5</div>
       
       <div class="action-buttons">
         <button onclick="signInAndExport()" id="exportBtn" disabled>Save Tournament Data</button>
@@ -160,7 +601,13 @@
     
     <table id="playerTable">
       <thead>
-        <tr><th>Player</th><th>Stacks</th><th>Total Paid</th><th>Status</th><th>Actions</th></tr>
+        <tr>
+          <th>Player</th>
+          <th>Stacks</th>
+          <th>Total Paid</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
       </thead>
       <tbody id="playerTableBody"></tbody>
     </table>
@@ -170,9 +617,9 @@
   </div>
   
   <div class="timer-panel">
-    <div class="timer-header" style="font-size:2rem; margin-bottom:10px;">ROUND TIMER</div>
+    <div class="timer-header">ROUND TIMER</div>
     <div id="roundInfo" class="round-info"></div>
-    <div id="timeRemaining" class="time-remaining">00:00</div>
+    <div id="timeRemaining" class="time-remaining">00:05</div>
     
     <div class="timer-controls">
       <button id="timerStartBtn" onclick="startTimer()">START</button>
@@ -181,28 +628,39 @@
       <button id="timerSkipBtn" onclick="skipRound()">SKIP ROUND</button>
     </div>
     
-    <div id="breakNotice" style="display:none; background:#bbdefb; padding:15px; margin:15px 0; border-radius:10px; color:#0d47a1; font-weight:700; text-align:center;">
-      BREAK TIME! - Add-ons available
+    <div id="breakNotice" class="break-notice">
+      <strong>BREAK TIME!</strong><br>30 minutes - Add-ons available
     </div>
     
-    <div class="prize-info" style="margin-top:20px; width:100%; text-align:center; background:#fff3e0; padding:15px; border-radius:10px;">
-      <div style="font-weight:bold;">Current Prize Pool: £<span id="currentPrizePool">0</span></div>
+    <div id="finalStage" class="final-stage">
+      <strong>FINAL STAGE</strong><br>No more re-buys or add-ons
+    </div>
+    
+    <div class="prize-info">
+      <div><strong>Current Prize Pool: £<span id="currentPrizePool">0</span></strong></div>
       <div>1st Place: £<span id="firstPrize">0</span></div>
       <div>2nd Place: £<span id="secondPrize">0</span></div>
     </div>
     
     <audio id="roundAlarm" preload="auto">
       <source src="alarm.mp3" type="audio/mpeg">
+      <source src="alarm.mp3" type="audio/mp3">
     </audio>
   </div>
 
   <script>
-    // === CONFIGURATION ===
+    // Debug logging
+    console.log('Script starting...');
+
+    // Global state variables
+    let players = [];
+
+    // Configuration - REPLACE WITH YOUR ACTUAL VALUES
     const CLIENT_ID = '341648594146-a9httcsv8e29vr4ehcup08qlpaak5u8a.apps.googleusercontent.com';
     const SPREADSHEET_ID = '1fZWOlbf95Xqg4AnsEm9ga8x1ENrZ_K_0EEF3sEZGz2Y';
     const SCOPES = 'https://www.googleapis.com/auth/spreadsheets';
 
-    // === TOURNAMENT STRUCTURE (18 Rounds - ~3.5 hours) ===
+    // Tournament structure (18 Rounds)
     const rounds = [
       { name: "Test Round", sb: 0, bb: 0, duration: 5, isTest: true },
       { name: "Round 1", sb: 5, bb: 10, duration: 20 },
@@ -226,29 +684,22 @@
       { name: "Round 18", sb: 500000, bb: 1000000, duration: 20 }
     ];
 
+    // Pre-populated player list
     const regularPlayers = [
       'Andre', 'Craig', 'Dale', 'Declan', 'Elton', 'Graham', 'Jacques', 'James', 'Lachy', 'Luciano', 'Malzo', 'Matt', 'Nick', 'Rafa', 'Rhys', 'Roberto'
     ].sort();
 
-    // === GLOBAL STATE ===
-    let players = [];
-    let customPlayers = [];
+    let customPlayers = []; // For new players added during session
     let currentRound = 0;
     let timer = null;
     let timeLeft = 0;
     let tournamentStarted = false;
     let tournamentEnded = false;
+    let isBreak = false;
+    let isFinalStage = false;
     let timerRunning = false;
     let googleApiReady = false;
-    let actionHistory = [];
-
-    // === INITIALIZATION ===
-    window.onload = function() {
-        populatePlayerDropdown();
-        updateRoundDisplay();
-        updateGameSettings();
-        if (typeof gapi !== 'undefined') gapi.load('client:auth2', initClient);
-    };
+    let actionHistory = []; // For undo functionality
 
     // Auto-toggle Major based on name selection
     window.handleTournamentSelect = function() {
@@ -267,292 +718,135 @@
     window.updateGameSettings = function() {
         const isMajor = document.getElementById('majorToggle').checked;
         const buyIn = isMajor ? 10 : 5;
-        const potLimit = isMajor ? 200 : 100; // House fee doubles only if pot is big? Or strictly fee logic.
         
         // Update the info display
         document.getElementById('gameInfoDisplay').innerHTML = 
-            `MODE: ${isMajor ? '🏆 MAJOR (2x Points/Buy-in)' : 'Standard'} | Buy-in: £${buyIn} | 1st: 80% | 2nd: 20%`;
+            `MODE: ${isMajor ? '🏆 MAJOR (2x Points/Buy-in)' : 'Standard'} | Buy-in: £${buyIn} | 1st: 80% | 2nd: 20% | House Fee: £5`;
             
         updatePrizeInfo();
     }
 
+    // Populate player dropdown
     function populatePlayerDropdown() {
-        const select = document.getElementById('playerSelect');
-        select.innerHTML = '<option value="">Select a player...</option>';
-        // Combine regular list with any custom ones added this session
-        const all = [...new Set([...regularPlayers, ...customPlayers])].sort();
-        all.forEach(p => select.add(new Option(p, p)));
+      const select = document.getElementById('playerSelect');
+      if (!select) return;
+      
+      // Clear existing options except the first one
+      select.innerHTML = '<option value="">Select a player...</option>';
+      
+      // Add regular and custom players
+      const allPlayers = [...new Set([...regularPlayers, ...customPlayers])].sort();
+      allPlayers.forEach(playerName => {
+        const option = document.createElement('option');
+        option.value = playerName;
+        option.textContent = playerName;
+        select.appendChild(option);
+      });
     }
 
-    // === PLAYER MANAGEMENT ===
-    window.addPlayer = function() {
-        if(tournamentStarted) {
-            // Check if break is passed
-            const breakIdx = rounds.findIndex(r => r.isBreak);
-            if(breakIdx > -1 && currentRound > breakIdx) {
-                return showMessage("Late registration closed (Break ended)", true);
-            } else if (breakIdx === -1) {
-                return showMessage("Game started - no late reg", true);
-            }
-        }
+    // Make functions globally accessible
+    window.addPlayer = addPlayer;
+    window.removePlayer = removePlayer;
+    window.startTournament = startTournament;
+    window.endTournament = endTournament;
+    window.clearPlayers = clearPlayers;
+    window.eliminatePlayer = eliminatePlayer;
+    window.rebuyPlayer = rebuyPlayer;
+    window.addonPlayer = addonPlayer;
+    window.startTimer = startTimer;
+    window.pauseTimer = pauseTimer;
+    window.resetTimer = resetTimer;
+    window.skipRound = skipRound;
+    window.signInAndExport = signInAndExport;
+    window.signInAndLoadDashboard = signInAndLoadDashboard;
+    window.undoLastAction = undoLastAction;
 
-        const input = document.getElementById('playerNameInput');
-        const select = document.getElementById('playerSelect');
-        const name = (select.value || input.value).trim();
+    // Utility functions
+    function formatTime(seconds) {
+      const m = Math.floor(seconds / 60);
+      const s = seconds % 60;
+      return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    }
+
+    function showMessage(message, isError = false) {
+      const statusEl = document.getElementById('statusMessage');
+      const errorEl = document.getElementById('errorMessage');
+      
+      statusEl.classList.remove('show');
+      errorEl.classList.remove('show');
+      
+      setTimeout(() => {
+        if (isError) {
+          errorEl.textContent = message;
+          errorEl.classList.add('show');
+        } else {
+          statusEl.textContent = message;
+          statusEl.classList.add('show');
+        }
         
-        if (!name) return showMessage('Enter a name', true);
-        if (players.find(p => p.name === name)) return showMessage('Player already exists', true);
+        setTimeout(() => {
+          statusEl.classList.remove('show');
+          errorEl.classList.remove('show');
+        }, 3000);
+      }, 10);
+    }
 
-        // Add to custom list to remember in dropdown for this session
-        if(!regularPlayers.includes(name) && !customPlayers.includes(name)) {
-            customPlayers.push(name);
-            populatePlayerDropdown();
+    function playAlarm() {
+        const audio = document.getElementById('roundAlarm');
+        if (audio) {
+            audio.currentTime = 0;
+            audio.play().catch(e => console.log(e));
         }
+        showVisualAlarm();
+    }
 
-        const isMajor = document.getElementById('majorToggle').checked;
-        const cost = isMajor ? 10 : 5;
+    function showVisualAlarm() {
+      const timerDisplay = document.getElementById('timeRemaining');
+      let flashCount = 0;
+      const flashInterval = setInterval(() => {
+        timerDisplay.style.background = flashCount % 2 === 0 ? '#f44336' : '#ffd54f';
+        timerDisplay.style.color = flashCount % 2 === 0 ? '#fff' : '#e65100';
+        flashCount++;
+        if (flashCount >= 6) {
+          clearInterval(flashInterval);
+          timerDisplay.style.background = '#ffd54f';
+          timerDisplay.style.color = '#e65100';
+        }
+      }, 300);
+    }
 
-        players.push({
-            name: name,
-            stacks: 1,
-            totalPaid: cost,
-            eliminated: false,
-            hasAddon: false,
-            eliminationTime: null,
-            rebuyEliminations: []
+    // Google Sheets Integration
+    function handleClientLoad() {
+      if (window.google && window.google.accounts) {
+        initWithGIS();
+      } else {
+        gapi.load('client:auth2', initClient);
+      }
+    }
+
+    function initWithGIS() {
+        google.accounts.id.initialize({
+          client_id: CLIENT_ID,
+          callback: (r) => {}
         });
-
-        input.value = '';
-        select.value = '';
-        updatePlayerTable();
-        showMessage(`${name} added`);
-    }
-
-    window.removePlayer = function(index) {
-        players.splice(index, 1);
-        updatePlayerTable();
-    }
-
-    window.eliminatePlayer = function(index) {
-        const p = players[index];
-        // Populate eliminator list
-        const killers = players.filter(pl => pl.name !== p.name).map(pl => pl.name);
-        let killer = prompt(`Who eliminated ${p.name}?\nOptions: ${killers.join(', ')}`);
-        
-        // Basic validation/normalization could go here, but prompt is simple
-        if(killer && !killers.includes(killer) && killer !== 'N/A') {
-             // Try to match vaguely or default to N/A
-             if(!confirm(`Player "${killer}" not found. Record as N/A?`)) return;
-             killer = 'N/A';
-        }
-        if(!killer) killer = 'N/A';
-
-        recordAction('eliminate', { name: p.name, time: Date.now(), by: killer });
-        
-        p.eliminated = true;
-        p.eliminationTime = Date.now();
-        p.eliminatedBy = killer;
-        
-        updatePlayerTable();
-        
-        // Check winner
-        const active = players.filter(pl => !pl.eliminated);
-        if(active.length === 1) {
-            alert(`🏆 ${active[0].name} Wins! End Tournament to save.`);
-            clearInterval(timer);
-        }
-    }
-
-    window.rebuyPlayer = function(index) {
-        const p = players[index];
-        const isMajor = document.getElementById('majorToggle').checked;
-        const cost = isMajor ? 10 : 5;
-
-        recordAction('rebuy', { name: p.name });
-        
-        // Add current elimination to history before resetting
-        if(p.eliminated) {
-            p.rebuyEliminations.push({
-                eliminatedBy: p.eliminatedBy,
-                timestamp: p.eliminationTime
+        gapi.load('client', () => {
+          gapi.client.init({
+            discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4']
+          }).then(() => {
+            googleApiReady = true;
+            window.tokenClient = google.accounts.oauth2.initTokenClient({
+              client_id: CLIENT_ID,
+              scope: SCOPES,
+              callback: (response) => {
+                if (response.access_token) {
+                  gapi.client.setToken(response);
+                }
+              }
             });
-        }
-        
-        p.eliminated = false;
-        p.stacks++;
-        p.totalPaid += cost;
-        p.eliminatedBy = null;
-        
-        updatePlayerTable();
-    }
-
-    window.addonPlayer = function(index) {
-        const p = players[index];
-        if(p.hasAddon) return alert("Already added on");
-        
-        const isMajor = document.getElementById('majorToggle').checked;
-        const cost = isMajor ? 10 : 5;
-        
-        recordAction('addon', { name: p.name });
-        p.stacks++;
-        p.totalPaid += cost;
-        p.hasAddon = true;
-        updatePlayerTable();
-    }
-
-    function updatePlayerTable() {
-        const tbody = document.getElementById('playerTableBody');
-        tbody.innerHTML = '';
-        const isMajor = document.getElementById('majorToggle').checked;
-        const cost = isMajor ? 10 : 5;
-
-        const active = players.filter(p => !p.eliminated);
-        const hasWinner = tournamentStarted && active.length === 1;
-
-        players.forEach((p, i) => {
-            let actions = '';
-            if(!tournamentStarted) {
-                actions = `<button onclick="removePlayer(${i})">Remove</button>`;
-            } else if (!tournamentEnded) {
-                if(hasWinner && !p.eliminated) {
-                    actions = `<strong>🏆 WINNER</strong>`;
-                } else if (!p.eliminated) {
-                    actions = `<button onclick="eliminatePlayer(${i})">Out</button>`;
-                } else {
-                    // Rebuy logic (allowed if not too late)
-                    // Simplified: Rebuy allowed anytime before end, or until break? 
-                    // Usually allowed until break.
-                    const breakIdx = rounds.findIndex(r => r.isBreak);
-                    if(currentRound <= breakIdx) {
-                        actions += `<button class="rebuy-btn" onclick="rebuyPlayer(${i})">Rebuy £${cost}</button> `;
-                    }
-                }
-                
-                // Addon logic
-                if(rounds[currentRound].isBreak && !p.hasAddon && !p.eliminated) {
-                     actions += `<button class="addon-btn" onclick="addonPlayer(${i})">Addon £${cost}</button>`;
-                }
-            }
-
-            const tr = document.createElement('tr');
-            if(p.eliminated) tr.className = 'eliminated';
-            tr.innerHTML = `
-                <td>${p.name}</td>
-                <td>${p.stacks}</td>
-                <td>£${p.totalPaid}</td>
-                <td>${p.eliminated ? (p.eliminatedBy !== 'N/A' && p.eliminatedBy ? 'Out by '+p.eliminatedBy : 'Out') : 'Active'}</td>
-                <td>${actions}</td>
-            `;
-            tbody.appendChild(tr);
+          });
         });
-        updatePrizeInfo();
     }
 
-    function updatePrizeInfo() {
-        const total = players.reduce((sum, p) => sum + p.totalPaid, 0);
-        const house = total > 100 ? 10 : 5;
-        const pool = Math.max(0, total - house);
-        
-        document.getElementById('playerCount').innerText = `Players: ${players.length} | Prize Pot: £${pool} | House Fee: £${house}`;
-        document.getElementById('currentPrizePool').innerText = pool;
-        document.getElementById('firstPrize').innerText = Math.round(pool * 0.8);
-        document.getElementById('secondPrize').innerText = Math.round(pool * 0.2);
-    }
-
-    // === TIMER ===
-    function updateRoundDisplay() {
-        const r = rounds[currentRound];
-        document.getElementById('roundInfo').innerHTML = 
-            `${r.name}<br><span style="font-size:0.8em">${r.isBreak ? "BREAK" : r.sb + " / " + r.bb}</span>`;
-        
-        if(!timerRunning) {
-            timeLeft = r.duration * (r.isTest ? 1 : 60);
-            document.getElementById('timeRemaining').innerText = formatTime(timeLeft);
-        }
-        document.getElementById('breakNotice').style.display = r.isBreak ? 'block' : 'none';
-    }
-    
-    window.startTimer = function() {
-        if(timerRunning) return;
-        timerRunning = true;
-        document.getElementById('timerStartBtn').disabled = true;
-        document.getElementById('timerPauseBtn').disabled = false;
-        
-        timer = setInterval(() => {
-            if(timeLeft > 0) {
-                timeLeft--;
-                document.getElementById('timeRemaining').innerText = formatTime(timeLeft);
-            } else {
-                document.getElementById('roundAlarm').play();
-                clearInterval(timer);
-                timerRunning = false;
-                if(currentRound < rounds.length - 1) {
-                    alert("Round Ended!");
-                    currentRound++;
-                    updateRoundDisplay();
-                    startTimer(); // Auto advance
-                }
-            }
-        }, 1000);
-    }
-
-    window.pauseTimer = function() {
-        clearInterval(timer);
-        timerRunning = false;
-        document.getElementById('timerStartBtn').disabled = false;
-        document.getElementById('timerPauseBtn').disabled = true;
-    }
-    
-    window.resetTimer = function() {
-        pauseTimer();
-        updateRoundDisplay();
-    }
-    
-    window.skipRound = function() {
-        if(currentRound < rounds.length - 1) {
-            currentRound++;
-            updateRoundDisplay();
-        }
-    }
-
-    // === GAME FLOW ===
-    window.startTournament = function() {
-        if(players.length < 2) return showMessage("Add players", true);
-        tournamentStarted = true;
-        document.getElementById('startBtn').disabled = true;
-        document.getElementById('endBtn').disabled = false;
-        document.getElementById('majorToggle').disabled = true;
-        updateRoundDisplay();
-        startTimer();
-        updatePlayerTable();
-    }
-
-    window.endTournament = function() {
-        if(!confirm("End Tournament?")) return;
-        tournamentEnded = true;
-        pauseTimer();
-        document.getElementById('endBtn').disabled = true;
-        document.getElementById('exportBtn').disabled = false;
-        document.getElementById('majorToggle').disabled = false;
-        updatePlayerTable();
-    }
-
-    // === UNDO ===
-    function recordAction(type, data) {
-        actionHistory.push({ type, data });
-        document.getElementById('undoBtn').disabled = false;
-    }
-    
-    window.undoLastAction = function() {
-        if(!actionHistory.length) return;
-        // Basic undo implementation: just alert for now as full state rollback is complex
-        // Ideally, popped action allows reversing logic (decrement stacks, money, etc)
-        alert("Undo functionality is basic - please manually adjust if needed.");
-        actionHistory.pop();
-        if(!actionHistory.length) document.getElementById('undoBtn').disabled = true;
-    }
-
-    // === GOOGLE SHEETS & DASHBOARD ===
     function initClient() {
         gapi.client.init({
             clientId: CLIENT_ID,
@@ -561,56 +855,519 @@
         }).then(() => { googleApiReady = true; });
     }
 
-    window.signInAndExport = function() {
-        if(!googleApiReady) return alert("API not ready");
-        gapi.auth2.getAuthInstance().signIn().then(exportData);
+    function signInAndExport() {
+      if (!googleApiReady) return showMessage('Google API not ready', true);
+      
+      if (window.tokenClient) {
+        window.tokenClient.callback = (response) => {
+          if (response.access_token) {
+            gapi.client.setToken(response);
+            exportTournamentData();
+          }
+        };
+        window.tokenClient.requestAccessToken({ prompt: '' });
+      } else {
+        gapi.auth2.getAuthInstance().signIn().then(exportTournamentData);
+      }
     }
 
-    function exportData() {
-        const isMajor = document.getElementById('majorToggle').checked;
-        const tName = document.getElementById('tournamentNameSelect').value;
-        const date = new Date().toISOString().split('T')[0];
-        const time = new Date().toLocaleTimeString();
-        const tID = `${date}_${time.replace(/:/g,'-')}`;
+    function signInAndLoadDashboard() {
+      if (!googleApiReady) return showMessage('Google API not ready', true);
+      
+      if (window.tokenClient) {
+        window.tokenClient.callback = (response) => {
+          if (response.access_token) {
+            gapi.client.setToken(response);
+            loadDashboard();
+          }
+        };
+        window.tokenClient.requestAccessToken({ prompt: 'consent' });
+      } else {
+        gapi.auth2.getAuthInstance().signIn().then(loadDashboard);
+      }
+    }
+
+    // Player management
+    function updatePlayerTable() {
+      const tbody = document.getElementById('playerTableBody');
+      tbody.innerHTML = '';
+      
+      const activePlayers = players.filter(p => !p.eliminated);
+      const hasWinner = tournamentStarted && !tournamentEnded && activePlayers.length === 1;
+      const isMajor = document.getElementById('majorToggle').checked;
+      const rebuyCost = isMajor ? 10 : 5;
+      
+      players.forEach((player, index) => {
+        const tr = document.createElement('tr');
+        if (player.eliminated) {
+          tr.classList.add('eliminated');
+        }
         
-        // Finalize positions
-        // Active players need ranks. If game ended with 1 survivor, they are 1st.
-        // Others are ranked by order of elimination (tracked in players list?) 
-        // Logic: Filter eliminated, sort by time. Active is rank 1.
+        let actions = '';
+        if (!tournamentStarted && !tournamentEnded) {
+          actions = `<button onclick="removePlayer(${index})">Remove</button>`;
+        } else if (tournamentStarted && !tournamentEnded) {
+          if (hasWinner && !player.eliminated) {
+            actions = `🏆 WINNER 🏆`;
+          } else {
+            if (!player.eliminated) {
+              actions += `<button onclick="eliminatePlayer(${index})">Eliminate</button>`;
+            }
+            
+            if (player.eliminated && !isFinalStage) {
+              actions += `<button class="rebuy-btn" onclick="rebuyPlayer(${index})">Re-buy £${rebuyCost}</button>`;
+            }
+            
+            if (isBreak && !isFinalStage && !player.hasAddon) {
+              actions += `<button class="addon-btn" onclick="addonPlayer(${index})">Add-on £${rebuyCost}</button>`;
+            }
+          }
+        }
         
-        // Simply: 
+        tr.innerHTML = `
+          <td><strong>${player.name}</strong></td>
+          <td>${player.stacks}</td>
+          <td>£${player.totalPaid}</td>
+          <td>${player.eliminated ? (player.eliminatedBy ? 'Out by ' + player.eliminatedBy : 'Eliminated') : (hasWinner && !player.eliminated ? 'WINNER' : 'Active')}</td>
+          <td>${actions}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+      
+      updatePrizeInfo();
+      checkForWinner();
+    }
+
+    function checkForWinner() {
+      if (!tournamentStarted || tournamentEnded) return;
+      const activePlayers = players.filter(p => !p.eliminated);
+      if (activePlayers.length === 1) {
+        if (timer) clearInterval(timer);
+        timerRunning = false;
+        document.getElementById('timerStartBtn').disabled = true;
+        document.getElementById('timerPauseBtn').disabled = true;
+        showMessage(`🏆 ${activePlayers[0].name} is the winner!`);
+        setTimeout(() => updatePlayerTable(), 100);
+      }
+    }
+
+    function updatePrizeInfo() {
+      const totalPaid = players.reduce((sum, p) => sum + p.totalPaid, 0);
+      const houseFee = totalPaid > 100 ? 10 : 5;
+      const prizePool = Math.max(0, totalPaid - houseFee);
+      
+      const rawFirstPrize = prizePool * 0.8;
+      const rawSecondPrize = prizePool * 0.2;
+      
+      // Round to nearest 5
+      const firstPrize = Math.round(rawFirstPrize / 5) * 5;
+      const secondPrize = Math.round(rawSecondPrize / 5) * 5;
+      
+      document.getElementById('playerCount').innerText = 
+        `Players: ${players.length} | Prize Pot: £${prizePool} | House Fee: £${houseFee}`;
+      document.getElementById('currentPrizePool').textContent = prizePool;
+      document.getElementById('firstPrize').textContent = firstPrize;
+      document.getElementById('secondPrize').textContent = secondPrize;
+    }
+
+    function addPlayer() {
+      const input = document.getElementById('playerNameInput');
+      const select = document.getElementById('playerSelect');
+      const name = (select.value || input.value).trim();
+      
+      if (!name) return showMessage('Enter a name', true);
+      if (players.some(p => p.name.toLowerCase() === name.toLowerCase())) return showMessage('Player exists', true);
+      
+      if (tournamentStarted) {
+        const breakIndex = rounds.findIndex(r => r.isBreak);
+        if (breakIndex !== -1 && currentRound > breakIndex) {
+          return showMessage('Late registration closed (break ended)', true);
+        }
+        if (breakIndex === -1) {
+           return showMessage('No late registration allowed', true);
+        }
+      }
+      
+      if (!regularPlayers.includes(name) && !customPlayers.includes(name)) {
+        customPlayers.push(name);
+        populatePlayerDropdown();
+      }
+      
+      const isMajor = document.getElementById('majorToggle').checked;
+      const cost = isMajor ? 10 : 5;
+
+      players.push({
+        name: name,
+        stacks: 1,
+        totalPaid: cost,
+        eliminated: false,
+        hasAddon: false,
+        eliminationTime: null,
+        rebuyEliminations: []
+      });
+      
+      input.value = '';
+      select.value = '';
+      updatePlayerTable();
+      showMessage(`${name} added`);
+    }
+
+    function removePlayer(index) {
+      if (tournamentStarted) return showMessage('Cannot remove during tournament', true);
+      players.splice(index, 1);
+      updatePlayerTable();
+    }
+
+    function eliminatePlayer(index) {
+      if (!tournamentStarted || tournamentEnded) return;
+      
+      const player = players[index];
+      const availablePlayers = players
+        .filter(p => !p.eliminated && p.name !== player.name) // Active and not self
+        .map(p => p.name);
+      
+      const eliminatorOptions = availablePlayers
+        .map(name => `<option value="${name}">${name}</option>`)
+        .join('');
+      
+      const eliminatorHtml = `
+        <div style="margin: 10px 0;">
+          <label for="eliminatorSelect">Who eliminated ${player.name}?</label><br>
+          <select id="eliminatorSelect" style="padding: 5px; margin: 5px 0; width: 200px;">
+            <option value="N/A">N/A (Self/Split/Unknown)</option>
+            ${eliminatorOptions}
+          </select>
+        </div>
+      `;
+      
+      const eliminationDialog = document.createElement('div');
+      eliminationDialog.style.cssText = `
+        position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+        background: white; border: 3px solid #ffa726; border-radius: 10px;
+        padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); z-index: 1000; text-align: center;
+      `;
+      
+      eliminationDialog.innerHTML = `
+        <h3 style="color: #e65100; margin-top: 0;">Eliminate ${player.name}</h3>
+        ${eliminatorHtml}
+        <div style="margin-top: 15px;">
+          <button onclick="confirmElimination(${index})" style="background: #f44336; color: white;">Confirm</button>
+          <button onclick="cancelElimination()">Cancel</button>
+        </div>
+      `;
+      
+      const backdrop = document.createElement('div');
+      backdrop.style.cssText = `
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.5); z-index: 999;
+      `;
+      backdrop.onclick = () => cancelElimination();
+      
+      document.body.appendChild(backdrop);
+      document.body.appendChild(eliminationDialog);
+      
+      window.currentEliminationDialog = eliminationDialog;
+      window.currentEliminationBackdrop = backdrop;
+    }
+
+    window.confirmElimination = function(index) {
+      const player = players[index];
+      const eliminatorSelect = document.getElementById('eliminatorSelect');
+      const eliminatedBy = eliminatorSelect.value;
+      
+      player.eliminationTime = Date.now();
+      recordAction('eliminate', { name: player.name });
+      
+      player.eliminated = true;
+      player.eliminatedBy = eliminatedBy;
+      
+      cancelElimination();
+      updatePlayerTable();
+      checkForWinner();
+    };
+
+    window.cancelElimination = function() {
+      if (window.currentEliminationDialog) {
+        document.body.removeChild(window.currentEliminationDialog);
+        window.currentEliminationDialog = null;
+      }
+      if (window.currentEliminationBackdrop) {
+        document.body.removeChild(window.currentEliminationBackdrop);
+        window.currentEliminationBackdrop = null;
+      }
+    };
+
+    function rebuyPlayer(index) {
+      if (tournamentEnded || isFinalStage) return showMessage('Re-buys not available', true);
+      
+      const player = players[index];
+      if (!player.eliminated) return;
+
+      const isMajor = document.getElementById('majorToggle').checked;
+      const cost = isMajor ? 10 : 5;
+      
+      recordAction('rebuy', { name: player.name });
+      
+      if (!player.rebuyEliminations) player.rebuyEliminations = [];
+      player.rebuyEliminations.push({
+        eliminatedBy: player.eliminatedBy,
+        timestamp: Date.now()
+      });
+      
+      player.eliminated = false;
+      player.stacks++;
+      player.totalPaid += cost;
+      updatePlayerTable();
+      showMessage(`${player.name} re-bought`);
+    }
+
+    function addonPlayer(index) {
+      if (!isBreak || tournamentEnded || isFinalStage) return showMessage('Add-ons not available', true);
+      
+      const player = players[index];
+      if (player.hasAddon) return showMessage('Already added on', true);
+      
+      const isMajor = document.getElementById('majorToggle').checked;
+      const cost = isMajor ? 10 : 5;
+      
+      recordAction('addon', { name: player.name });
+      
+      player.stacks++;
+      player.totalPaid += cost;
+      player.hasAddon = true;
+      updatePlayerTable();
+      showMessage(`${player.name} added on`);
+    }
+
+    function clearPlayers() {
+      if (tournamentStarted && !tournamentEnded) {
+        if (!confirm('Tournament in progress. Clear all?')) return;
+      }
+      players = [];
+      tournamentStarted = false;
+      tournamentEnded = false;
+      resetTournament();
+      updatePlayerTable();
+      showMessage('Players cleared');
+    }
+
+    // Tournament management
+    function startTournament() {
+      if (players.length < 2) return showMessage('Need 2+ players', true);
+      
+      tournamentStarted = true;
+      tournamentEnded = false;
+      
+      document.getElementById('startBtn').disabled = true;
+      document.getElementById('endBtn').disabled = false;
+      document.getElementById('exportBtn').disabled = true;
+      document.getElementById('loadDashboardBtn').disabled = true;
+      document.getElementById('majorToggle').disabled = true;
+      
+      currentRound = 0;
+      updateRoundDisplay();
+      startTimer();
+      updatePlayerTable();
+      showMessage('Tournament started!');
+    }
+
+    function endTournament() {
+      if (!confirm('End tournament?')) return;
+      
+      tournamentEnded = true;
+      tournamentStarted = false;
+      clearInterval(timer);
+      timerRunning = false;
+      
+      document.getElementById('endBtn').disabled = true;
+      document.getElementById('timerStartBtn').disabled = true;
+      document.getElementById('timerPauseBtn').disabled = true;
+      document.getElementById('timerSkipBtn').disabled = true;
+      document.getElementById('majorToggle').disabled = false;
+      
+      const exportBtn = document.getElementById('exportBtn');
+      const dashboardBtn = document.getElementById('loadDashboardBtn');
+      if (googleApiReady) {
+        exportBtn.disabled = false;
+        dashboardBtn.disabled = false;
+      }
+      
+      updatePlayerTable();
+      displayFinalResults();
+      showMessage('Tournament ended. Save results now.');
+    }
+
+    function displayFinalResults() {
+      const resultsDiv = document.getElementById('prizeResults');
+      const active = players.filter(p => !p.eliminated);
+      // Sort logic
+      // 1. Winner (Active)
+      // 2. Others sorted by elimination time desc
+      const eliminated = players.filter(p => p.eliminated).sort((a,b) => b.eliminationTime - a.eliminationTime);
+      const sorted = [...active, ...eliminated];
+      
+      if(sorted.length === 0) return;
+
+      const totalPaid = players.reduce((sum, p) => sum + p.totalPaid, 0);
+      const houseFee = totalPaid > 100 ? 10 : 5;
+      const prizePool = Math.max(0, totalPaid - houseFee);
+      const p1 = Math.round((prizePool * 0.8) / 5) * 5;
+      const p2 = Math.round((prizePool * 0.2) / 5) * 5;
+      
+      let html = '<div class="prize-info"><h3>Final Results</h3>';
+      if(sorted[0]) html += `<div style="color:#d84315">🥇 1st: ${sorted[0].name} - £${p1}</div>`;
+      if(sorted[1]) html += `<div style="color:#d84315">🥈 2nd: ${sorted[1].name} - £${p2}</div>`;
+      
+      html += '</div>';
+      resultsDiv.innerHTML = html;
+    }
+
+    function resetTournament() {
+      clearInterval(timer);
+      timerRunning = false;
+      currentRound = 0;
+      timeLeft = 0;
+      isBreak = false;
+      isFinalStage = false;
+      
+      document.getElementById('startBtn').disabled = false;
+      document.getElementById('endBtn').disabled = true;
+      document.getElementById('exportBtn').disabled = true;
+      document.getElementById('timerStartBtn').disabled = false;
+      document.getElementById('timerPauseBtn').disabled = true;
+      document.getElementById('timerSkipBtn').disabled = false;
+      document.getElementById('majorToggle').disabled = false;
+      
+      document.getElementById('prizeResults').innerHTML = '';
+      document.getElementById('chartsSection').innerHTML = '';
+      
+      updateRoundDisplay();
+    }
+
+    function updateRoundDisplay() {
+      const round = rounds[currentRound];
+      let html = `<div style="font-size: 1.6rem; margin-bottom: 15px;">${round.name}</div>`;
+      
+      if (round.isBreak) {
+        html += `<div class="blind-display">BREAK TIME</div>`;
+      } else {
+        html += `<div class="blind-display">SB: ${round.sb} | BB: ${round.bb}</div>`;
+      }
+      
+      document.getElementById('roundInfo').innerHTML = html;
+      
+      if (!timerRunning) {
+        timeLeft = round.isTest ? round.duration : round.duration * 60;
+        document.getElementById('timeRemaining').textContent = formatTime(timeLeft);
+      }
+      
+      isBreak = !!round.isBreak;
+      isFinalStage = currentRound > 5; // Simplified
+      
+      document.getElementById('breakNotice').style.display = isBreak ? 'block' : 'none';
+      document.getElementById('finalStage').style.display = isFinalStage ? 'block' : 'none';
+    }
+
+    function tick() {
+      if (timeLeft > 0) {
+        timeLeft--;
+        document.getElementById('timeRemaining').textContent = formatTime(timeLeft);
+      } else {
+        clearInterval(timer);
+        timerRunning = false;
+        playAlarm();
+        setTimeout(() => nextRound(), 3000);
+      }
+    }
+
+    function startTimer() {
+      if (timerRunning) return;
+      timerRunning = true;
+      document.getElementById('timerStartBtn').disabled = true;
+      document.getElementById('timerPauseBtn').disabled = false;
+      timer = setInterval(tick, 1000);
+    }
+
+    function pauseTimer() {
+      if (!timerRunning) return;
+      clearInterval(timer);
+      timerRunning = false;
+      document.getElementById('timerStartBtn').disabled = false;
+      document.getElementById('timerPauseBtn').disabled = true;
+    }
+
+    function resetTimer() {
+      clearInterval(timer);
+      timerRunning = false;
+      document.getElementById('timerStartBtn').disabled = false;
+      document.getElementById('timerPauseBtn').disabled = true;
+      updateRoundDisplay();
+    }
+
+    function skipRound() {
+      clearInterval(timer);
+      timerRunning = false;
+      nextRound();
+    }
+
+    function nextRound() {
+      if (currentRound < rounds.length - 1) {
+        currentRound++;
+        updateRoundDisplay();
+        if (tournamentStarted) startTimer();
+      } else {
+        showMessage('All rounds complete');
+      }
+    }
+
+    // Export Logic
+    function collectCurrentTournamentData() {
+        const now = new Date();
+        const date = now.toISOString().split('T')[0];
+        const tId = `${date}_${now.toLocaleTimeString().replace(/:/g, '-')}`;
+        
+        // Final positions logic
         const active = players.filter(p => !p.eliminated);
         const eliminated = players.filter(p => p.eliminated).sort((a,b) => b.eliminationTime - a.eliminationTime);
-        const finalStandings = [...active, ...eliminated]; // Winner, then last out (2nd), etc.
+        const finalOrder = [...active, ...eliminated];
         
-        const rows = players.map(p => {
-            // Find rank in standings
-            const rank = finalStandings.findIndex(fs => fs.name === p.name) + 1;
-            
-            // Calculate earnings logic skipped for brevity, focused on stats
-            return [
-                date, time, tID, p.name, rank, players.length, 
-                p.totalPaid, 0, p.stacks - 1, p.hasAddon ? 1 : 0, 0, 
-                p.eliminatedBy, tName, isMajor ? "TRUE" : "FALSE"
-            ];
-            
-            // Also append rebuyEliminations as separate rows if needed for deep "Killer" tracking
-            // For simplicity, we just log main elimination here.
-        });
+        // Calculate prizes for record
+        const totalPaid = players.reduce((sum, p) => sum + p.totalPaid, 0);
+        const houseFee = totalPaid > 100 ? 10 : 5;
+        const prizePool = Math.max(0, totalPaid - houseFee);
+        const p1 = Math.round((prizePool * 0.8) / 5) * 5;
+        const p2 = Math.round((prizePool * 0.2) / 5) * 5;
 
+        const isMajor = document.getElementById('majorToggle').checked;
+        const tName = document.getElementById('tournamentNameSelect').value;
+
+        const records = players.map(p => {
+            const rank = finalOrder.findIndex(f => f.name === p.name) + 1;
+            let earned = 0;
+            if (rank === 1) earned = p1;
+            if (rank === 2) earned = p2;
+            
+            return [
+                date, now.toLocaleTimeString(), tId, p.name, rank, players.length,
+                p.totalPaid, earned, p.stacks - 1, p.hasAddon ? 1 : 0, 0,
+                p.eliminatedBy || 'N/A', tName, isMajor ? "TRUE" : "FALSE"
+            ];
+        });
+        
+        return records;
+    }
+
+    function exportTournamentData() {
+        const rows = collectCurrentTournamentData();
         gapi.client.sheets.spreadsheets.values.append({
             spreadsheetId: SPREADSHEET_ID,
             range: 'PlayerResults!A:N',
             valueInputOption: 'USER_ENTERED',
             resource: { values: rows }
-        }).then(() => showMessage("Saved!"));
+        }).then(() => showMessage(`Saved ${rows.length} rows!`));
     }
 
-    window.signInAndLoadDashboard = function() {
-        if(!googleApiReady) return alert("API not ready");
-        gapi.auth2.getAuthInstance().signIn().then(loadDashboard);
-    }
-
+    // Dashboard Logic
     function loadDashboard() {
         gapi.client.sheets.spreadsheets.values.get({
             spreadsheetId: SPREADSHEET_ID,
@@ -618,53 +1375,44 @@
         }).then(resp => {
             const rows = resp.result.values || [];
             
-            // SMART DROPDOWN LOGIC:
-            // Extract unique names from history to remember them
+            // Auto-populate dropdown from history
             const historyNames = new Set();
-            rows.slice(1).forEach(r => {
-                if(r[3]) historyNames.add(r[3].trim());
-            });
-            // Add to custom players if not exists
+            rows.slice(1).forEach(r => { if(r[3]) historyNames.add(r[3]); });
             historyNames.forEach(n => {
-                if(!regularPlayers.includes(n) && !customPlayers.includes(n)) {
-                    customPlayers.push(n);
-                }
+                if(!regularPlayers.includes(n) && !customPlayers.includes(n)) customPlayers.push(n);
             });
             populatePlayerDropdown();
 
             buildDashboard(rows);
-            showMessage("Dashboard Loaded");
         });
     }
 
     function buildDashboard(rows) {
-        // Separate 2026 data
+        const section = document.getElementById('chartsSection');
         const rows2026 = rows.filter((r, i) => i === 0 || r[0].startsWith('2026'));
         
-        const section = document.getElementById('chartsSection');
-        
-        // 1. Calculate 2026 Points
-        const pointsData = calculate2026Points(rows2026);
-        
-        // 2. All Time Stats (using all rows)
-        const allTimeStats = calculateStats(rows, false); // false = don't filter year
-        
-        // 3. Detailed Stats (2026 Only)
-        const detailed2026 = calculateStats(rows2026, true);
-        
+        const stats2026 = calculate2026Points(rows2026);
+        const detail2026 = calculateDetailed(rows2026);
+        const allTime = calculateAllTime(rows);
+
         section.innerHTML = `
             <div class="dashboard-tabs">
                 <button class="dashboard-tab active" onclick="switchTab('p2026')">📊 2026 Leaderboard</button>
-                <button class="dashboard-tab" onclick="switchTab('titles')">🏆 Titles (2026)</button>
                 <button class="dashboard-tab" onclick="switchTab('detailed')">📈 Detailed Stats (2026)</button>
                 <button class="dashboard-tab" onclick="switchTab('alltime')">📅 All-Time Overview</button>
             </div>
-            <div id="p2026" class="dashboard-tab-content">${render2026Leaderboard(pointsData)}</div>
-            <div id="titles" class="dashboard-tab-content" style="display:none">${renderTitles(rows2026)}</div>
-            <div id="detailed" class="dashboard-tab-content" style="display:none">${renderDetailed(detailed2026)}</div>
+            <div id="p2026" class="dashboard-tab-content">
+                <div style="background:#ffcc80; padding:10px; margin-bottom:10px; border-radius:5px; text-align:center;">
+                   Points: 1st(10), 2nd(7), 3rd(4) | Att(+1) | Killer(+2). Majors x2.
+                </div>
+                ${renderLeaderboard(stats2026)}
+            </div>
+            <div id="detailed" class="dashboard-tab-content" style="display:none">
+                ${renderDetailed(detail2026)}
+            </div>
             <div id="alltime" class="dashboard-tab-content" style="display:none">
-                <p style="color:red; font-weight:bold;">⚠️ Note: 2025 data is incomplete.</p>
-                ${renderAllTime(allTimeStats)}
+                <p style="color:red; text-align:center;">⚠️ 2025 data is incomplete/ignored for 2026 stats.</p>
+                ${renderAllTime(allTime)}
             </div>
         `;
     }
@@ -676,161 +1424,122 @@
         event.target.classList.add('active');
     }
 
-    // --- CALCULATION LOGIC ---
-
     function calculate2026Points(rows) {
-        // Group by Tournament to determine "Most Kills" bonus
-        const tournaments = {};
+        const tournaments = {}; 
         const stats = {};
-
-        // 1. Parse Data
+        
         rows.slice(1).forEach(r => {
-            const [date, time, tid, name, rank, field, paid, earn, rebuy, addon, roi, killer, tname, isMaj] = r;
-            const isMajor = isMaj === "TRUE";
-            
-            // Init Tournament grouping
-            if(!tournaments[tid]) tournaments[tid] = { isMajor, kills: {} };
-            
-            // Count kills (who killed this player?)
-            if(killer && killer !== 'N/A') {
-                if(!tournaments[tid].kills[killer]) tournaments[tid].kills[killer] = 0;
-                tournaments[tid].kills[killer]++;
-            }
-
-            // Init Player Stats
-            if(!stats[name]) stats[name] = { 
-                points: 0, wins: 0, seconds: 0, thirds: 0, 
-                attendance: 0, killerWins: 0 
-            };
-            
-            // Base Points
+            const [date, time, tid, name, rankStr, field, paid, earn, rebuy, addon, roi, killer, tname, isMaj] = r;
+            const isMajor = isMaj === 'TRUE';
+            const rank = parseInt(rankStr);
             const multiplier = isMajor ? 2 : 1;
-            stats[name].attendance += 1; // Not multiplied? Prompt implied "All points doubled" - usually attendance is base. Let's double all.
-            stats[name].points += (1 * multiplier); // Attendance pts
+
+            // Stats Init
+            if(!stats[name]) stats[name] = { points:0, wins:0, seconds:0, thirds:0, att:0, killerWins:0 };
             
-            const rInt = parseInt(rank);
-            if(rInt === 1) { stats[name].points += (10 * multiplier); stats[name].wins++; }
-            if(rInt === 2) { stats[name].points += (7 * multiplier); stats[name].seconds++; }
-            if(rInt === 3) { stats[name].points += (4 * multiplier); stats[name].thirds++; }
+            // Attendance
+            stats[name].att++;
+            stats[name].points += (1 * multiplier); // Attendance Pts
+
+            // Placement
+            if(rank === 1) { stats[name].points += (10 * multiplier); stats[name].wins++; }
+            if(rank === 2) { stats[name].points += (7 * multiplier); stats[name].seconds++; }
+            if(rank === 3) { stats[name].points += (4 * multiplier); stats[name].thirds++; }
+            
+            // Killer Tracking per Tournament
+            if(!tournaments[tid]) tournaments[tid] = { kills: {}, isMajor };
+            if(killer && killer !== 'N/A') {
+                tournaments[tid].kills[killer] = (tournaments[tid].kills[killer] || 0) + 1;
+            }
         });
 
-        // 2. Assign Killer Bonuses
+        // Award Killer Bonuses
         Object.values(tournaments).forEach(t => {
-            const multiplier = t.isMajor ? 2 : 1;
-            let maxKills = 0;
-            // Find max kills
-            Object.values(t.kills).forEach(k => { if(k > maxKills) maxKills = k; });
-            
-            if(maxKills > 0) {
-                // Award to all who tied for max
-                Object.keys(t.kills).forEach(pName => {
-                    if(t.kills[pName] === maxKills) {
-                        if(stats[pName]) {
-                            stats[pName].points += (2 * multiplier); // +2 Bonus
-                            stats[pName].killerWins++;
-                        }
+            const mult = t.isMajor ? 2 : 1;
+            let max = 0;
+            Object.values(t.kills).forEach(k => { if(k > max) max = k; });
+            if(max > 0) {
+                Object.keys(t.kills).forEach(k => {
+                    if(t.kills[k] === max && stats[k]) {
+                        stats[k].points += (2 * mult);
+                        stats[k].killerWins++;
                     }
                 });
             }
         });
-
+        
         return Object.entries(stats).sort((a,b) => b[1].points - a[1].points);
     }
 
-    function render2026Leaderboard(data) {
-        return `
-            <div style="background:#ffcc80; padding:10px; text-align:center; font-weight:bold; margin-bottom:10px; border-radius:5px;">
-                Points: 1st(10), 2nd(7), 3rd(4) | Attendance(+1) | Killer Bonus(+2, Most elims). <br>
-                MAJORS DOUBLE ALL POINTS!
-            </div>
-            <table>
-                <thead>
-                    <tr><th>Rank</th><th>Player</th><th>Points</th><th>1st Place</th><th>2nd Place</th><th>3rd Place</th><th>Attendance</th><th>Killer Wins</th></tr>
-                </thead>
-                <tbody>
-                    ${data.map((p, i) => `
-                        <tr>
-                            <td>#${i+1}</td>
-                            <td><strong>${p[0]}</strong></td>
-                            <td style="font-size:1.2em; color:#d84315; font-weight:bold;">${p[1].points}</td>
-                            <td>${p[1].wins}</td>
-                            <td>${p[1].seconds}</td>
-                            <td>${p[1].thirds}</td>
-                            <td>${p[1].attendance}</td>
-                            <td>${p[1].killerWins}</td>
-                        </tr>
-                    `).join('')}
-                </tbody>
-            </table>
-        `;
-    }
-
-    function calculateStats(rows, is2026) {
+    function calculateDetailed(rows) {
         const s = {};
         rows.slice(1).forEach(r => {
             const name = r[3];
             const rank = parseInt(r[4]);
             const killer = r[11];
             
-            if(!s[name]) s[name] = { wins:0, seconds:0, thirds:0, games:0, kills:0, deaths:0 };
+            if(!s[name]) s[name] = { thirds:0, kills:0, deaths:0, games:0 };
+            s[name].games++;
+            if(rank === 3) s[name].thirds++;
+            if(rank > 1) s[name].deaths++; // Assumed death if not 1st
+            
+            if(killer && killer !== 'N/A') {
+                if(!s[killer]) s[killer] = { thirds:0, kills:0, deaths:0, games:0 };
+                s[killer].kills++;
+            }
+        });
+        return Object.entries(s).sort((a,b) => b[1].kills - a[1].kills);
+    }
+
+    function calculateAllTime(rows) {
+        const s = {};
+        rows.slice(1).forEach(r => {
+            const name = r[3];
+            const rank = parseInt(r[4]);
+            const killer = r[11];
+            if(!s[name]) s[name] = { wins:0, sec:0, third:0, games:0, kills:0 };
             s[name].games++;
             if(rank === 1) s[name].wins++;
-            if(rank === 2) s[name].seconds++;
-            if(rank === 3) s[name].thirds++;
-            
-            // Deaths (if rank > 1, assume died unless game ended prematurely, but rank is proxy)
-            if(rank > 1) s[name].deaths++;
-
-            // Kills - scan rows again? No, loop efficiency. 
-            // We need to credit the KILLER. The current row is the VICTIM.
+            if(rank === 2) s[name].sec++;
+            if(rank === 3) s[name].third++;
             if(killer && killer !== 'N/A') {
-                // Ensure killer exists in stats (might not have played this game if data mismatch)
-                if(!s[killer]) s[killer] = { wins:0, seconds:0, thirds:0, games:0, kills:0, deaths:0 };
+                if(!s[killer]) s[killer] = { wins:0, sec:0, third:0, games:0, kills:0 };
                 s[killer].kills++;
             }
         });
         return Object.entries(s).sort((a,b) => b[1].wins - a[1].wins);
     }
 
+    function renderLeaderboard(data) {
+        return `<table><thead><tr><th>Rank</th><th>Player</th><th>Points</th><th>1st</th><th>2nd</th><th>3rd</th><th>Att</th><th>Killer Wins</th></tr></thead><tbody>
+        ${data.map((p,i) => `<tr>
+            <td>#${i+1}</td><td><strong>${p[0]}</strong></td><td style="color:#d84315; font-weight:bold; font-size:1.1em">${p[1].points}</td>
+            <td>${p[1].wins}</td><td>${p[1].seconds}</td><td>${p[1].thirds}</td><td>${p[1].att}</td><td>${p[1].killerWins}</td>
+        </tr>`).join('')}</tbody></table>`;
+    }
+
     function renderDetailed(data) {
         return `<table><thead><tr><th>Player</th><th>3rd Place</th><th>Kills</th><th>Deaths</th><th>Games</th></tr></thead><tbody>
-        ${data.map(p => `<tr>
-            <td>${p[0]}</td>
-            <td>${p[1].thirds}</td>
-            <td>${p[1].kills}</td>
-            <td>${p[1].deaths}</td>
-            <td>${p[1].games}</td>
-        </tr>`).join('')}</tbody></table>`;
+        ${data.map(p => `<tr><td>${p[0]}</td><td>${p[1].thirds}</td><td>${p[1].kills}</td><td>${p[1].deaths}</td><td>${p[1].games}</td></tr>`).join('')}</tbody></table>`;
     }
 
     function renderAllTime(data) {
-        return `<table><thead><tr><th>Rank</th><th>Player</th><th>🥇 Wins</th><th>🥈 2nd</th><th>3rd</th><th>Tournaments</th><th>Kills</th></tr></thead><tbody>
-        ${data.map((p,i) => `<tr>
-            <td>${i+1}</td><td>${p[0]}</td>
-            <td>${p[1].wins}</td><td>${p[1].seconds}</td><td>${p[1].thirds}</td>
-            <td>${p[1].games}</td><td>${p[1].kills}</td>
-        </tr>`).join('')}</tbody></table>`;
-    }
-    
-    function renderTitles(rows) {
-        // reuse calculateStats logic or custom title logic
-        // Placeholder simple output
-        return `<p style="text-align:center">Play more games to unlock titles!</p>`;
+        return `<table><thead><tr><th>Rank</th><th>Player</th><th>🥇 Wins</th><th>🥈 2nd</th><th>3rd</th><th>Games</th><th>Kills</th></tr></thead><tbody>
+        ${data.map((p,i) => `<tr><td>${i+1}</td><td>${p[0]}</td><td>${p[1].wins}</td><td>${p[1].sec}</td><td>${p[1].third}</td><td>${p[1].games}</td><td>${p[1].kills}</td></tr>`).join('')}</tbody></table>`;
     }
 
-    // Utility
-    function formatTime(s) {
-        const m = Math.floor(s/60);
-        const sec = Math.floor(s%60);
-        return `${m}:${sec<10?'0'+sec:sec}`;
-    }
-    function showMessage(msg, isErr) {
-        const el = document.getElementById(isErr ? 'errorMessage' : 'statusMessage');
-        el.innerText = msg;
-        el.classList.add('show');
-        setTimeout(() => el.classList.remove('show'), 3000);
+    function undoLastAction() {
+        if(!actionHistory.length) return;
+        alert("Undo is limited. Please correct state manually.");
+        actionHistory.pop();
+        if(!actionHistory.length) document.getElementById('undoBtn').disabled = true;
     }
 
+    window.onload = function() {
+      populatePlayerDropdown();
+      updateRoundDisplay();
+      if (typeof gapi !== 'undefined') handleClientLoad();
+    };
   </script>
 </body>
 </html>
