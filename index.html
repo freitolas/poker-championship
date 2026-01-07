@@ -200,7 +200,7 @@
         updateRoundDisplay();
         updateGameSettings();
         if(typeof gapi !== 'undefined') {
-            gapi.load('client:auth2', initClient);
+            handleClientLoad();
         } else {
             console.log("GAPI not loaded yet.");
         }
@@ -481,6 +481,12 @@
             
             // Advance
             currentRound++;
+            
+            // FORCE TIME RESET
+            const r = rounds[currentRound];
+            timeLeft = r.duration * (r.isTest ? 1 : 60); 
+            document.getElementById('timeRemaining').innerText = formatTime(timeLeft);
+            
             updateRoundDisplay();
         }
     }
@@ -540,7 +546,7 @@
         if(!actionHistory.length) document.getElementById('undoBtn').disabled = true;
     }
 
-    // === API & DASHBOARD (Reverted to Reliable 2025 Logic) ===
+    // === API & DASHBOARD (Exact 2025 Logic) ===
     
     // Core Legacy Init
     function initClient() {
@@ -596,15 +602,13 @@
     }
 
     window.signInAndExport = function() {
-        // Force Check if not ready
         if(!googleApiReady) {
-            gapi.load('client:auth2', () => {
-                initClient();
-                setTimeout(() => {
-                    if(googleApiReady) executeExport();
-                    else alert("API still connecting... try again in 5s");
-                }, 1000);
-            });
+            // Lazy load if not ready
+            handleClientLoad();
+            setTimeout(() => {
+               if(googleApiReady) executeExport();
+               else alert("Initializing connection... Click again in 5s");
+            }, 1000);
             return;
         }
         executeExport();
@@ -654,16 +658,12 @@
     }
 
     window.signInAndLoadDashboard = function() {
-        const btn = document.getElementById('loadDashboardBtn');
         if(!googleApiReady) {
-            btn.innerText = "Connecting...";
-            // Manual Trigger
             handleClientLoad();
             setTimeout(() => {
                 if(googleApiReady) executeLoadDash();
-                else alert("Connection slow. Wait a moment and click again.");
-                btn.innerText = "Load Dashboard";
-            }, 1500);
+                else alert("Initializing connection... Click again in 5s");
+            }, 1000);
             return;
         }
         executeLoadDash();
@@ -677,7 +677,7 @@
                     loadDashboard();
                 }
             };
-            window.tokenClient.requestAccessToken({ prompt: '' });
+            window.tokenClient.requestAccessToken({ prompt: 'consent' });
         } else {
             gapi.auth2.getAuthInstance().signIn().then(loadDashboard);
         }
