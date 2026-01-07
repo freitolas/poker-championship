@@ -16,7 +16,7 @@
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       color: #7a4800; display: flex; min-height: 100vh;
     }
-    .main-content { flex: 3; padding: 20px; min-width: 500px; overflow-y: auto; }
+    .main-content { flex: 3; padding: 20px; min-width: 500px; overflow-y: auto; position: relative; }
     h1 { text-align: center; color: #e65100; font-size: 2.2rem; margin-bottom: 15px; text-shadow: 2px 2px 4px rgba(0,0,0,0.1); position: relative; }
     
     .game-info { background: linear-gradient(90deg, #ffd740 0%, #ffa726 100%); padding: 15px; border-radius: 10px; text-align: center; color: #d84315; font-weight: 700; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(255, 152, 0, 0.2); }
@@ -48,23 +48,28 @@
     .dashboard-tab { flex: 1; padding: 15px 20px; background: #ffe0b2; color: #e65100; border: none; font-weight: 700; cursor: pointer; border-right: 2px solid #ffa726; }
     .dashboard-tab.active { background: #ff9800; color: white; }
     .dashboard-tab-content { background: #fff3e0; padding: 25px; border-radius: 0 0 10px 10px; min-height: 400px; }
-    .dashboard-tab-panel { display: none; }
-    .dashboard-tab-panel.active { display: block; }
     
-    /* Title Cards */
     .titles-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
     .title-card { background: linear-gradient(135deg, #fff3e0 0%, #ffecb3 100%); border: 3px solid #ffa726; border-radius: 15px; padding: 20px; text-align: center; }
     .title-card-emoji { font-size: 3rem; display: block; margin-bottom: 10px; }
-    .title-card-name { font-size: 1.1rem; font-weight: bold; color: #e65100; margin-bottom: 5px; }
-    .title-card-holder { font-size: 1.4rem; font-weight: 900; color: #d84315; margin-bottom: 5px; }
-    .title-card-stat { color: #bf360c; font-weight: 600; }
+    .title-card-holder { font-size: 1.8rem; font-weight: 900; color: #d84315; }
     
     .status-message { background: #e8f5e8; border: 2px solid #4caf50; color: #2e7d32; padding: 12px; border-radius: 8px; margin: 15px 0; text-align: center; font-weight: 600; opacity: 0; transition: opacity 0.3s ease; }
     .status-message.show { opacity: 1; }
+
+    /* Smart Home Modal */
+    .smart-btn { position: absolute; top: 20px; right: 20px; background: #2E003E; color: #f7e348; border: 2px solid #dc2b71; font-size: 0.9rem; padding: 8px 12px; }
+    .sh-modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); background: white; border: 3px solid #2E003E; width: 90%; max-width: 500px; padding: 20px; z-index: 2000; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+    .sh-modal h3 { color: #2E003E; margin-top: 0; }
+    .sh-row { margin-bottom: 15px; }
+    .sh-row label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 0.9rem; }
+    .sh-row input { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+    .sh-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
   </style>
 </head>
 <body>
   <div class="main-content">
+    <button class="smart-btn" onclick="openSmartHome()">Smart Home 🏠</button>
     <h1>Curupira's Head Poker 2026</h1>
     
     <div class="game-info" id="gameInfoDisplay">
@@ -151,6 +156,32 @@
     </audio>
   </div>
 
+  <div id="smartHomeModal" class="sh-modal">
+    <h3>🏠 Smart Home Config (Webhooks)</h3>
+    <p style="font-size:0.8rem; color:#666;">Paste IFTTT Webhook URLs here.</p>
+    <div class="sh-row">
+        <label>Elimination (Red Lights/Sound)</label>
+        <input type="text" id="wh-elimination" placeholder="https://maker.ifttt.com/trigger/..." />
+    </div>
+    <div class="sh-row">
+        <label>Round End (Blind Increase)</label>
+        <input type="text" id="wh-roundend" placeholder="https://maker.ifttt.com/trigger/..." />
+    </div>
+    <div class="sh-row">
+        <label>Break Time (Music/Chill)</label>
+        <input type="text" id="wh-break" placeholder="https://maker.ifttt.com/trigger/..." />
+    </div>
+    <div class="sh-row">
+        <label>Winner (Victory Scene)</label>
+        <input type="text" id="wh-winner" placeholder="https://maker.ifttt.com/trigger/..." />
+    </div>
+    <div class="sh-actions">
+        <button onclick="saveSmartHome()" style="background:#2e7d32; color:white;">Save & Close</button>
+        <button onclick="closeSmartHome()" style="background:#666; color:white;">Cancel</button>
+    </div>
+  </div>
+  <div id="sh-overlay" onclick="closeSmartHome()" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1999;"></div>
+
   <script>
     // === CONFIGURATION ===
     const CLIENT_ID = '341648594146-a9httcsv8e29vr4ehcup08qlpaak5u8a.apps.googleusercontent.com';
@@ -196,13 +227,15 @@
     let timerRunning = false;
     let googleApiReady = false;
     let actionHistory = [];
+    let webhooks = {};
 
     // === INITIALIZATION ===
     window.onload = function() {
         populatePlayerDropdown();
         updateRoundDisplay();
         updateGameSettings();
-        handleClientLoad(); // Load API immediately like 2025 version
+        handleClientLoad(); // Load API immediately
+        loadSmartHome();
     };
 
     function handleTournamentSelect() {
@@ -230,6 +263,44 @@
       select.innerHTML = '<option value="">Select a player...</option>';
       const all = [...new Set([...regularPlayers, ...customPlayers])].sort();
       all.forEach(p => select.add(new Option(p, p)));
+    }
+
+    // === SMART HOME ===
+    window.openSmartHome = function() {
+        document.getElementById('smartHomeModal').style.display = 'block';
+        document.getElementById('sh-overlay').style.display = 'block';
+    }
+    window.closeSmartHome = function() {
+        document.getElementById('smartHomeModal').style.display = 'none';
+        document.getElementById('sh-overlay').style.display = 'none';
+    }
+    window.saveSmartHome = function() {
+        webhooks = {
+            elim: document.getElementById('wh-elimination').value,
+            round: document.getElementById('wh-roundend').value,
+            break: document.getElementById('wh-break').value,
+            winner: document.getElementById('wh-winner').value
+        };
+        localStorage.setItem('pokerWebhooks', JSON.stringify(webhooks));
+        closeSmartHome();
+        showMessage("Smart Home Settings Saved");
+    }
+    function loadSmartHome() {
+        const stored = localStorage.getItem('pokerWebhooks');
+        if(stored) {
+            webhooks = JSON.parse(stored);
+            document.getElementById('wh-elimination').value = webhooks.elim || '';
+            document.getElementById('wh-roundend').value = webhooks.round || '';
+            document.getElementById('wh-break').value = webhooks.break || '';
+            document.getElementById('wh-winner').value = webhooks.winner || '';
+        }
+    }
+    function triggerWebhook(type) {
+        const url = webhooks[type];
+        if(url) {
+            console.log("Triggering Webhook:", type);
+            fetch(url, { mode: 'no-cors' }).catch(e => console.log("Webhook error", e));
+        }
     }
 
     // === PLAYER ACTIONS ===
@@ -302,6 +373,7 @@
             
             document.body.removeChild(document.getElementById('elim-dialog'));
             
+            triggerWebhook('elim'); // Trigger Red Lights
             updatePlayerTable();
             checkForWinner();
         } catch(e) {
@@ -369,13 +441,11 @@
                 } else if (!p.eliminated) {
                     actions = `<button onclick="eliminatePlayer(${i})">Eliminate</button>`;
                 } else {
-                    // Rebuy allowed if before break finishes
                     if(currentRound <= breakIdx) {
                         actions += `<button class="rebuy-btn" onclick="rebuyPlayer(${i})">Rebuy £${cost}</button> `;
                     }
                 }
                 
-                // Addon logic - strict check
                 if(isBreakRound && !p.hasAddon && !p.eliminated) {
                      actions += `<button class="addon-btn" onclick="addonPlayer(${i})">Addon £${cost}</button>`;
                 }
@@ -399,6 +469,7 @@
         const active = players.filter(p => !p.eliminated);
         if(tournamentStarted && !tournamentEnded && active.length === 1) {
             alert(`🏆 ${active[0].name} Wins!`);
+            triggerWebhook('winner'); // Trigger Victory Scene
             clearInterval(timer);
             timerRunning = false;
             updatePlayerTable();
@@ -431,7 +502,6 @@
         const isBreak = !!r.isBreak;
         document.getElementById('breakNotice').style.display = isBreak ? 'block' : 'none';
         
-        // FORCE TABLE UPDATE to show Addon buttons
         if(tournamentStarted) updatePlayerTable();
     }
 
@@ -440,17 +510,25 @@
         timerRunning = true;
         document.getElementById('timerStartBtn').disabled = true;
         document.getElementById('timerPauseBtn').disabled = false;
+        
+        // If restarting timer on a break round, fire break webhook immediately
+        if(rounds[currentRound].isBreak) triggerWebhook('break');
+
         timer = setInterval(() => {
             if(timeLeft > 0) {
                 timeLeft--;
                 document.getElementById('timeRemaining').innerText = formatTime(timeLeft);
             } else {
                 document.getElementById('roundAlarm').play();
+                triggerWebhook('round'); // Trigger Round End
                 clearInterval(timer);
                 timerRunning = false;
                 if(currentRound < rounds.length - 1) {
                     alert("Round Ended!");
                     currentRound++;
+                    // Check if new round is break
+                    if(rounds[currentRound].isBreak) triggerWebhook('break');
+                    
                     updateRoundDisplay();
                     startTimer();
                 }
@@ -472,18 +550,16 @@
 
     window.skipRound = function() {
         if(currentRound < rounds.length - 1) {
-            // STOP current timer
             clearInterval(timer);
             timerRunning = false;
             document.getElementById('timerStartBtn').disabled = false;
             document.getElementById('timerPauseBtn').disabled = true;
             
-            // Advance
             currentRound++;
             
-            // FORCE TIME RESET
+            // Force reset time
             const r = rounds[currentRound];
-            timeLeft = r.duration * (r.isTest ? 1 : 60); 
+            timeLeft = r.duration * (r.isTest ? 1 : 60);
             document.getElementById('timeRemaining').innerText = formatTime(timeLeft);
             
             updateRoundDisplay();
@@ -506,6 +582,10 @@
         tournamentEnded = true;
         pauseTimer();
         document.getElementById('endBtn').disabled = true;
+        // ENABLE SAVE BUTTON
+        document.getElementById('exportBtn').disabled = false;
+        document.getElementById('loadDashboardBtn').disabled = false;
+        document.getElementById('majorToggle').disabled = false;
         
         updatePlayerTable();
         
@@ -541,16 +621,14 @@
         if(!actionHistory.length) document.getElementById('undoBtn').disabled = true;
     }
 
-    // === API & DASHBOARD (RESTORED 2025 LOGIC) ===
+    // === API & DASHBOARD (Exact 2025 Logic) ===
     function handleClientLoad() {
       if (window.google && window.google.accounts) {
         initWithGIS();
       } else {
         gapi.load('client:auth2', {
           callback: initClient,
-          onerror: function() {
-            console.error('Failed to load Google API client');
-          }
+          onerror: function() { console.error('Failed to load Google API client'); }
         });
       }
     }
@@ -576,13 +654,9 @@
                 }
               }
             });
-          }).catch(error => {
-            console.error('GIS client init failed:', error);
-          });
+          }).catch(error => { console.error('GIS client init failed:', error); });
         });
-      } catch (error) {
-        console.error('GIS initialization failed:', error);
-      }
+      } catch (error) { console.error('GIS initialization failed:', error); }
     }
 
     function initClient() {
@@ -595,7 +669,6 @@
 
     window.signInAndExport = function() {
         if(!googleApiReady) {
-            // Lazy try
             handleClientLoad();
             setTimeout(() => {
                 if(googleApiReady) executeExport();
@@ -682,7 +755,6 @@
         }).then(resp => {
             const rows = resp.result.values || [];
             
-            // Sync history players
             const histNames = new Set();
             rows.slice(1).forEach(r => { if(r[3]) histNames.add(r[3].trim()); });
             histNames.forEach(n => {
@@ -702,16 +774,13 @@
         const stats2026 = calculate2026Points(rows2026);
         const detail2026 = calculateDetailedStats(rows2026);
         const allTime = calculateAllTime(rows);
-        
-        // Use all-time stats for titles if 2026 is empty, or just use 2026
-        // Usually titles are for the season.
-        const titles = calculateTitles(calculateDetailedStats(rows2026, true)); // Pass true for raw stats
+        const titles = calculateTitles(detail2026);
 
         section.innerHTML = `
             <div class="dashboard-tabs">
                 <button class="dashboard-tab active" onclick="switchTab('p2026')">📊 2026 Leaderboard</button>
-                <button class="dashboard-tab" onclick="switchTab('titles')">🏆 Titles</button>
-                <button class="dashboard-tab" onclick="switchTab('detailed')">📈 Detailed Stats</button>
+                <button class="dashboard-tab" onclick="switchTab('titles')">🏆 Titles (2026)</button>
+                <button class="dashboard-tab" onclick="switchTab('detailed')">📈 Detailed Stats (2026)</button>
                 <button class="dashboard-tab" onclick="switchTab('alltime')">📅 All-Time</button>
             </div>
             <div id="p2026" class="dashboard-tab-content">${render2026Leaderboard(stats2026)}</div>
@@ -790,7 +859,7 @@
             const rank = parseInt(rankStr);
             const field = parseInt(fieldStr);
             const cost = parseFloat(paid)||0;
-            const earnings = parseFloat(earn)||0; // assuming col H has earnings if saved
+            const earnings = parseFloat(earn)||0; 
             
             if(!s[name]) s[name] = { 
                 played:0, wins:0, sec:0, third:0, 
@@ -843,8 +912,6 @@
     }
     
     function calculateTitles(statsObj) {
-        // StatsObj is { name: {wins, sec, third, kills, rebuys, played, firstOuts, totalProfit}... }
-        
         let t = {
             champion: {n:'-', v:0},
             runnerup: {n:'-', v:0},
