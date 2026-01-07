@@ -376,7 +376,7 @@
                     }
                 }
                 
-                // Addon logic
+                // Addon logic - strict check
                 if(isBreakRound && !p.hasAddon && !p.eliminated) {
                      actions += `<button class="addon-btn" onclick="addonPlayer(${i})">Addon £${cost}</button>`;
                 }
@@ -473,6 +473,13 @@
 
     window.skipRound = function() {
         if(currentRound < rounds.length - 1) {
+            // STOP current timer
+            clearInterval(timer);
+            timerRunning = false;
+            document.getElementById('timerStartBtn').disabled = false;
+            document.getElementById('timerPauseBtn').disabled = true;
+            
+            // Advance
             currentRound++;
             updateRoundDisplay();
         }
@@ -494,7 +501,7 @@
         tournamentEnded = true;
         pauseTimer();
         document.getElementById('endBtn').disabled = true;
-        // Make export buttons available
+        // ALWAYS enable save button
         document.getElementById('exportBtn').disabled = false;
         document.getElementById('loadDashboardBtn').disabled = false;
         document.getElementById('majorToggle').disabled = false;
@@ -546,7 +553,6 @@
             console.log("GAPI Client Initialized");
         }).catch(err => {
             console.error("GAPI Init Error:", err);
-            // Don't alert yet, let user try clicking button
         });
     }
 
@@ -831,12 +837,15 @@
     }
     
     function calculateTitles(statsArray) {
-        let maxK = {n:'', v:-1}, maxR = {n:'', v:-1}, max3 = {n:'', v:-1};
-        statsArray.forEach(([n, d]) => {
-            if(d.kills > maxK.v) maxK = {n:n, v:d.kills};
-            if(d.rebuys > maxR.v) maxR = {n:n, v:d.rebuys};
-            if(d.third > max3.v) max3 = {n:n, v:d.third};
-        });
+        let maxK = {n:'-', v:0}, maxR = {n:'-', v:0}, max3 = {n:'-', v:0};
+        
+        if (statsArray.length > 0) {
+            statsArray.forEach(([n, d]) => {
+                if(d.kills > maxK.v) maxK = {n:n, v:d.kills};
+                if(d.rebuys > maxR.v) maxR = {n:n, v:d.rebuys};
+                if(d.third > max3.v) max3 = {n:n, v:d.third};
+            });
+        }
         return { killer: maxK, phoenix: maxR, bubble: max3 };
     }
 
