@@ -346,7 +346,6 @@
                 const data = JSON.parse(e.target.result);
                 webhooks = data;
                 localStorage.setItem('pokerWebhooks', JSON.stringify(webhooks));
-                // Update inputs
                 document.getElementById('wh-elimination').value = webhooks.elim || '';
                 document.getElementById('wh-roundend').value = webhooks.round || '';
                 document.getElementById('wh-break').value = webhooks.break || '';
@@ -429,7 +428,13 @@
             
             document.body.removeChild(document.getElementById('elim-dialog'));
             
-            triggerWebhook('elim', p.name); 
+            // CONFLICT FIX: Only fire elimination trigger if there are still 2+ players.
+            // If only 1 player remains, the 'checkForWinner' function will fire the 'winner' trigger instead.
+            const activeCount = players.filter(pl => !pl.eliminated).length;
+            if (activeCount > 1) {
+                triggerWebhook('elim', p.name); 
+            }
+            
             updatePlayerTable();
             checkForWinner();
         } catch(e) {
@@ -676,7 +681,7 @@
         if(!actionHistory.length) document.getElementById('undoBtn').disabled = true;
     }
 
-    // === API & DASHBOARD ===
+    // === API & DASHBOARD (RESTORED 2025 LOGIC) ===
     function handleClientLoad() {
       if (window.google && window.google.accounts) {
         initWithGIS();
