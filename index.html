@@ -429,7 +429,6 @@
             document.body.removeChild(document.getElementById('elim-dialog'));
             
             // CONFLICT FIX: Only fire elimination trigger if there are still 2+ players.
-            // If only 1 player remains, the 'checkForWinner' function will fire the 'winner' trigger instead.
             const activeCount = players.filter(pl => !pl.eliminated).length;
             if (activeCount > 1) {
                 triggerWebhook('elim', p.name); 
@@ -580,15 +579,19 @@
                 document.getElementById('timeRemaining').innerText = formatTime(timeLeft);
             } else {
                 document.getElementById('roundAlarm').play();
-                const r = rounds[currentRound];
-                triggerWebhook('round', r.sb, r.bb); 
+                
+                // FIXED: Look AHEAD to next round for announcements
+                if(currentRound < rounds.length - 1) {
+                    const nextR = rounds[currentRound + 1];
+                    if(nextR.isBreak) triggerWebhook('break');
+                    else triggerWebhook('round', nextR.sb, nextR.bb);
+                }
                 
                 clearInterval(timer);
                 timerRunning = false;
                 if(currentRound < rounds.length - 1) {
                     alert("Round Ended!");
                     currentRound++;
-                    if(rounds[currentRound].isBreak) triggerWebhook('break');
                     updateRoundDisplay();
                     startTimer();
                 }
@@ -610,19 +613,28 @@
 
     window.skipRound = function() {
         if(currentRound < rounds.length - 1) {
+            // STOP current timer
             clearInterval(timer);
             timerRunning = false;
             document.getElementById('timerStartBtn').disabled = false;
             document.getElementById('timerPauseBtn').disabled = true;
             
+            // Advance
             currentRound++;
             
-            // Force reset time
+            // IMMEDIATE WEBHOOK TRIGGER for the new round
             const r = rounds[currentRound];
+            if(r.isBreak) triggerWebhook('break');
+            else triggerWebhook('round', r.sb, r.bb);
+            
+            // Force reset time
             timeLeft = r.duration * (r.isTest ? 1 : 60);
             document.getElementById('timeRemaining').innerText = formatTime(timeLeft);
             
             updateRoundDisplay();
+            
+            // AUTO START if tournament is active
+            if(tournamentStarted) startTimer();
         }
     }
 
@@ -642,7 +654,7 @@
         tournamentEnded = true;
         pauseTimer();
         document.getElementById('endBtn').disabled = true;
-        // ENABLE SAVE BUTTON
+        // ALWAYS enable save button
         document.getElementById('exportBtn').disabled = false;
         document.getElementById('loadDashboardBtn').disabled = false;
         document.getElementById('majorToggle').disabled = false;
