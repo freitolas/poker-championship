@@ -654,7 +654,7 @@
         tournamentEnded = true;
         pauseTimer();
         document.getElementById('endBtn').disabled = true;
-        // ALWAYS enable save button
+        // ENABLE SAVE BUTTON
         document.getElementById('exportBtn').disabled = false;
         document.getElementById('loadDashboardBtn').disabled = false;
         document.getElementById('majorToggle').disabled = false;
@@ -846,7 +846,7 @@
         const stats2026 = calculate2026Points(rows2026);
         const detail2026 = calculateDetailedStats(rows2026);
         const allTime = calculateAllTime(rows);
-        const titles = calculateTitles(calculateDetailedStats(rows, true));
+        const titles = calculateTitles(calculateDetailedStats(rows2026, true));
 
         section.innerHTML = `
             <div class="dashboard-tabs">
