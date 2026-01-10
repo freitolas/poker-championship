@@ -841,6 +841,7 @@
 
     function buildDashboard(rows) {
         const section = document.getElementById('chartsSection');
+        // Filter rows for 2026 for specific tab, but 'allTime' just uses 'rows'
         const rows2026 = rows.filter((r, i) => i === 0 || r[0].startsWith('2026'));
         
         const stats2026 = calculate2026Points(rows2026);
@@ -859,7 +860,6 @@
             <div id="titles" class="dashboard-tab-content" style="display:none">${renderTitles(titles)}</div>
             <div id="detailed" class="dashboard-tab-content" style="display:none">${renderDetailed(detail2026)}</div>
             <div id="alltime" class="dashboard-tab-content" style="display:none">
-                <p style="color:red; font-weight:bold; text-align:center;">⚠️ Note: 2025 data is incomplete.</p>
                 ${renderAllTime(allTime)}
             </div>
         `;
@@ -890,7 +890,7 @@
                 tournaments[tid].kills[killer] = (tournaments[tid].kills[killer] || 0) + 1;
             }
 
-            // Only count participation/points if rank > 0
+            // Only count participation/points if rank > 0 (Ignores Rebuy Lines)
             if (rank > 0) {
                 if(!stats[name]) stats[name] = { points:0, wins:0, seconds:0, thirds:0, att:0, killerWins:0 };
                 
@@ -942,6 +942,7 @@
                 firstOuts:0, totalProfit:0 
             };
             
+            // Only count participation if rank > 0
             if (rank > 0) {
                 s[name].played++;
                 s[name].rebuys += parseInt(rebuy)||0;
@@ -952,7 +953,7 @@
                 if(rank === 2) s[name].sec++;
                 if(rank === 3) s[name].third++;
                 if(rank > 1) s[name].deaths++;
-                if(rank === field) s[name].firstOuts++; // Early Bird Logic
+                if(rank === field) s[name].firstOuts++; 
             }
             
             if(killer && killer !== 'N/A') {
@@ -977,6 +978,7 @@
             const rank = parseInt(r[4]);
             if(!s[name]) s[name] = { played:0, wins:0, sec:0, third:0, kills:0 };
             
+            // Only count if rank > 0
             if (rank > 0) {
                 s[name].played++;
                 if(rank===1) s[name].wins++;
