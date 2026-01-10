@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Curupira's Head Poker 2026 (True God Mode V2)</title>
+  <title>Curupira's Head Poker 2026 (God Mode V3)</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8Y2lyY2xlIGN4PSIzMiIgY3k9IjMyIiByPSIzMCIgZmlsbD0iI0RDMkI3MSIgc3Ryb2tlPSIjMkUwMDNFIiBzdHJva2Utd2lkdGg9IjQiLz4KICA8dGV4dCB4PSIzMiIgeT0iMzgiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxOCIgZm9udC13ZWlnaHQ9ImJvbGQiIGZpbGw9IndoaXRlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj4yNjwvdGV4dD4KPC9zdmc+">
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script src="https://apis.google.com/js/api.js"></script>
@@ -28,15 +28,18 @@
     button { padding: 10px 16px; border: 2px solid #ffa726; border-radius: 6px; background: #ffb74d; color: #7a4800; font-weight: 700; cursor: pointer; transition: all 0.3s ease; font-size: 14px; }
     button:hover:not(:disabled) { background: #ff9800; color: #fff; transform: translateY(-1px); }
     button:disabled { background: #e0e0e0; color: #999; cursor: not-allowed; border-color: #bdbdbd; }
-    .rebuy-btn { background: #f44336 !important; color: white !important; border-color: #d32f2f !important; }
-    .addon-btn { background: #2196f3 !important; color: white !important; border-color: #1976d2 !important; }
-    .revive-btn { background: #4caf50 !important; color: white !important; border-color: #388e3c !important; }
+    .rebuy-btn { background: #4caf50 !important; color: white !important; border-color: #388e3c !important; }
+    .elim-btn { background: #f44336 !important; color: white !important; border-color: #d32f2f !important; }
     
     /* God Mode Controls */
     .stack-ctrl { display: flex; align-items: center; justify-content: center; gap: 5px; }
     .stack-btn { padding: 4px 8px; font-size: 14px; min-width: 30px; cursor: pointer; background: #fff; border: 1px solid #ffa726; }
     .stack-btn:hover { background: #ffe0b2; }
     
+    .god-btn { font-size: 10px; padding: 4px 8px; margin: 0 2px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .god-kill { background: #3e2723; color: #ffab91; border-color: #4e342e; }
+    .god-revive { background: #e0f2f1; color: #00695c; border-color: #80cbc4; }
+
     .action-buttons { display: flex; gap: 12px; justify-content: center; margin-top: 15px; flex-wrap: wrap; }
     
     table { width: 100%; border-collapse: collapse; background: #fff3e0; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 12px rgba(255, 152, 0, 0.15); margin-bottom: 20px; }
@@ -148,12 +151,16 @@
     
     <div id="dashboardSection" style="display:none; margin-top:20px;">
         <div class="dashboard-tabs">
-            <button class="dashboard-tab active" onclick="switchTab('overview')">Overview</button>
-            <button class="dashboard-tab" onclick="switchTab('detailed')">Detailed</button>
-            <button class="dashboard-tab" onclick="switchTab('alltime')">All-Time</button>
+            <button class="dashboard-tab active" onclick="switchTab('p2026')">📊 2026 Leaderboard</button>
+            <button class="dashboard-tab" onclick="switchTab('titles')">🏆 Titles</button>
+            <button class="dashboard-tab" onclick="switchTab('detailed')">📈 Detailed Stats</button>
+            <button class="dashboard-tab" onclick="switchTab('alltime')">📅 All-Time</button>
         </div>
-        <div id="tab-overview" class="dashboard-tab-content active">
-            <div id="dashboardContent" class="titles-grid"></div>
+        <div id="tab-p2026" class="dashboard-tab-content active">
+             <div id="p2026Content"></div>
+        </div>
+        <div id="tab-titles" class="dashboard-tab-content">
+             <div id="titlesContent"></div>
         </div>
         <div id="tab-detailed" class="dashboard-tab-content">
              <div id="detailedContent"></div>
@@ -482,20 +489,21 @@
         // GOD MODE: Paid always editable
         const paidHtml = `<span class="editable-cost" onclick="manualEditPaid('${p.name}')">£${p.totalPaid}</span>`;
 
-        // Actions: Standard Game
+        // Actions: Eliminate OR Rebuy
         let actionsHtml = '';
         if (!p.eliminated) {
-            actionsHtml += `<button class="rebuy-btn" style="margin-right:5px; padding:4px 8px;" onclick="rebuy('${p.name}')">Rebuy</button>`;
-            actionsHtml += `<button onclick="initEliminate('${p.name}')" style="padding:4px 8px; background:#f44336; color:white; border-color:#d32f2f;">Eliminate</button>`;
+            // Active Player -> Show Eliminate
+            actionsHtml = `<button class="elim-btn" onclick="initEliminate('${p.name}')">Eliminate</button>`;
         } else {
-             actionsHtml = "<span>Out</span>";
+            // Eliminated Player -> Show Rebuy
+             actionsHtml = `<button class="rebuy-btn" onclick="rebuy('${p.name}')">Rebuy</button>`;
         }
         
-        // God Mode Column: Revive
-        let godHtml = '';
-        if (p.eliminated) {
-             godHtml = `<button class="revive-btn" style="padding:4px 8px;" onclick="revive('${p.name}')">Revive</button>`;
-        }
+        // God Mode Column: Kill & Revive
+        const godHtml = `
+            <button class="god-btn god-kill" onclick="godKill('${p.name}')">Kill</button>
+            <button class="god-btn god-revive" onclick="godRevive('${p.name}')">Revive</button>
+        `;
 
         tr.innerHTML = `
           <td>${p.name}</td>
@@ -531,16 +539,19 @@
     }
     
     function rebuy(name) {
-        // Wrapper for rebuy button: just adds a stack
-        updateStack(name, 1);
+        // Rebuy Logic: Add stack, Add cost, Set Active. No questions.
+        saveState();
+        const p = players.find(x => x.name === name);
+        p.eliminated = false;
+        p.eliminationTime = null; // Clear elimination time so they aren't ranked as "out"
         
-        // Optional: Track who you rebought from (for fun/stats)?
-        // Not strictly required by logic but useful for stats
-        const killer = prompt(`Who did ${name} rebuy from? (Leave blank if N/A)`);
-        if(killer) {
-             const p = players.find(x => x.name === name);
-             p.rebuyEliminations.push({ eliminatedBy: killer, timestamp: Date.now() });
-        }
+        // Add stack & cost
+        p.stacks += 1;
+        const cost = document.getElementById('majorToggle').checked ? 10 : 5;
+        p.totalPaid += cost;
+        
+        renderTable();
+        showMessage(`${name} rebought!`);
     }
 
     function toggleAddon(name) {
@@ -614,13 +625,22 @@
         }
     }
 
-    function revive(name) {
+    // GOD MODE FUNCTIONS (Silent)
+    function godKill(name) {
+        saveState();
+        const p = players.find(x => x.name === name);
+        p.eliminated = true;
+        p.eliminationTime = Date.now();
+        p.eliminatedBy = "God Mode";
+        renderTable();
+    }
+
+    function godRevive(name) {
         saveState();
         const p = players.find(x => x.name === name);
         p.eliminated = false;
         p.eliminationTime = null;
         renderTable();
-        showMessage(`${name} Resuscitated!`);
     }
 
     // === TOURNAMENT CONTROL ===
@@ -877,7 +897,7 @@
         }
     }
 
-    // === DASHBOARD LOGIC (CLASSIC CARDS + TIE BREAKER) ===
+    // === DASHBOARD LOGIC (ORIGINAL TAB STRUCTURE + TIE BREAKER) ===
     async function loadDashboard() {
         document.getElementById('dashboardSection').style.display = 'block';
         window.scrollTo(0, document.body.scrollHeight);
@@ -890,7 +910,7 @@
             
             const allRows = res.result.values || [];
             if(allRows.length === 0) {
-                document.getElementById('dashboardContent').innerHTML = "No data found.";
+                document.getElementById('tab-p2026').innerHTML = "No data found.";
                 return;
             }
 
@@ -900,17 +920,9 @@
             const titles = calculateTitles(calculateDetailedStats(rows2026, true));
             const allTime = calculateAllTime(allRows);
 
-            const overviewHtml = `
-                <div class="title-card">
-                    <span class="title-card-emoji">👥</span>
-                    <div class="title-card-name">Fixture (2026)</div>
-                    <div class="title-card-holder">${stats2026.length} Players</div>
-                </div>
-                ${renderTitles(titles)}
-            `;
-            
-            document.getElementById('dashboardContent').innerHTML = overviewHtml;
-            document.getElementById('detailedContent').innerHTML = render2026Leaderboard(stats2026); // Points table
+            document.getElementById('p2026Content').innerHTML = render2026Leaderboard(stats2026);
+            document.getElementById('titlesContent').innerHTML = renderTitles(titles);
+            document.getElementById('detailedContent').innerHTML = renderDetailed(detail2026);
             document.getElementById('allTimeContent').innerHTML = renderAllTime(allTime);
 
         } catch(err) {
@@ -1003,7 +1015,12 @@
             }
         });
         if (returnRaw) return s;
-        return Object.entries(s);
+        
+        return Object.entries(s).map(([name, d]) => {
+            d.winRate = d.played > 0 ? ((d.wins / d.played)*100).toFixed(0) + '%' : '0%';
+            d.cashRate = d.played > 0 ? (((d.wins + d.sec)/d.played)*100).toFixed(0) + '%' : '0%';
+            return [name, d];
+        });
     }
 
     function calculateAllTime(rows) {
@@ -1029,7 +1046,6 @@
     
     // === TIE BREAKER LOGIC ===
     function calculateTitles(statsObj) {
-        // Initialize with arrays for ties
         let t = {
             champion: {n:[], v:0},
             runnerup: {n:[], v:0},
@@ -1084,8 +1100,13 @@
     }
 
     function render2026Leaderboard(data) {
-        return `<div style="margin-top:20px;"><h3>2026 Points Leaderboard</h3>
-        <table><thead><tr><th>Rank</th><th>Player</th><th>Points</th><th>1st</th><th>2nd</th><th>3rd</th><th>Att</th></tr></thead><tbody>${data.map((p, i) => `<tr><td>#${i+1}</td><td><strong>${p[0]}</strong></td><td style="color:#d84315; font-weight:bold;">${p[1].points}</td><td>${p[1].wins}</td><td>${p[1].seconds}</td><td>${p[1].thirds}</td><td>${p[1].att}</td></tr>`).join('')}</tbody></table></div>`;
+        return `<h3>2026 Points Leaderboard</h3>
+        <table><thead><tr><th>Rank</th><th>Player</th><th>Points</th><th>1st</th><th>2nd</th><th>3rd</th><th>Att</th></tr></thead><tbody>${data.map((p, i) => `<tr><td>#${i+1}</td><td><strong>${p[0]}</strong></td><td style="color:#d84315; font-weight:bold;">${p[1].points}</td><td>${p[1].wins}</td><td>${p[1].seconds}</td><td>${p[1].thirds}</td><td>${p[1].att}</td></tr>`).join('')}</tbody></table>`;
+    }
+    
+    function renderDetailed(data) {
+        return `<table><thead><tr><th>Player</th><th>Games</th><th>1st</th><th>2nd</th><th>3rd</th><th>Kills</th><th>Deaths</th><th>Rebuys</th><th>Addons</th><th>Win%</th><th>Cash%</th></tr></thead><tbody>
+        ${data.map(p => `<tr><td><strong>${p[0]}</strong></td><td>${p[1].played}</td><td>${p[1].wins}</td><td>${p[1].sec}</td><td>${p[1].third}</td><td>${p[1].kills}</td><td>${p[1].deaths}</td><td>${p[1].rebuys}</td><td>${p[1].addons}</td><td>${p[1].winRate}</td><td>${p[1].cashRate}</td></tr>`).join('')}</tbody></table>`;
     }
 
     function renderAllTime(data) {
