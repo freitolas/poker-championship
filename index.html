@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Curupira's Head Poker 2026 (God Mode Final)</title>
+  <title>Curupira's Head Poker 2026 (Final)</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8Y2lyY2xlIGN4PSIzMiIgY3k9IjMyIiByPSIzMCIgZmlsbD0iI0RDMkI3MSIgc3Ryb2tlPSIjMkUwMDNFIiBzdHJva2Utd2lkdGg9IjQiLz4KICA8dGV4dCB4PSIzMiIgeT0iMzgiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxOCIgZm9udC13ZWlnaHQ9ImJvbGQiIGZpbGw9IndoaXRlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj4yNjwvdGV4dD4KPC9zdmc+">
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script src="https://apis.google.com/js/api.js"></script>
@@ -543,11 +543,19 @@
     }
     
     function rebuy(name) {
-        // Rebuy Logic: Add stack, Add cost, Set Active. No questions.
         saveState();
         const p = players.find(x => x.name === name);
+        
+        // FIX: Archive previous kill before resetting
+        if (p.eliminated) {
+             p.rebuyEliminations.push({
+                 eliminatedBy: p.eliminatedBy || "Unknown",
+                 timestamp: p.eliminationTime || Date.now()
+             });
+        }
+
         p.eliminated = false;
-        p.eliminationTime = null; // Clear elimination time
+        p.eliminationTime = null;
         
         // Add stack & cost
         p.stacks += 1;
@@ -622,9 +630,8 @@
         
         renderTable();
         
-        // Auto-End Logic?
+        // Auto-End Logic
         const activeCount = players.filter(pl => !pl.eliminated).length;
-        
         if (activeCount === 1) {
             checkForWinner();
         } else if (activeCount > 1) {
@@ -727,10 +734,9 @@
       
       document.getElementById('roundInfo').innerHTML = html;
       
-      // Calculate mins/secs
+      // Calculate mins/secs if not running
       if (!timerRunning) {
-          // FIX: Correctly interpret 5s for test round
-          timeLeft = r.duration * (r.isTest ? 1 : 60); 
+          timeLeft = r.duration * (r.isTest ? 5 : 60); // Fix: 5 seconds for test
       }
       displayTime();
     }
@@ -744,7 +750,7 @@
 
     function startTimer() {
         if (timerRunning) return;
-        if (timeLeft === 0) updateRoundDisplay(); // Reset if needed
+        if (timeLeft === 0) updateRoundDisplay(); 
         
         timerRunning = true;
         document.getElementById('timerStartBtn').disabled = true;
@@ -770,20 +776,29 @@
     function resetTimer() {
         pauseTimer();
         const r = rounds[currentRound];
-        timeLeft = r.duration * (r.isTest ? 1 : 60);
+        timeLeft = r.duration * (r.isTest ? 5 : 60); // Fix 5s
         displayTime();
     }
 
     function skipRound() {
-        pauseTimer();
+        // Stop current
+        clearInterval(timer);
+        
+        // Advance
         currentRound = Math.min(currentRound + 1, rounds.length - 1);
         const r = rounds[currentRound];
-        timeLeft = r.duration * (r.isTest ? 1 : 60); 
+        timeLeft = r.duration * (r.isTest ? 5 : 60); 
         
         updateRoundDisplay();
         
         if(r.isBreak) triggerWebhook('break');
         else triggerWebhook('round', r.sb, r.bb);
+        
+        // Force Start if in game
+        timerRunning = false;
+        if (tournamentStarted && !tournamentEnded) {
+            startTimer();
+        }
     }
 
     function roundComplete() {
@@ -793,13 +808,11 @@
         if (currentRound < rounds.length - 1) {
             currentRound++;
             const r = rounds[currentRound];
-            timeLeft = r.duration * (r.isTest ? 1 : 60);
+            timeLeft = r.duration * (r.isTest ? 5 : 60);
             updateRoundDisplay();
             
             if(r.isBreak) triggerWebhook('break');
             else triggerWebhook('round', r.sb, r.bb);
-            // Timer keeps ticking because we reset timeLeft inside the interval flow? 
-            // Actually setInterval just ticks. If we set timeLeft > 0 here, it continues next second.
         } else {
             alert("Tournament Structure Complete!");
             pauseTimer();
@@ -814,14 +827,11 @@
         callback: (tokenResponse) => {
           if (tokenResponse && tokenResponse.access_token) {
             googleApiReady = true;
-            // Depending on which button triggered auth, run that action
             if(window.pendingAction === 'export') exportData();
             if(window.pendingAction === 'dashboard') loadDashboard();
           }
         },
       });
-      
-      // Load GAPI for spreadsheets
       gapi.load('client', () => {
           gapi.client.init({
               discoveryDocs: ["https://sheets.googleapis.com/$discovery/rest?version=v4"],
@@ -851,7 +861,6 @@
         const isMajor = document.getElementById('majorToggle').checked;
         const tournamentName = document.getElementById('tournamentNameSelect').value;
 
-        // Prepare Rows
         let rows = [];
         let activePlayers = players.filter(p => !p.eliminated);
         let eliminatedPlayers = players.filter(p => p.eliminated).sort((a,b) => b.eliminationTime - a.eliminationTime);
@@ -863,11 +872,8 @@
                 p.rebuyEliminations.forEach(rebuy => {
                     rows.push([
                         dateStr, timeStr, tournId, p.name, 
-                        0, // FinishPos 0 for rebuy
-                        totalP, 0, 0, 0, 0, 0,
-                        rebuy.eliminatedBy,
-                        tournamentName,
-                        isMajor
+                        0, totalP, 0, 0, 0, 0, 0,
+                        rebuy.eliminatedBy, tournamentName, isMajor
                     ]);
                 });
             }
@@ -876,7 +882,6 @@
         // 2. Process Final Results
         let finalRankings = [];
         activePlayers.forEach(p => finalRankings.push({ player: p, rank: 1 }));
-        
         let currentRank = activePlayers.length + 1;
         eliminatedPlayers.forEach(p => {
             finalRankings.push({ player: p, rank: currentRank });
@@ -886,7 +891,6 @@
         finalRankings.forEach(item => {
             const p = item.player;
             const rank = item.rank;
-            
             let prize = 0;
             const pot = calculatePot();
             if(rank === 1) prize = activePlayers.length === 1 ? pot * 0.8 : (pot / activePlayers.length); 
@@ -898,27 +902,19 @@
             
             rows.push([
                 dateStr, timeStr, tournId, p.name,
-                rank,
-                totalP,
-                p.totalPaid,
-                earnings,
-                p.stacks - 1, // Rebuys approx
-                p.hasAddon ? 1 : 0,
-                roi.toFixed(1),
-                p.eliminated ? p.eliminatedBy : 'N/A',
-                tournamentName,
-                isMajor
+                rank, totalP, p.totalPaid, earnings,
+                p.stacks - 1, p.hasAddon ? 1 : 0,
+                roi.toFixed(1), p.eliminated ? p.eliminatedBy : 'N/A',
+                tournamentName, isMajor
             ]);
         });
 
-        const resource = { values: rows };
-        
         try {
             await gapi.client.sheets.spreadsheets.values.append({
                 spreadsheetId: SPREADSHEET_ID,
                 range: 'PlayerResults!A:N',
                 valueInputOption: 'USER_ENTERED',
-                resource: resource,
+                resource: { values: rows },
             });
             alert("Data Exported to Google Sheets!");
         } catch (err) {
@@ -931,19 +927,16 @@
     async function loadDashboard() {
         document.getElementById('dashboardSection').style.display = 'block';
         window.scrollTo(0, document.body.scrollHeight);
-        
         try {
             const res = await gapi.client.sheets.spreadsheets.values.get({
                 spreadsheetId: SPREADSHEET_ID,
                 range: 'PlayerResults!A2:N',
             });
-            
             const allRows = res.result.values || [];
             if(allRows.length === 0) {
                 document.getElementById('tab-p2026').innerHTML = "No data found.";
                 return;
             }
-
             const rows2026 = allRows.filter(r => r[0].startsWith('2026'));
             const stats2026 = calculate2026Points(rows2026);
             const detail2026 = calculateDetailedStats(rows2026);
@@ -954,7 +947,6 @@
             document.getElementById('titlesContent').innerHTML = renderTitles(titles);
             document.getElementById('detailedContent').innerHTML = renderDetailed(detail2026);
             document.getElementById('allTimeContent').innerHTML = renderAllTime(allTime);
-
         } catch(err) {
             console.error(err);
             alert("Error loading dashboard data.");
@@ -964,7 +956,6 @@
     function calculate2026Points(rows) {
         const tournaments = {}; 
         const stats = {};
-        
         rows.forEach(r => {
             const [d, t, tid, name, rankStr, f, paid, earn, rebuy, addon, roi, killer, tname, isMaj] = r;
             const isMajor = isMaj === 'TRUE';
@@ -973,17 +964,12 @@
 
             if(!tournaments[tid]) tournaments[tid] = { kills: {}, isMajor: isMajor, ranks: {} };
             if (rank > 0) tournaments[tid].ranks[name] = rank;
-            
-            if(killer && killer !== 'N/A') {
-                tournaments[tid].kills[killer] = (tournaments[tid].kills[killer] || 0) + 1;
-            }
+            if(killer && killer !== 'N/A') tournaments[tid].kills[killer] = (tournaments[tid].kills[killer] || 0) + 1;
 
             if (rank > 0) {
                 if(!stats[name]) stats[name] = { points:0, wins:0, seconds:0, thirds:0, att:0, killerWins:0 };
-                
                 stats[name].att++;
                 stats[name].points += (1 * multiplier); 
-
                 if(rank === 1) { stats[name].points += (10 * multiplier); stats[name].wins++; }
                 if(rank === 2) { stats[name].points += (7 * multiplier); stats[name].seconds++; }
                 if(rank === 3) { stats[name].points += (4 * multiplier); stats[name].thirds++; }
@@ -1021,18 +1007,13 @@
             const cost = parseFloat(paid)||0;
             const earnings = parseFloat(earn)||0; 
             
-            if(!s[name]) s[name] = { 
-                played:0, wins:0, sec:0, third:0, 
-                rebuys:0, addons:0, kills:0, deaths:0, 
-                firstOuts:0, totalProfit:0 
-            };
+            if(!s[name]) s[name] = { played:0, wins:0, sec:0, third:0, rebuys:0, addons:0, kills:0, deaths:0, firstOuts:0, totalProfit:0 };
             
             if (rank > 0) {
                 s[name].played++;
                 s[name].rebuys += parseInt(rebuy)||0;
                 s[name].addons += parseInt(addon)||0;
                 s[name].totalProfit += (earnings - cost);
-                
                 if(rank === 1) s[name].wins++;
                 if(rank === 2) s[name].sec++;
                 if(rank === 3) s[name].third++;
@@ -1045,7 +1026,6 @@
             }
         });
         if (returnRaw) return s;
-        
         return Object.entries(s).map(([name, d]) => {
             d.winRate = d.played > 0 ? ((d.wins / d.played)*100).toFixed(0) + '%' : '0%';
             d.cashRate = d.played > 0 ? (((d.wins + d.sec)/d.played)*100).toFixed(0) + '%' : '0%';
@@ -1059,7 +1039,6 @@
             const name = r[3];
             const rank = parseInt(r[4]);
             if(!s[name]) s[name] = { played:0, wins:0, sec:0, third:0, kills:0 };
-            
             if (rank > 0) {
                 s[name].played++;
                 if(rank===1) s[name].wins++;
@@ -1074,27 +1053,15 @@
         return Object.entries(s).sort((a,b) => b[1].wins - a[1].wins);
     }
     
-    // === TIE BREAKER LOGIC ===
     function calculateTitles(statsObj) {
         let t = {
-            champion: {n:[], v:0},
-            runnerup: {n:[], v:0},
-            musk: {n:[], v:0},
-            fixture: {n:[], v:0},
-            killer: {n:[], v:0},
-            early: {n:[], v:0},
-            phoenix: {n:[], v:0},
-            bubble: {n:[], v:0}
+            champion: {n:[], v:0}, runnerup: {n:[], v:0}, musk: {n:[], v:0}, fixture: {n:[], v:0},
+            killer: {n:[], v:0}, early: {n:[], v:0}, phoenix: {n:[], v:0}, bubble: {n:[], v:0}
         };
-        
         const updateTitle = (key, name, val) => {
-            if (val > t[key].v) {
-                t[key] = { n: [name], v: val };
-            } else if (val === t[key].v && val > 0) {
-                t[key].n.push(name);
-            }
+            if (val > t[key].v) { t[key] = { n: [name], v: val }; } 
+            else if (val === t[key].v && val > 0) { t[key].n.push(name); }
         };
-        
         Object.entries(statsObj).forEach(([n, d]) => {
             updateTitle('champion', n, d.wins);
             updateTitle('runnerup', n, d.sec);
