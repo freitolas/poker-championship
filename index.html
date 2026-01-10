@@ -3,10 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Curupira's Head Poker 2026 (God Mode V3)</title>
+  <title>Curupira's Head Poker 2026 (God Mode Final)</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8Y2lyY2xlIGN4PSIzMiIgY3k9IjMyIiByPSIzMCIgZmlsbD0iI0RDMkI3MSIgc3Ryb2tlPSIjMkUwMDNFIiBzdHJva2Utd2lkdGg9IjQiLz4KICA8dGV4dCB4PSIzMiIgeT0iMzgiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxOCIgZm9udC13ZWlnaHQ9ImJvbGQiIGZpbGw9IndoaXRlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj4yNjwvdGV4dD4KPC9zdmc+">
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script src="https://apis.google.com/js/api.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     * { box-sizing: border-box; }
     body {
@@ -423,7 +424,10 @@
     function addPlayer() {
       const select = document.getElementById('playerSelect');
       const input = document.getElementById('playerNameInput');
-      let name = input.value.trim() || select.value;
+      
+      // PRIORITY FIX: Check Input first
+      let name = input.value.trim();
+      if (!name) name = select.value;
       
       if (!name) return alert('Please select or enter a name.');
       if (players.find(p => p.name === name)) return alert('Player already added.');
@@ -445,6 +449,11 @@
         rebuyEliminations: [] // Track previous deaths (rebuys)
       });
       
+      // AUTO SORT only if tournament hasn't started
+      if (!tournamentStarted) {
+          players.sort((a,b) => a.name.localeCompare(b.name));
+      }
+      
       input.value = '';
       select.value = '';
       renderTable();
@@ -464,13 +473,8 @@
       const tbody = document.getElementById('playerTableBody');
       tbody.innerHTML = '';
       
-      const sorted = [...players].sort((a, b) => {
-        if (a.eliminated !== b.eliminated) return a.eliminated ? 1 : -1;
-        if (a.stacks !== b.stacks) return b.stacks - a.stacks;
-        return a.name.localeCompare(b.name);
-      });
-      
-      sorted.forEach(p => {
+      // NO DYNAMIC SORTING - Keeps lines fixed
+      players.forEach(p => {
         const tr = document.createElement('tr');
         if (p.eliminated) tr.classList.add('eliminated');
         
@@ -543,7 +547,7 @@
         saveState();
         const p = players.find(x => x.name === name);
         p.eliminated = false;
-        p.eliminationTime = null; // Clear elimination time so they aren't ranked as "out"
+        p.eliminationTime = null; // Clear elimination time
         
         // Add stack & cost
         p.stacks += 1;
@@ -618,9 +622,12 @@
         
         renderTable();
         
-        // Rafa Protocol: Suppress if Winner imminent
+        // Auto-End Logic?
         const activeCount = players.filter(pl => !pl.eliminated).length;
-        if(activeCount > 1) {
+        
+        if (activeCount === 1) {
+            checkForWinner();
+        } else if (activeCount > 1) {
              triggerWebhook('elim', name);
         }
     }
@@ -633,6 +640,8 @@
         p.eliminationTime = Date.now();
         p.eliminatedBy = "God Mode";
         renderTable();
+        
+        if (players.filter(pl => !pl.eliminated).length === 1) checkForWinner();
     }
 
     function godRevive(name) {
@@ -642,12 +651,30 @@
         p.eliminationTime = null;
         renderTable();
     }
+    
+    function checkForWinner() {
+        const active = players.filter(p => !p.eliminated);
+        if (active.length === 1 && tournamentStarted && !tournamentEnded) {
+            triggerWebhook('winner');
+            tournamentEnded = true;
+            pauseTimer();
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('endBtn').disabled = true;
+            showMessage(`🏆 ${active[0].name} Wins!`);
+            alert(`🏆 ${active[0].name} Wins!`);
+        }
+    }
 
     // === TOURNAMENT CONTROL ===
     function startTournament() {
         tournamentStarted = true;
         document.getElementById('startBtn').disabled = true;
         document.getElementById('endBtn').disabled = false;
+        
+        // Sort one last time before locking order
+        players.sort((a,b) => a.name.localeCompare(b.name));
+        renderTable();
+        
         showMessage("Tournament Started!");
         startTimer();
     }
@@ -701,8 +728,9 @@
       document.getElementById('roundInfo').innerHTML = html;
       
       // Calculate mins/secs
-      if (!timerRunning && timeLeft === 0) {
-          timeLeft = r.duration * 60;
+      if (!timerRunning) {
+          // FIX: Correctly interpret 5s for test round
+          timeLeft = r.duration * (r.isTest ? 1 : 60); 
       }
       displayTime();
     }
@@ -741,38 +769,40 @@
 
     function resetTimer() {
         pauseTimer();
-        timeLeft = rounds[currentRound].duration * 60;
+        const r = rounds[currentRound];
+        timeLeft = r.duration * (r.isTest ? 1 : 60);
         displayTime();
     }
 
     function skipRound() {
         pauseTimer();
         currentRound = Math.min(currentRound + 1, rounds.length - 1);
-        timeLeft = 0; // Will be set by updateRoundDisplay
+        const r = rounds[currentRound];
+        timeLeft = r.duration * (r.isTest ? 1 : 60); 
+        
         updateRoundDisplay();
         
-        const r = rounds[currentRound];
         if(r.isBreak) triggerWebhook('break');
         else triggerWebhook('round', r.sb, r.bb);
     }
 
     function roundComplete() {
-        pauseTimer();
+        // SMOOTH TRANSITION: No pause, no alert
         document.getElementById('roundAlarm').play().catch(e=>console.log("Audio play failed"));
         
         if (currentRound < rounds.length - 1) {
             currentRound++;
-            timeLeft = 0;
+            const r = rounds[currentRound];
+            timeLeft = r.duration * (r.isTest ? 1 : 60);
             updateRoundDisplay();
             
-            const r = rounds[currentRound];
-            if(r.isBreak) {
-                triggerWebhook('break');
-            } else {
-                triggerWebhook('round', r.sb, r.bb);
-            }
+            if(r.isBreak) triggerWebhook('break');
+            else triggerWebhook('round', r.sb, r.bb);
+            // Timer keeps ticking because we reset timeLeft inside the interval flow? 
+            // Actually setInterval just ticks. If we set timeLeft > 0 here, it continues next second.
         } else {
             alert("Tournament Structure Complete!");
+            pauseTimer();
         }
     }
 
@@ -897,7 +927,7 @@
         }
     }
 
-    // === DASHBOARD LOGIC (ORIGINAL TAB STRUCTURE + TIE BREAKER) ===
+    // === DASHBOARD LOGIC ===
     async function loadDashboard() {
         document.getElementById('dashboardSection').style.display = 'block';
         window.scrollTo(0, document.body.scrollHeight);
@@ -1101,7 +1131,7 @@
 
     function render2026Leaderboard(data) {
         return `<h3>2026 Points Leaderboard</h3>
-        <table><thead><tr><th>Rank</th><th>Player</th><th>Points</th><th>1st</th><th>2nd</th><th>3rd</th><th>Att</th></tr></thead><tbody>${data.map((p, i) => `<tr><td>#${i+1}</td><td><strong>${p[0]}</strong></td><td style="color:#d84315; font-weight:bold;">${p[1].points}</td><td>${p[1].wins}</td><td>${p[1].seconds}</td><td>${p[1].thirds}</td><td>${p[1].att}</td></tr>`).join('')}</tbody></table>`;
+        <table><thead><tr><th>Rank</th><th>Player</th><th>Points</th><th>1st</th><th>2nd</th><th>3rd</th><th>Att</th><th>Killer Bonus</th></tr></thead><tbody>${data.map((p, i) => `<tr><td>#${i+1}</td><td><strong>${p[0]}</strong></td><td style="color:#d84315; font-weight:bold;">${p[1].points}</td><td>${p[1].wins}</td><td>${p[1].seconds}</td><td>${p[1].thirds}</td><td>${p[1].att}</td><td>${p[1].killerWins}</td></tr>`).join('')}</tbody></table>`;
     }
     
     function renderDetailed(data) {
