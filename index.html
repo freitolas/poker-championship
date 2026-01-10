@@ -3,15 +3,17 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Curupira's Head Poker 2026</title>
+  <title>Curupira's Head Poker 2026 (True God Mode)</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8Y2lyY2xlIGN4PSIzMiIgY3k9IjMyIiByPSIzMCIgZmlsbD0iI0RDMkI3MSIgc3Ryb2tlPSIjMkUwMDNFIiBzdHJva2Utd2lkdGg9IjQiLz4KICA8dGV4dCB4PSIzMiIgeT0iMzgiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxOCIgZm9udC13ZWlnaHQ9ImJvbGQiIGZpbGw9IndoaXRlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj4yNjwvdGV4dD4KPC9zdmc+">
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script src="https://apis.google.com/js/api.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
   <style>
     * { box-sizing: border-box; }
     body {
       margin: 0; padding: 0;
-      background: url('background.svg'), linear-gradient(135deg, #fff7e1 0%, #ffe0b2 100%);
+      background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" opacity="0.1"><circle cx="50" cy="50" r="40" stroke="%23ccc" fill="none"/></svg>'), linear-gradient(135deg, #fff7e1 0%, #ffe0b2 100%);
       background-size: 512px 512px, auto;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       color: #7a4800; display: flex; min-height: 100vh;
@@ -30,6 +32,12 @@
     button:disabled { background: #e0e0e0; color: #999; cursor: not-allowed; border-color: #bdbdbd; }
     .rebuy-btn { background: #f44336 !important; color: white !important; border-color: #d32f2f !important; }
     .addon-btn { background: #2196f3 !important; color: white !important; border-color: #1976d2 !important; }
+    .revive-btn { background: #4caf50 !important; color: white !important; border-color: #388e3c !important; }
+    
+    /* God Mode Controls */
+    .stack-ctrl { display: flex; align-items: center; justify-content: center; gap: 5px; }
+    .stack-btn { padding: 4px 8px; font-size: 14px; min-width: 30px; cursor: pointer; background: #fff; border: 1px solid #ffa726; }
+    .stack-btn:hover { background: #ffe0b2; }
     
     .action-buttons { display: flex; gap: 12px; justify-content: center; margin-top: 15px; flex-wrap: wrap; }
     
@@ -37,8 +45,12 @@
     th, td { padding: 12px 8px; text-align: center; font-weight: 600; border-bottom: 1px solid #eee; }
     thead { background: linear-gradient(90deg, #ff9800 0%, #fb8c00 100%); color: white; }
     tbody tr:nth-child(odd) { background: #fff9e5; }
-    tbody tr.eliminated { background: #ffcdd2 !important; color: #c62828; opacity: 0.8; }
+    tbody tr.eliminated { background: #ffcdd2 !important; color: #c62828; opacity: 0.9; }
     
+    /* Paid Amount Editable */
+    .editable-cost { cursor: pointer; border-bottom: 1px dashed #7a4800; }
+    .editable-cost:hover { background: #fff; }
+
     .timer-panel { flex: 1; background: linear-gradient(135deg, #ffecb3 0%, #ffd54f 100%); border-left: 7px solid #ffa726; padding: 25px; display: flex; flex-direction: column; align-items: center; height: 100vh; position: sticky; top: 0; overflow-y: auto; }
     .timer-header { font-size: 2.4rem; font-weight: 900; color: #e65100; margin-bottom: 20px; text-shadow: 2px 2px 4px rgba(0,0,0,0.1); position: relative; }
     .round-info { width: 100%; background: #ffe0b2; border-radius: 12px; padding: 20px; font-size: 1.4rem; font-weight: 700; text-align: center; color: #e65100; margin-bottom: 25px; }
@@ -47,11 +59,9 @@
     .dashboard-tabs { display: flex; border-bottom: 3px solid #ffa726; margin-bottom: 20px; border-radius: 10px 10px 0 0; overflow: hidden; }
     .dashboard-tab { flex: 1; padding: 15px 20px; background: #ffe0b2; color: #e65100; border: none; font-weight: 700; cursor: pointer; border-right: 2px solid #ffa726; }
     .dashboard-tab.active { background: #ff9800; color: white; }
-    .dashboard-tab-content { background: #fff3e0; padding: 25px; border-radius: 0 0 10px 10px; min-height: 400px; }
-    .dashboard-tab-panel { display: none; }
-    .dashboard-tab-panel.active { display: block; }
+    .dashboard-tab-content { background: #fff3e0; padding: 25px; border-radius: 0 0 10px 10px; min-height: 400px; display: none; }
+    .dashboard-tab-content.active { display: block; }
     
-    /* Title Cards */
     .titles-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
     .title-card { background: linear-gradient(135deg, #fff3e0 0%, #ffecb3 100%); border: 3px solid #ffa726; border-radius: 15px; padding: 20px; text-align: center; }
     .title-card-emoji { font-size: 3rem; display: block; margin-bottom: 10px; }
@@ -112,7 +122,7 @@
         <button onclick="startTournament()" id="startBtn">Start Tournament</button>
         <button onclick="endTournament()" id="endBtn" disabled>End Tournament</button>
         <button onclick="clearPlayers()">Clear All Players</button>
-        <button onclick="undoLastAction()" id="undoBtn" disabled>Undo</button>
+        <button onclick="undoLastAction()" id="undoBtn" disabled>Undo (CTRL+Z)</button>
       </div>
       
       <div id="playerCount">Players: 0 | Prize Pot: £0 | House Fee: £5</div>
@@ -125,13 +135,27 @@
     
     <table id="playerTable">
       <thead>
-        <tr><th>Player</th><th>Stacks</th><th>Total Paid</th><th>Status</th><th>Actions</th></tr>
+        <tr><th>Player</th><th>Stacks</th><th>Addon?</th><th>Paid</th><th>Status</th><th>Actions</th></tr>
       </thead>
       <tbody id="playerTableBody"></tbody>
     </table>
     
-    <div id="prizeResults"></div>
-    <div class="charts-section" id="chartsSection"></div>
+    <div id="dashboardSection" style="display:none; margin-top:20px;">
+        <div class="dashboard-tabs">
+            <button class="dashboard-tab active" onclick="switchTab('overview')">Overview</button>
+            <button class="dashboard-tab" onclick="switchTab('charts')">Charts</button>
+            <button class="dashboard-tab" onclick="switchTab('alltime')">All-Time</button>
+        </div>
+        <div id="tab-overview" class="dashboard-tab-content active">
+            <div id="dashboardContent" class="titles-grid"></div>
+        </div>
+        <div id="tab-charts" class="dashboard-tab-content">
+             <canvas id="earningsChart"></canvas>
+        </div>
+        <div id="tab-alltime" class="dashboard-tab-content">
+             <div id="allTimeContent"></div>
+        </div>
+    </div>
   </div>
   
   <div class="timer-panel">
@@ -158,7 +182,6 @@
     
     <audio id="roundAlarm" preload="auto">
       <source src="alarm.mp3" type="audio/mpeg">
-      <source src="alarm.mp3" type="audio/mp3">
     </audio>
   </div>
 
@@ -201,7 +224,6 @@
     const SPREADSHEET_ID = '1fZWOlbf95Xqg4AnsEm9ga8x1ENrZ_K_0EEF3sEZGz2Y';
     const SCOPES = 'https://www.googleapis.com/auth/spreadsheets';
 
-    // === TOURNAMENT STRUCTURE ===
     const rounds = [
       { name: "Test Round", sb: 0, bb: 0, duration: 5, isTest: true },
       { name: "Round 1", sb: 5, bb: 10, duration: 20 },
@@ -239,7 +261,8 @@
     let tournamentEnded = false;
     let timerRunning = false;
     let googleApiReady = false;
-    let actionHistory = [];
+    let tokenClient;
+    let historyStack = []; // Deep copy history
     let webhooks = {};
 
     // === INITIALIZATION ===
@@ -318,7 +341,7 @@
         }
     }
     
-    // BACKUP AND RESTORE
+    // BACKUP AND RESTORE SETTINGS
     window.backupSettings = function() {
         if(!webhooks || Object.keys(webhooks).length === 0) return alert("No settings to backup!");
         const data = JSON.stringify(webhooks);
@@ -358,539 +381,533 @@
         reader.readAsText(file);
     }
 
-    // === PLAYER ACTIONS ===
-    window.addPlayer = function() {
-        if(tournamentStarted) {
-            const breakIdx = rounds.findIndex(r => r.isBreak);
-            if(breakIdx !== -1 && currentRound > breakIdx) return showMessage("Late registration closed", true);
-            if(breakIdx === -1) return showMessage("Game started - no late reg", true);
-        }
-        
-        const name = (document.getElementById('playerSelect').value || document.getElementById('playerNameInput').value).trim();
-        if(!name) return showMessage("Enter a name", true);
-        if(players.some(p => p.name === name)) return showMessage("Player exists", true);
-        
-        if(!regularPlayers.includes(name) && !customPlayers.includes(name)) {
-            customPlayers.push(name);
-            populatePlayerDropdown();
-        }
-
-        const isMajor = document.getElementById('majorToggle').checked;
-        const cost = isMajor ? 10 : 5;
-        players.push({ name, stacks:1, totalPaid:cost, eliminated:false, hasAddon:false, eliminationTime:null, rebuyEliminations:[] });
-        
-        document.getElementById('playerNameInput').value = '';
-        updatePlayerTable();
-        showMessage(`${name} added`);
+    // === RELIABLE UNDO SYSTEM ===
+    function saveState() {
+        // Deep copy of players array to ensure total isolation
+        const state = JSON.stringify(players);
+        historyStack.push(state);
+        document.getElementById('undoBtn').disabled = false;
+        // Limit history to prevent memory issues
+        if(historyStack.length > 50) historyStack.shift(); 
     }
 
-    window.removePlayer = function(i) {
-        if(tournamentStarted) return showMessage("Cannot remove during game", true);
-        players.splice(i, 1);
-        updatePlayerTable();
+    function undoLastAction() {
+        if(historyStack.length === 0) return;
+        const previousState = historyStack.pop();
+        if(historyStack.length === 0) document.getElementById('undoBtn').disabled = true;
+        
+        players = JSON.parse(previousState);
+        renderTable();
+        updatePrizeInfo();
+        showMessage("Undo Successful");
+    }
+    
+    document.addEventListener('keydown', function(event) {
+        if (event.ctrlKey && event.key === 'z') {
+            undoLastAction();
+        }
+    });
+
+    // === PLAYER MANAGEMENT ===
+    function addPlayer() {
+      const select = document.getElementById('playerSelect');
+      const input = document.getElementById('playerNameInput');
+      let name = input.value.trim() || select.value;
+      
+      if (!name) return alert('Please select or enter a name.');
+      if (players.find(p => p.name === name)) return alert('Player already added.');
+      
+      saveState();
+
+      if (!regularPlayers.includes(name) && !customPlayers.includes(name)) {
+        customPlayers.push(name);
+        populatePlayerDropdown();
+      }
+      
+      players.push({
+        name: name,
+        stacks: 1,
+        totalPaid: document.getElementById('majorToggle').checked ? 10 : 5,
+        eliminated: false,
+        hasAddon: false,
+        eliminationTime: null,
+        rebuyEliminations: [] // Track previous deaths (rebuys)
+      });
+      
+      input.value = '';
+      select.value = '';
+      renderTable();
+      updatePrizeInfo();
     }
 
-    window.eliminatePlayer = function(index) {
-        if (document.getElementById('elim-dialog')) return; 
+    function clearPlayers() {
+        if(confirm("Clear all players?")) {
+            saveState();
+            players = [];
+            renderTable();
+            updatePrizeInfo();
+        }
+    }
+
+    function renderTable() {
+      const tbody = document.getElementById('playerTableBody');
+      tbody.innerHTML = '';
+      
+      const sorted = [...players].sort((a, b) => {
+        if (a.eliminated !== b.eliminated) return a.eliminated ? 1 : -1;
+        if (a.stacks !== b.stacks) return b.stacks - a.stacks;
+        return a.name.localeCompare(b.name);
+      });
+      
+      sorted.forEach(p => {
+        const tr = document.createElement('tr');
+        if (p.eliminated) tr.classList.add('eliminated');
         
-        const p = players[index];
-        const killers = players.filter(pl => pl.name !== p.name && !pl.eliminated).map(pl => pl.name);
-        
-        const options = killers.map(k => `<option value="${k}">${k}</option>`).join('');
-        
-        const dialog = document.createElement('div');
-        dialog.id = 'elim-dialog';
-        dialog.style.cssText = "position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:white; padding:20px; border:3px solid #ffa726; z-index:1000; border-radius:10px; text-align:center; box-shadow:0 4px 15px rgba(0,0,0,0.3);";
-        dialog.innerHTML = `
-            <h3 style="color:#e65100; margin-top:0;">Eliminate ${p.name}</h3>
-            <p>Who eliminated them?</p>
-            <select id="killerSelect" style="padding:5px; font-size:16px;">
-                <option value="N/A">N/A (Self/Unknown)</option>
-                ${options}
-            </select>
-            <div style="margin-top:15px;">
-                <button onclick="confirmElimination(${index})" style="background:#f44336; color:white;">Confirm</button>
-                <button onclick="document.body.removeChild(document.getElementById('elim-dialog'))">Cancel</button>
+        // GOD MODE: Stacks always editable
+        const stackHtml = `
+            <div class="stack-ctrl">
+                <button class="stack-btn" onclick="updateStack('${p.name}', -1)">-</button>
+                <span style="min-width:20px; text-align:center;">${p.stacks}</span>
+                <button class="stack-btn" onclick="updateStack('${p.name}', 1)">+</button>
             </div>
         `;
-        document.body.appendChild(dialog);
-    }
 
-    window.confirmElimination = function(index) {
-        try {
-            const p = players[index];
-            const killer = document.getElementById('killerSelect').value;
-            
-            p.eliminated = true;
-            p.eliminatedBy = killer;
-            p.eliminationTime = Date.now();
-            recordAction('eliminate', { name: p.name });
-            
-            document.body.removeChild(document.getElementById('elim-dialog'));
-            
-            // CONFLICT FIX: Only fire elimination trigger if there are still 2+ players.
-            const activeCount = players.filter(pl => !pl.eliminated).length;
-            if (activeCount > 1) {
-                triggerWebhook('elim', p.name); 
-            }
-            
-            updatePlayerTable();
-            checkForWinner();
-        } catch(e) {
-            alert("Error: " + e.message);
+        // GOD MODE: Addon always editable
+        const addonHtml = `<input type="checkbox" ${p.hasAddon ? 'checked' : ''} onchange="toggleAddon('${p.name}')">`;
+
+        // GOD MODE: Paid always editable (Prompt)
+        const paidHtml = `<span class="editable-cost" onclick="manualEditPaid('${p.name}')">£${p.totalPaid}</span>`;
+
+        // Action Buttons: Toggle between Eliminate and Revive
+        let actionsHtml = '';
+        if (!p.eliminated) {
+            actionsHtml += `<button onclick="eliminate('${p.name}')" style="padding:4px 8px; background:#f44336; color:white; border-color:#d32f2f;">Out</button>`;
+        } else {
+            actionsHtml += `<button class="revive-btn" style="padding:4px 8px;" onclick="revive('${p.name}')">Revive</button>`;
         }
+
+        tr.innerHTML = `
+          <td>${p.name}</td>
+          <td>${stackHtml}</td>
+          <td>${addonHtml}</td>
+          <td>${paidHtml}</td>
+          <td>${p.eliminated ? 'OUT' : 'Active'}</td>
+          <td>${actionsHtml}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+      
+      updatePrizeInfo();
+      document.getElementById('playerCount').innerText = `Players: ${players.length} | Prize Pot: £${calculatePot()} | House Fee: £5`;
     }
 
-    window.rebuyPlayer = function(index) {
-        try {
-            const p = players[index];
-            const toggle = document.getElementById('majorToggle');
-            const cost = (toggle && toggle.checked) ? 10 : 5;
-            
-            recordAction('rebuy', { name: p.name });
-            if(p.eliminated) {
-                p.rebuyEliminations.push({ eliminatedBy: p.eliminatedBy, timestamp: p.eliminationTime });
-            }
-            p.eliminated = false;
-            p.stacks++;
-            p.totalPaid += cost;
-            updatePlayerTable();
-            showMessage(`${p.name} rebought`);
-        } catch(e) {
-            alert("Rebuy error: " + e.message);
-        }
-    }
-
-    window.addonPlayer = function(index) {
-        try {
-            const p = players[index];
-            if(p.hasAddon) return alert("Already added on");
-            
-            const toggle = document.getElementById('majorToggle');
-            const cost = (toggle && toggle.checked) ? 10 : 5;
-            
-            recordAction('addon', { name: p.name });
-            p.stacks++;
-            p.totalPaid += cost;
-            p.hasAddon = true;
-            updatePlayerTable();
-            showMessage(`${p.name} added on`);
-        } catch(e) {
-            alert("Addon error: " + e.message);
-        }
-    }
-
-    function updatePlayerTable() {
-        const tbody = document.getElementById('playerTableBody');
-        tbody.innerHTML = '';
-        const toggle = document.getElementById('majorToggle');
-        const cost = (toggle && toggle.checked) ? 10 : 5;
+    // === GAME ACTIONS (GOD MODE) ===
+    function updateStack(name, change) {
+        saveState();
+        const p = players.find(x => x.name === name);
+        if(!p) return;
         
-        const active = players.filter(p => !p.eliminated);
-        const hasWinner = tournamentStarted && active.length === 1;
-        const breakIdx = rounds.findIndex(r => r.isBreak);
-        const isBreakRound = rounds[currentRound].isBreak;
-
-        players.forEach((p, i) => {
-            let actions = '';
-            if(!tournamentStarted) {
-                actions = `<button onclick="removePlayer(${i})">Remove</button>`;
-            } else if (!tournamentEnded) {
-                if(hasWinner && !p.eliminated) {
-                    actions = `<strong>🏆 WINNER</strong>`;
-                } else if (!p.eliminated) {
-                    actions = `<button onclick="eliminatePlayer(${i})">Eliminate</button>`;
-                } else {
-                    if(currentRound <= breakIdx) {
-                        actions += `<button class="rebuy-btn" onclick="rebuyPlayer(${i})">Rebuy £${cost}</button> `;
-                    }
-                }
-                
-                if(isBreakRound && !p.hasAddon && !p.eliminated) {
-                     actions += `<button class="addon-btn" onclick="addonPlayer(${i})">Addon £${cost}</button>`;
-                }
-            }
-
-            const tr = document.createElement('tr');
-            if(p.eliminated) tr.className = 'eliminated';
-            tr.innerHTML = `
-                <td>${p.name}</td>
-                <td>${p.stacks}</td>
-                <td>£${p.totalPaid}</td>
-                <td>${p.eliminated ? (p.eliminatedBy && p.eliminatedBy!=='N/A' ? 'Out by '+p.eliminatedBy : 'Out') : 'Active'}</td>
-                <td>${actions}</td>
-            `;
-            tbody.appendChild(tr);
-        });
-        updatePrizeInfo();
+        p.stacks += change;
+        if(p.stacks < 0) p.stacks = 0; // Prevent negative stacks
+        
+        // Adjust cost automatically (can be manually overridden later)
+        if(change > 0) {
+            const cost = document.getElementById('majorToggle').checked ? 10 : 5;
+            p.totalPaid += cost;
+        } else {
+            const cost = document.getElementById('majorToggle').checked ? 10 : 5;
+            p.totalPaid = Math.max(0, p.totalPaid - cost);
+        }
+        renderTable();
     }
 
-    function checkForWinner() {
-        const active = players.filter(p => !p.eliminated);
-        if(tournamentStarted && !tournamentEnded && active.length === 1) {
-            alert(`🏆 ${active[0].name} Wins!`);
-            triggerWebhook('winner');
-            clearInterval(timer);
-            timerRunning = false;
-            updatePlayerTable();
+    function toggleAddon(name) {
+        saveState();
+        const p = players.find(x => x.name === name);
+        p.hasAddon = !p.hasAddon;
+        const cost = document.getElementById('majorToggle').checked ? 10 : 5;
+        if(p.hasAddon) p.totalPaid += cost;
+        else p.totalPaid -= cost;
+        renderTable();
+    }
+    
+    function manualEditPaid(name) {
+        saveState();
+        const p = players.find(x => x.name === name);
+        const newVal = prompt("Enter new Total Paid amount:", p.totalPaid);
+        if(newVal !== null && !isNaN(newVal)) {
+            p.totalPaid = parseInt(newVal);
+            renderTable();
+        } else {
+            // Cancelled, undo state save? No, just render.
+            // Actually, popping undo here would be cleaner but saving state for nothing is fine.
         }
+    }
+
+    function eliminate(name) {
+        saveState();
+        const p = players.find(x => x.name === name);
+        p.eliminated = true;
+        p.eliminationTime = Date.now();
+        
+        const killer = prompt(`Who eliminated ${name}?`);
+        p.eliminatedBy = killer || "Unknown";
+        
+        renderTable();
+        
+        // Rafa Protocol: Suppress webhook if only 1 player remains (Winner Scene imminent)
+        const activeCount = players.filter(pl => !pl.eliminated).length;
+        if(activeCount > 1) {
+             triggerWebhook('elim', name);
+        }
+    }
+
+    function revive(name) {
+        saveState();
+        const p = players.find(x => x.name === name);
+        p.eliminated = false;
+        p.eliminationTime = null;
+        renderTable();
+        showMessage(`${name} Resuscitated!`);
+    }
+
+    // === TOURNAMENT CONTROL ===
+    function startTournament() {
+        tournamentStarted = true;
+        document.getElementById('startBtn').disabled = true;
+        document.getElementById('endBtn').disabled = false;
+        showMessage("Tournament Started!");
+        startTimer();
+    }
+
+    function endTournament() {
+        if(!confirm("End Tournament and Finalize Results?")) return;
+        tournamentStarted = false;
+        tournamentEnded = true;
+        pauseTimer();
+        document.getElementById('startBtn').disabled = false;
+        document.getElementById('endBtn').disabled = true;
+        showMessage("Tournament Ended!");
+        triggerWebhook('winner');
+    }
+
+    function calculatePot() {
+        let total = players.reduce((sum, p) => sum + p.totalPaid, 0);
+        return Math.max(0, total - 5); // Subtract House Fee
     }
 
     function updatePrizeInfo() {
-        const total = players.reduce((acc, p) => acc + p.totalPaid, 0);
-        const house = total > 100 ? 10 : 5;
-        const pool = Math.max(0, total - house);
-        const p1 = Math.round((pool * 0.8)/5)*5;
-        const p2 = Math.round((pool * 0.2)/5)*5;
-        
-        document.getElementById('playerCount').innerText = `Players: ${players.length} | Prize Pot: £${pool} | House Fee: £${house}`;
-        document.getElementById('currentPrizePool').innerText = pool;
-        document.getElementById('firstPrize').innerText = p1;
-        document.getElementById('secondPrize').innerText = p2;
+        const pot = calculatePot();
+        document.getElementById('currentPrizePool').innerText = pot;
+        document.getElementById('firstPrize').innerText = (pot * 0.8).toFixed(2);
+        document.getElementById('secondPrize').innerText = (pot * 0.2).toFixed(2);
     }
 
-    // === TIMER ===
+    function showMessage(msg) {
+        const el = document.getElementById('statusMessage');
+        el.innerText = msg;
+        el.classList.add('show');
+        setTimeout(() => el.classList.remove('show'), 3000);
+    }
+
+    // === TIMER LOGIC ===
     function updateRoundDisplay() {
-        const r = rounds[currentRound];
-        document.getElementById('roundInfo').innerHTML = `${r.name}<br>${r.isBreak ? "BREAK" : r.sb + " / " + r.bb}`;
-        
-        if(!timerRunning) {
-            timeLeft = r.duration * (r.isTest ? 1 : 60);
-            document.getElementById('timeRemaining').innerText = formatTime(timeLeft);
-        }
-        
-        const isBreak = !!r.isBreak;
-        document.getElementById('breakNotice').style.display = isBreak ? 'block' : 'none';
-        
-        if(tournamentStarted) updatePlayerTable();
+      const r = rounds[currentRound];
+      const nextR = rounds[currentRound + 1];
+      const isBreak = r.isBreak;
+      
+      let html = `<div>${r.name}</div>`;
+      if (isBreak) {
+        html += `<div style="font-size:0.8em; color:#d84315;">BREAK</div>`;
+        document.getElementById('breakNotice').style.display = 'block';
+      } else {
+        html += `<div style="font-size:1.8rem; margin-top:5px;">${r.sb.toLocaleString()} / ${r.bb.toLocaleString()}</div>`;
+        if (nextR) html += `<div style="font-size:0.8rem; color:#777; margin-top:5px;">Next: ${nextR.sb}/${nextR.bb}</div>`;
+        document.getElementById('breakNotice').style.display = 'none';
+      }
+      
+      document.getElementById('roundInfo').innerHTML = html;
+      
+      // Calculate mins/secs
+      if (!timerRunning && timeLeft === 0) {
+          timeLeft = r.duration * 60;
+      }
+      displayTime();
     }
 
-    window.startTimer = function() {
-        if(timerRunning) return;
+    function displayTime() {
+        const m = Math.floor(timeLeft / 60);
+        const s = timeLeft % 60;
+        document.getElementById('timeRemaining').innerText = 
+            `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+    }
+
+    function startTimer() {
+        if (timerRunning) return;
+        if (timeLeft === 0) updateRoundDisplay(); // Reset if needed
+        
         timerRunning = true;
         document.getElementById('timerStartBtn').disabled = true;
         document.getElementById('timerPauseBtn').disabled = false;
         
-        if(rounds[currentRound].isBreak) triggerWebhook('break');
-
         timer = setInterval(() => {
-            if(timeLeft > 0) {
+            if (timeLeft > 0) {
                 timeLeft--;
-                document.getElementById('timeRemaining').innerText = formatTime(timeLeft);
+                displayTime();
             } else {
-                document.getElementById('roundAlarm').play();
-                
-                // FIXED: Look AHEAD to next round for announcements
-                if(currentRound < rounds.length - 1) {
-                    const nextR = rounds[currentRound + 1];
-                    if(nextR.isBreak) triggerWebhook('break');
-                    else triggerWebhook('round', nextR.sb, nextR.bb);
-                }
-                
-                clearInterval(timer);
-                timerRunning = false;
-                if(currentRound < rounds.length - 1) {
-                    alert("Round Ended!");
-                    currentRound++;
-                    updateRoundDisplay();
-                    startTimer();
-                }
+                roundComplete();
             }
         }, 1000);
     }
 
-    window.pauseTimer = function() {
+    function pauseTimer() {
         clearInterval(timer);
         timerRunning = false;
         document.getElementById('timerStartBtn').disabled = false;
         document.getElementById('timerPauseBtn').disabled = true;
     }
 
-    window.resetTimer = function() {
+    function resetTimer() {
         pauseTimer();
-        updateRoundDisplay();
+        timeLeft = rounds[currentRound].duration * 60;
+        displayTime();
     }
 
-    window.skipRound = function() {
-        if(currentRound < rounds.length - 1) {
-            // STOP current timer
-            clearInterval(timer);
-            timerRunning = false;
-            document.getElementById('timerStartBtn').disabled = false;
-            document.getElementById('timerPauseBtn').disabled = true;
-            
-            // Advance
+    function skipRound() {
+        pauseTimer();
+        currentRound = Math.min(currentRound + 1, rounds.length - 1);
+        timeLeft = 0; // Will be set by updateRoundDisplay
+        updateRoundDisplay();
+        
+        // Trigger Webhook immediately on skip
+        const r = rounds[currentRound];
+        if(r.isBreak) triggerWebhook('break');
+        else triggerWebhook('round', r.sb, r.bb);
+    }
+
+    function roundComplete() {
+        pauseTimer();
+        document.getElementById('roundAlarm').play().catch(e=>console.log("Audio play failed"));
+        
+        // Auto advance
+        if (currentRound < rounds.length - 1) {
             currentRound++;
-            
-            // IMMEDIATE WEBHOOK TRIGGER for the new round
-            const r = rounds[currentRound];
-            if(r.isBreak) triggerWebhook('break');
-            else triggerWebhook('round', r.sb, r.bb);
-            
-            // Force reset time
-            timeLeft = r.duration * (r.isTest ? 1 : 60);
-            document.getElementById('timeRemaining').innerText = formatTime(timeLeft);
-            
+            timeLeft = 0;
             updateRoundDisplay();
             
-            // AUTO START if tournament is active
-            if(tournamentStarted) startTimer();
+            // Rafa Protocol: Pass SB (Value1) AND BB (Value2)
+            const r = rounds[currentRound];
+            if(r.isBreak) {
+                triggerWebhook('break');
+            } else {
+                triggerWebhook('round', r.sb, r.bb);
+            }
+        } else {
+            alert("Tournament Structure Complete!");
         }
     }
 
-    window.startTournament = function() {
-        if(players.length < 2) return showMessage("Need 2+ players", true);
-        tournamentStarted = true;
-        document.getElementById('startBtn').disabled = true;
-        document.getElementById('endBtn').disabled = false;
-        document.getElementById('majorToggle').disabled = true;
-        updateRoundDisplay();
-        startTimer();
-        updatePlayerTable();
-    }
-
-    window.endTournament = function() {
-        if(!confirm("End Tournament?")) return;
-        tournamentEnded = true;
-        pauseTimer();
-        document.getElementById('endBtn').disabled = true;
-        // ENABLE SAVE BUTTON
-        document.getElementById('exportBtn').disabled = false;
-        document.getElementById('loadDashboardBtn').disabled = false;
-        document.getElementById('majorToggle').disabled = false;
-        
-        updatePlayerTable();
-        
-        // Show finals
-        const active = players.filter(p => !p.eliminated);
-        const eliminated = players.filter(p => p.eliminated).sort((a,b) => b.eliminationTime - a.eliminationTime);
-        const sorted = [...active, ...eliminated];
-        
-        let html = '<div class="prize-info"><h3>Final Standings</h3>';
-        sorted.forEach((p, i) => html += `<div>${i+1}. ${p.name}</div>`);
-        html += '</div>';
-        document.getElementById('prizeResults').innerHTML = html;
-    }
-
-    window.clearPlayers = function() {
-        if(tournamentStarted && !confirm("Clear all players?")) return;
-        players = [];
-        tournamentStarted = false;
-        tournamentEnded = false;
-        resetTimer();
-        updatePlayerTable();
-    }
-
-    function recordAction(type, data) {
-        actionHistory.push({ type, data });
-        document.getElementById('undoBtn').disabled = false;
-    }
-
-    window.undoLastAction = function() {
-        if(!actionHistory.length) return;
-        alert("Undo is limited. Please manually correct.");
-        actionHistory.pop();
-        if(!actionHistory.length) document.getElementById('undoBtn').disabled = true;
-    }
-
-    // === API & DASHBOARD (RESTORED 2025 LOGIC) ===
+    // === GOOGLE SHEETS INTEGRATION ===
     function handleClientLoad() {
-      if (window.google && window.google.accounts) {
-        initWithGIS();
-      } else {
-        gapi.load('client:auth2', {
-          callback: initClient,
-          onerror: function() { console.error('Failed to load Google API client'); }
-        });
-      }
-    }
-
-    function initWithGIS() {
-      try {
-        google.accounts.id.initialize({
-          client_id: CLIENT_ID,
-          callback: (r) => {}
-        });
-
-        gapi.load('client', () => {
-          gapi.client.init({
-            discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4']
-          }).then(() => {
+      tokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: CLIENT_ID,
+        scope: SCOPES,
+        callback: (tokenResponse) => {
+          if (tokenResponse && tokenResponse.access_token) {
             googleApiReady = true;
-            window.tokenClient = google.accounts.oauth2.initTokenClient({
-              client_id: CLIENT_ID,
-              scope: SCOPES,
-              callback: (response) => {
-                if (response.access_token) {
-                  gapi.client.setToken(response);
-                }
-              }
-            });
-          }).catch(error => { console.error('GIS client init failed:', error); });
-        });
-      } catch (error) { console.error('GIS initialization failed:', error); }
+            // Depending on which button triggered auth, run that action
+            if(window.pendingAction === 'export') exportData();
+            if(window.pendingAction === 'dashboard') loadDashboard();
+          }
+        },
+      });
+      
+      // Load GAPI for spreadsheets
+      gapi.load('client', () => {
+          gapi.client.init({
+              discoveryDocs: ["https://sheets.googleapis.com/$discovery/rest?version=v4"],
+          });
+      });
     }
 
-    function initClient() {
-        gapi.client.init({
-            clientId: CLIENT_ID,
-            discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4'],
-            scope: SCOPES
-        }).then(() => { googleApiReady = true; });
+    function signInAndExport() {
+        window.pendingAction = 'export';
+        if(googleApiReady && gapi.client.sheets) exportData();
+        else tokenClient.requestAccessToken();
     }
 
-    window.signInAndExport = function() {
-        if(!googleApiReady) {
-            handleClientLoad();
-            setTimeout(() => {
-                if(googleApiReady) executeExport();
-                else alert("Connection initializing... Try again in 5s");
-            }, 1000);
-            return;
-        }
-        executeExport();
-    }
-    
-    function executeExport() {
-        if (window.tokenClient) {
-            window.tokenClient.callback = (response) => {
-                if (response.access_token) {
-                    gapi.client.setToken(response);
-                    exportData();
-                }
-            };
-            window.tokenClient.requestAccessToken({ prompt: '' });
-        } else {
-            gapi.auth2.getAuthInstance().signIn().then(exportData);
-        }
+    function signInAndLoadDashboard() {
+        window.pendingAction = 'dashboard';
+        if(googleApiReady && gapi.client.sheets) loadDashboard();
+        else tokenClient.requestAccessToken();
     }
 
-    function exportData() {
-        const toggle = document.getElementById('majorToggle');
-        const isMajor = toggle && toggle.checked;
-        const tName = document.getElementById('tournamentNameSelect').value;
-        const date = new Date().toISOString().split('T')[0];
-        const time = new Date().toLocaleTimeString();
-        const tID = `${date}_${time.replace(/:/g,'-')}`;
+    async function exportData() {
+        if(!tournamentEnded && !confirm("Tournament hasn't officially ended. Save anyway?")) return;
         
-        const active = players.filter(p => !p.eliminated);
-        const elim = players.filter(p => p.eliminated).sort((a,b) => b.eliminationTime - a.eliminationTime);
-        const finalOrder = [...active, ...elim];
+        const timestamp = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
+        const dateStr = timestamp.split(' ')[0];
+        const timeStr = timestamp.split(' ')[1];
+        const tournId = `${dateStr}_${timeStr.replace(/:/g,'-')}`;
+        const isMajor = document.getElementById('majorToggle').checked;
+        const tournamentName = document.getElementById('tournamentNameSelect').value;
+
+        // Prepare Rows: One per elimination/finish
+        let rows = [];
         
-        const rows = players.map(p => {
-            const rank = finalOrder.findIndex(f => f.name === p.name) + 1;
-            return [
-                date, time, tID, p.name, rank, players.length, 
-                p.totalPaid, 0, p.stacks - 1, p.hasAddon?1:0, 0, 
-                p.eliminatedBy || 'N/A', tName, isMajor?"TRUE":"FALSE"
-            ];
+        let activePlayers = players.filter(p => !p.eliminated);
+        let eliminatedPlayers = players.filter(p => p.eliminated).sort((a,b) => b.eliminationTime - a.eliminationTime);
+        
+        const totalP = players.length;
+        
+        // 1. Process Rebuys (FinishPosition = 0)
+        players.forEach(p => {
+            if(p.rebuyEliminations && p.rebuyEliminations.length > 0) {
+                p.rebuyEliminations.forEach(rebuy => {
+                    rows.push([
+                        dateStr, timeStr, tournId, p.name, 
+                        0, // FinishPos 0 for rebuy
+                        totalP, 
+                        0, 0, // Paid/Earned 0 here
+                        0, 0, 0,
+                        rebuy.eliminatedBy,
+                        tournamentName,
+                        isMajor
+                    ]);
+                });
+            }
         });
 
-        gapi.client.sheets.spreadsheets.values.append({
-            spreadsheetId: SPREADSHEET_ID,
-            range: 'PlayerResults!A:N',
-            valueInputOption: 'USER_ENTERED',
-            resource: { values: rows }
-        }).then(() => showMessage("Saved!"));
-    }
+        // 2. Process Final Results
+        let finalRankings = [];
+        
+        // Add Winner(s)
+        activePlayers.forEach(p => finalRankings.push({ player: p, rank: 1 }));
+        
+        // Add Eliminated
+        let currentRank = activePlayers.length + 1;
+        eliminatedPlayers.forEach(p => {
+            finalRankings.push({ player: p, rank: currentRank });
+            currentRank++;
+        });
 
-    window.signInAndLoadDashboard = function() {
-        if(!googleApiReady) {
-            handleClientLoad();
-            setTimeout(() => {
-                if(googleApiReady) executeLoadDash();
-                else alert("Connection initializing... Try again in 5s");
-            }, 1000);
-            return;
-        }
-        executeLoadDash();
-    }
-    
-    function executeLoadDash() {
-        if (window.tokenClient) {
-            window.tokenClient.callback = (response) => {
-                if (response.access_token) {
-                    gapi.client.setToken(response);
-                    loadDashboard();
-                }
-            };
-            window.tokenClient.requestAccessToken({ prompt: 'consent' });
-        } else {
-            gapi.auth2.getAuthInstance().signIn().then(loadDashboard);
-        }
-    }
-
-    function loadDashboard() {
-        gapi.client.sheets.spreadsheets.values.get({
-            spreadsheetId: SPREADSHEET_ID,
-            range: 'PlayerResults!A:N'
-        }).then(resp => {
-            const rows = resp.result.values || [];
+        // Build Rows
+        finalRankings.forEach(item => {
+            const p = item.player;
+            const rank = item.rank;
             
-            const histNames = new Set();
-            rows.slice(1).forEach(r => { if(r[3]) histNames.add(r[3].trim()); });
-            histNames.forEach(n => {
-                if(!regularPlayers.includes(n) && !customPlayers.includes(n)) customPlayers.push(n);
-            });
-            populatePlayerDropdown();
-
-            buildDashboard(rows);
-            showMessage("Dashboard Loaded");
+            // Calculate Earnings
+            let prize = 0;
+            const pot = calculatePot();
+            if(rank === 1) prize = activePlayers.length === 1 ? pot * 0.8 : (pot / activePlayers.length); 
+            if(activePlayers.length === 1 && rank === 1) prize = pot * 0.8;
+            if(rank === 2) prize = pot * 0.2;
+            
+            // ROI
+            const earnings = prize;
+            const roi = p.totalPaid > 0 ? ((earnings - p.totalPaid)/p.totalPaid)*100 : 0;
+            
+            rows.push([
+                dateStr, timeStr, tournId, p.name,
+                rank,
+                totalP,
+                p.totalPaid,
+                earnings,
+                p.stacks - 1, // Rebuys approx
+                p.hasAddon ? 1 : 0,
+                roi.toFixed(1),
+                p.eliminated ? p.eliminatedBy : 'N/A',
+                tournamentName,
+                isMajor
+            ]);
         });
-    }
 
-    function buildDashboard(rows) {
-        const section = document.getElementById('chartsSection');
-        // Filter rows for 2026 for specific tab, but 'allTime' just uses 'rows'
-        const rows2026 = rows.filter((r, i) => i === 0 || r[0].startsWith('2026'));
+        const resource = { values: rows };
         
-        const stats2026 = calculate2026Points(rows2026);
-        const detail2026 = calculateDetailedStats(rows2026);
-        const allTime = calculateAllTime(rows);
-        const titles = calculateTitles(calculateDetailedStats(rows2026, true));
-
-        section.innerHTML = `
-            <div class="dashboard-tabs">
-                <button class="dashboard-tab active" onclick="switchTab('p2026')">📊 2026 Leaderboard</button>
-                <button class="dashboard-tab" onclick="switchTab('titles')">🏆 Titles</button>
-                <button class="dashboard-tab" onclick="switchTab('detailed')">📈 Detailed Stats</button>
-                <button class="dashboard-tab" onclick="switchTab('alltime')">📅 All-Time</button>
-            </div>
-            <div id="p2026" class="dashboard-tab-content">${render2026Leaderboard(stats2026)}</div>
-            <div id="titles" class="dashboard-tab-content" style="display:none">${renderTitles(titles)}</div>
-            <div id="detailed" class="dashboard-tab-content" style="display:none">${renderDetailed(detail2026)}</div>
-            <div id="alltime" class="dashboard-tab-content" style="display:none">
-                ${renderAllTime(allTime)}
-            </div>
-        `;
+        try {
+            await gapi.client.sheets.spreadsheets.values.append({
+                spreadsheetId: SPREADSHEET_ID,
+                range: 'PlayerResults!A:N', // Adjust sheet name if needed
+                valueInputOption: 'USER_ENTERED',
+                resource: resource,
+            });
+            alert("Data Exported to Google Sheets!");
+        } catch (err) {
+            console.error("Export error", err);
+            alert("Error exporting data. Check console.");
+        }
     }
 
-    window.switchTab = function(id) {
-        document.querySelectorAll('.dashboard-tab-content').forEach(d => d.style.display = 'none');
-        document.querySelectorAll('.dashboard-tab').forEach(b => b.classList.remove('active'));
-        document.getElementById(id).style.display = 'block';
-        event.target.classList.add('active');
+    // === DASHBOARD LOGIC (Rows Fixed + 2025 Separation) ===
+    async function loadDashboard() {
+        document.getElementById('dashboardSection').style.display = 'block';
+        window.scrollTo(0, document.body.scrollHeight);
+        
+        try {
+            // Fetch ALL data
+            const res = await gapi.client.sheets.spreadsheets.values.get({
+                spreadsheetId: SPREADSHEET_ID,
+                range: 'PlayerResults!A2:N', // Skip header
+            });
+            
+            const allRows = res.result.values || [];
+            if(allRows.length === 0) {
+                document.getElementById('dashboardContent').innerHTML = "No data found.";
+                return;
+            }
+
+            // Filter for 2026 for specific tabs
+            const rows2026 = allRows.filter(r => r[0].startsWith('2026'));
+
+            // === CALCULATIONS ===
+            const stats2026 = calculate2026Points(rows2026);
+            const detail2026 = calculateDetailedStats(rows2026);
+            
+            // All Time now calculates from EVERYTHING in the sheet (2025+2026)
+            // assuming user might eventually paste 2025 back or just wants current sheet stats
+            const allTime = calculateAllTime(allRows); 
+            const titles = calculateTitles(calculateDetailedStats(rows2026, true));
+
+            // Render Overview (2026 Data)
+            const overviewHtml = `
+                <div class="title-card">
+                    <span class="title-card-emoji">👥</span>
+                    <div class="title-card-name">Fixture (2026)</div>
+                    <div class="title-card-holder">${stats2026.length} Players</div>
+                </div>
+                ${renderTitles(titles)}
+            `;
+            document.getElementById('dashboardContent').innerHTML = overviewHtml;
+            document.getElementById('p2026-leaderboard').innerHTML = render2026Leaderboard(stats2026);
+            document.getElementById('allTimeContent').innerHTML = renderAllTime(allTime);
+            
+            // Render Chart
+            renderChart(stats2026);
+
+        } catch(err) {
+            console.error(err);
+            alert("Error loading dashboard data.");
+        }
     }
 
-    // --- STATS LOGIC ---
     function calculate2026Points(rows) {
         const tournaments = {}; 
         const stats = {};
         
-        rows.slice(1).forEach(r => {
+        rows.forEach(r => {
             const [d, t, tid, name, rankStr, f, paid, earn, rebuy, addon, roi, killer, tname, isMaj] = r;
             const isMajor = isMaj === 'TRUE';
             const rank = parseInt(rankStr);
             const multiplier = isMajor ? 2 : 1;
 
-            if(!tournaments[tid]) tournaments[tid] = { kills: {}, isMajor, ranks: {} };
+            if(!tournaments[tid]) tournaments[tid] = { kills: {}, isMajor: isMajor, ranks: {} };
             if (rank > 0) tournaments[tid].ranks[name] = rank;
             
             if(killer && killer !== 'N/A') {
                 tournaments[tid].kills[killer] = (tournaments[tid].kills[killer] || 0) + 1;
             }
 
-            // Only count participation/points if rank > 0 (Ignores Rebuy Lines)
+            // Points logic: Only for rank > 0
             if (rank > 0) {
                 if(!stats[name]) stats[name] = { points:0, wins:0, seconds:0, thirds:0, att:0, killerWins:0 };
                 
@@ -903,7 +920,7 @@
             }
         });
 
-        // Killer Bonus Logic (Only if killer rank >= 3)
+        // Killer Bonus Logic
         Object.values(tournaments).forEach(t => {
             const mult = t.isMajor ? 2 : 1;
             const eligibleKillers = [];
@@ -929,7 +946,7 @@
 
     function calculateDetailedStats(rows, returnRaw = false) {
         const s = {};
-        rows.slice(1).forEach(r => {
+        rows.forEach(r => {
             const [d,t,id,name,rankStr,fieldStr,paid,earn,rebuy,addon,roi,killer] = r;
             const rank = parseInt(rankStr);
             const field = parseInt(fieldStr);
@@ -942,7 +959,6 @@
                 firstOuts:0, totalProfit:0 
             };
             
-            // Only count participation if rank > 0
             if (rank > 0) {
                 s[name].played++;
                 s[name].rebuys += parseInt(rebuy)||0;
@@ -973,12 +989,11 @@
 
     function calculateAllTime(rows) {
         const s = {};
-        rows.slice(1).forEach(r => {
+        rows.forEach(r => {
             const name = r[3];
             const rank = parseInt(r[4]);
             if(!s[name]) s[name] = { played:0, wins:0, sec:0, third:0, kills:0 };
             
-            // Only count if rank > 0
             if (rank > 0) {
                 s[name].played++;
                 if(rank===1) s[name].wins++;
@@ -1020,55 +1035,61 @@
     }
 
     function render2026Leaderboard(data) {
-        return `
-            <div style="background:#ffcc80; padding:10px; text-align:center; font-weight:bold; margin-bottom:10px; border-radius:5px;">
-                Points: 1st(10), 2nd(7), 3rd(4) | Att(+1). <br>
-                Killer Bonus (+2) ONLY if finishing 3rd or lower. <br>
-                MAJORS DOUBLE ALL POINTS!
-            </div>
-            <table>
-                <thead><tr><th>Rank</th><th>Player</th><th>Points</th><th>1st</th><th>2nd</th><th>3rd</th><th>Att</th><th>Killer Wins</th></tr></thead>
-                <tbody>${data.map((p, i) => `<tr><td>#${i+1}</td><td><strong>${p[0]}</strong></td><td style="color:#d84315; font-weight:bold;">${p[1].points}</td><td>${p[1].wins}</td><td>${p[1].seconds}</td><td>${p[1].thirds}</td><td>${p[1].att}</td><td>${p[1].killerWins}</td></tr>`).join('')}</tbody>
-            </table>`;
+        // Needs a dedicated container in tab-overview if you want it there, 
+        // OR simpler: put it in Overview tab.
+        // For simplicity, I'm just returning text logic here.
+        // But dashboard logic above might need adjustment.
+        // Let's attach this to the Overview
+        return `<table><thead><tr><th>Rank</th><th>Player</th><th>Points</th><th>1st</th><th>2nd</th><th>3rd</th><th>Att</th></tr></thead><tbody>${data.map((p, i) => `<tr><td>#${i+1}</td><td><strong>${p[0]}</strong></td><td style="color:#d84315; font-weight:bold;">${p[1].points}</td><td>${p[1].wins}</td><td>${p[1].seconds}</td><td>${p[1].thirds}</td><td>${p[1].att}</td></tr>`).join('')}</tbody></table>`;
     }
 
-    function renderDetailed(data) {
-        return `<table><thead><tr><th>Player</th><th>Games</th><th>1st</th><th>2nd</th><th>3rd</th><th>Kills</th><th>Deaths</th><th>Rebuys</th><th>Addons</th><th>Win%</th><th>Cash%</th></tr></thead><tbody>
-        ${data.map(p => `<tr><td><strong>${p[0]}</strong></td><td>${p[1].played}</td><td>${p[1].wins}</td><td>${p[1].sec}</td><td>${p[1].third}</td><td>${p[1].kills}</td><td>${p[1].deaths}</td><td>${p[1].rebuys}</td><td>${p[1].addons}</td><td>${p[1].winRate}</td><td>${p[1].cashRate}</td></tr>`).join('')}</tbody></table>`;
+    function renderTitles(t) {
+        return `
+        <div class="titles-grid" style="margin-top:20px;">
+            <div class="title-card"><span class="title-card-emoji">👑</span><div class="title-card-name">The Champion</div><div class="title-card-holder">${t.champion.n}</div><div class="title-card-stat">${t.champion.v} Wins</div></div>
+            <div class="title-card"><span class="title-card-emoji">💰</span><div class="title-card-name">Elon Musk</div><div class="title-card-holder">${t.musk.n}</div><div class="title-card-stat">£${t.musk.v.toFixed(0)}</div></div>
+            <div class="title-card"><span class="title-card-emoji">💀</span><div class="title-card-name">The Killer</div><div class="title-card-holder">${t.killer.n}</div><div class="title-card-stat">${t.killer.v} Kills</div></div>
+        </div>
+        <div style="margin-top:20px; font-weight:bold; color:#e65100;">Current Leaderboard (2026)</div>
+        <div id="p2026-leaderboard"></div>
+        `;
     }
 
     function renderAllTime(data) {
         return `<table><thead><tr><th>Rank</th><th>Player</th><th>🥇 Wins</th><th>🥈 2nd</th><th>3rd</th><th>Games</th><th>Kills</th></tr></thead><tbody>
         ${data.map((p,i) => `<tr><td>${i+1}</td><td>${p[0]}</td><td>${p[1].wins}</td><td>${p[1].sec}</td><td>${p[1].third}</td><td>${p[1].played}</td><td>${p[1].kills}</td></tr>`).join('')}</tbody></table>`;
     }
+
+    function renderChart(data) {
+        const ctx = document.getElementById('earningsChart').getContext('2d');
+        const sorted = data.slice(0, 10);
+        
+        if(window.myChart) window.myChart.destroy();
+        
+        window.myChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: sorted.map(x => x[0]),
+                datasets: [{
+                    label: '2026 Points',
+                    data: sorted.map(x => x[1].points),
+                    backgroundColor: 'rgba(255, 152, 0, 0.6)',
+                    borderColor: 'rgba(230, 81, 0, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: { responsive: true, scales: { y: { beginAtZero: true } } }
+        });
+    }
     
-    function renderTitles(t) {
-        return `<div class="titles-grid">
-            <div class="title-card"><span class="title-card-emoji">👑</span><div class="title-card-name">The Champion</div><div class="title-card-holder">${t.champion.n}</div><div class="title-card-stat">${t.champion.v} Wins</div></div>
-            <div class="title-card"><span class="title-card-emoji">🥈</span><div class="title-card-name">The Runner-up</div><div class="title-card-holder">${t.runnerup.n}</div><div class="title-card-stat">${t.runnerup.v} 2nds</div></div>
-            <div class="title-card"><span class="title-card-emoji">💰</span><div class="title-card-name">Elon Musk</div><div class="title-card-holder">${t.musk.n}</div><div class="title-card-stat">£${t.musk.v.toFixed(0)}</div></div>
-            <div class="title-card"><span class="title-card-emoji">🏠</span><div class="title-card-name">Permanent Fixture</div><div class="title-card-holder">${t.fixture.n}</div><div class="title-card-stat">${t.fixture.v} Games</div></div>
-            <div class="title-card"><span class="title-card-emoji">💀</span><div class="title-card-name">The Killer</div><div class="title-card-holder">${t.killer.n}</div><div class="title-card-stat">${t.killer.v} Kills</div></div>
-            <div class="title-card"><span class="title-card-emoji">🦅</span><div class="title-card-name">Early Bird</div><div class="title-card-holder">${t.early.n}</div><div class="title-card-stat">${t.early.v} 1st Outs</div></div>
-            <div class="title-card"><span class="title-card-emoji">🔥</span><div class="title-card-name">The Phoenix</div><div class="title-card-holder">${t.phoenix.n}</div><div class="title-card-stat">${t.phoenix.v} Rebuys</div></div>
-            <div class="title-card"><span class="title-card-emoji">🫧</span><div class="title-card-name">Bubble Boy</div><div class="title-card-holder">${t.bubble.n}</div><div class="title-card-stat">${t.bubble.v} 3rds</div></div>
-        </div>`;
+    function switchTab(tabName) {
+        document.querySelectorAll('.dashboard-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.dashboard-tab-content').forEach(c => c.classList.remove('active'));
+        
+        event.target.classList.add('active');
+        document.getElementById(`tab-${tabName}`).classList.add('active');
     }
 
-    // Utility
-    function formatTime(s) {
-        const m = Math.floor(s/60);
-        const sec = Math.floor(s%60);
-        return `${m}:${sec<10?'0'+sec:sec}`;
-    }
-    function showMessage(msg, isErr) {
-        const el = document.getElementById('statusMessage');
-        el.innerText = msg;
-        el.style.backgroundColor = isErr ? '#ffebee' : '#e8f5e8';
-        el.style.color = isErr ? '#c62828' : '#2e7d32';
-        el.className = 'status-message show';
-        setTimeout(() => el.className = 'status-message', 3000);
-    }
   </script>
 </body>
 </html>
