@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Curupira's Head Poker 2026 (Final)</title>
+  <title>Curupira's Head Poker 2026 (God Mode Final)</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8Y2lyY2xlIGN4PSIzMiIgY3k9IjMyIiByPSIzMCIgZmlsbD0iI0RDMkI3MSIgc3Ryb2tlPSIjMkUwMDNFIiBzdHJva2Utd2lkdGg9IjQiLz4KICA8dGV4dCB4PSIzMiIgeT0iMzgiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxOCIgZm9udC13ZWlnaHQ9ImJvbGQiIGZpbGw9IndoaXRlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj4yNjwvdGV4dD4KPC9zdmc+">
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script src="https://apis.google.com/js/api.js"></script>
@@ -49,6 +49,10 @@
     tbody tr:nth-child(odd) { background: #fff9e5; }
     tbody tr.eliminated { background: #ffcdd2 !important; color: #c62828; opacity: 0.9; }
     
+    /* Sortable Headers */
+    th.sortable { cursor: pointer; text-decoration: underline; text-decoration-style: dotted; }
+    th.sortable:hover { background-color: #f57c00; color: white; }
+
     /* Paid Amount Editable */
     .editable-cost { cursor: pointer; border-bottom: 1px dashed #7a4800; }
     .editable-cost:hover { background: #fff; }
@@ -278,6 +282,7 @@
     let tokenClient;
     let historyStack = []; 
     let webhooks = {};
+    let detailedSort = { col: 'shark', asc: false };
 
     // === INITIALIZATION ===
     window.onload = function() {
@@ -939,13 +944,21 @@
             }
             const rows2026 = allRows.filter(r => r[0].startsWith('2026'));
             const stats2026 = calculate2026Points(rows2026);
-            const detail2026 = calculateDetailedStats(rows2026);
-            const titles = calculateTitles(calculateDetailedStats(rows2026, true));
+            
+            // Need total games for Shark %
+            const uniqueTourns = new Set(rows2026.map(r => r[2])).size;
+            const detail2026 = calculateDetailedStats(rows2026, uniqueTourns);
+            
+            const titles = calculateTitles(calculateDetailedStats(rows2026, uniqueTourns, true));
             const allTime = calculateAllTime(allRows);
 
             document.getElementById('p2026Content').innerHTML = render2026Leaderboard(stats2026);
             document.getElementById('titlesContent').innerHTML = renderTitles(titles);
-            document.getElementById('detailedContent').innerHTML = renderDetailed(detail2026);
+            
+            // Pass rendered HTML
+            window.detailedDataCache = detail2026; // Cache for sorting
+            document.getElementById('detailedContent').innerHTML = renderDetailedTable(detail2026);
+            
             document.getElementById('allTimeContent').innerHTML = renderAllTime(allTime);
         } catch(err) {
             console.error(err);
@@ -976,7 +989,6 @@
             }
         });
 
-        // Killer Bonus
         Object.values(tournaments).forEach(t => {
             const mult = t.isMajor ? 2 : 1;
             const eligibleKillers = [];
@@ -998,7 +1010,7 @@
         return Object.entries(stats).sort((a,b) => b[1].points - a[1].points);
     }
 
-    function calculateDetailedStats(rows, returnRaw = false) {
+    function calculateDetailedStats(rows, totalTournaments, returnRaw = false) {
         const s = {};
         rows.forEach(r => {
             const [d,t,id,name,rankStr,fieldStr,paid,earn,rebuy,addon,roi,killer] = r;
@@ -1025,12 +1037,83 @@
                 s[killer].kills++;
             }
         });
+        
         if (returnRaw) return s;
+
+        // SHARK LOGIC: 50% Attendance Rule
+        const penaltyDivisor = Math.ceil(totalTournaments * 0.5);
+
         return Object.entries(s).map(([name, d]) => {
-            d.winRate = d.played > 0 ? ((d.wins / d.played)*100).toFixed(0) + '%' : '0%';
-            d.cashRate = d.played > 0 ? (((d.wins + d.sec)/d.played)*100).toFixed(0) + '%' : '0%';
-            return [name, d];
+            // Proven Shark Win %
+            const effectiveGames = Math.max(d.played, penaltyDivisor);
+            d.sharkRateVal = (d.wins / effectiveGames) * 100;
+            d.sharkRate = d.sharkRateVal.toFixed(0) + '%';
+            
+            d.cashRateVal = d.played > 0 ? ((d.wins + d.sec)/d.played)*100 : 0;
+            d.cashRate = d.cashRateVal.toFixed(0) + '%';
+            
+            return { name: name, ...d };
+        }).sort((a,b) => b.sharkRateVal - a.sharkRateVal); // Default sort
+    }
+
+    // SORTING FUNCTION FOR DETAILED STATS
+    window.sortDetailed = function(col) {
+        if(detailedSort.col === col) detailedSort.asc = !detailedSort.asc;
+        else { detailedSort.col = col; detailedSort.asc = false; }
+        
+        const data = window.detailedDataCache;
+        if(!data) return;
+        
+        data.sort((a,b) => {
+            let valA = a[col];
+            let valB = b[col];
+            // Handle numeric vs string
+            if(col === 'name') return detailedSort.asc ? valA.localeCompare(valB) : valB.localeCompare(valA);
+            if(col === 'shark') return detailedSort.asc ? a.sharkRateVal - b.sharkRateVal : b.sharkRateVal - a.sharkRateVal;
+            if(col === 'cash') return detailedSort.asc ? a.cashRateVal - b.cashRateVal : b.cashRateVal - a.cashRateVal;
+            
+            return detailedSort.asc ? valA - valB : valB - valA;
         });
+        
+        document.getElementById('detailedContent').innerHTML = renderDetailedTable(data);
+    }
+
+    function renderDetailedTable(data) {
+        return `
+        <div style="font-size:0.8rem; color:#666; margin-bottom:5px;">Click headers to sort. Shark % requires 50% attendance.</div>
+        <table>
+            <thead>
+                <tr>
+                    <th class="sortable" onclick="sortDetailed('name')">Player</th>
+                    <th class="sortable" onclick="sortDetailed('played')">Games</th>
+                    <th class="sortable" onclick="sortDetailed('wins')">1st</th>
+                    <th class="sortable" onclick="sortDetailed('sec')">2nd</th>
+                    <th class="sortable" onclick="sortDetailed('third')">3rd</th>
+                    <th class="sortable" onclick="sortDetailed('kills')">Kills</th>
+                    <th class="sortable" onclick="sortDetailed('deaths')">Deaths</th>
+                    <th class="sortable" onclick="sortDetailed('rebuys')">Rebuys</th>
+                    <th class="sortable" onclick="sortDetailed('addons')">Addons</th>
+                    <th class="sortable" onclick="sortDetailed('shark')" style="background:#fff3e0;">Shark %</th>
+                    <th class="sortable" onclick="sortDetailed('cash')">Cash %</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${data.map(p => `
+                <tr>
+                    <td><strong>${p.name}</strong></td>
+                    <td>${p.played}</td>
+                    <td>${p.wins}</td>
+                    <td>${p.sec}</td>
+                    <td>${p.third}</td>
+                    <td>${p.kills}</td>
+                    <td>${p.deaths}</td>
+                    <td>${p.rebuys}</td>
+                    <td>${p.addons}</td>
+                    <td style="background:#fff3e0; font-weight:bold;">${p.sharkRate}</td>
+                    <td>${p.cashRate}</td>
+                </tr>`).join('')}
+            </tbody>
+        </table>`;
     }
 
     function calculateAllTime(rows) {
@@ -1099,11 +1182,6 @@
     function render2026Leaderboard(data) {
         return `<h3>2026 Points Leaderboard</h3>
         <table><thead><tr><th>Rank</th><th>Player</th><th>Points</th><th>1st</th><th>2nd</th><th>3rd</th><th>Att</th><th>Killer Bonus</th></tr></thead><tbody>${data.map((p, i) => `<tr><td>#${i+1}</td><td><strong>${p[0]}</strong></td><td style="color:#d84315; font-weight:bold;">${p[1].points}</td><td>${p[1].wins}</td><td>${p[1].seconds}</td><td>${p[1].thirds}</td><td>${p[1].att}</td><td>${p[1].killerWins}</td></tr>`).join('')}</tbody></table>`;
-    }
-    
-    function renderDetailed(data) {
-        return `<table><thead><tr><th>Player</th><th>Games</th><th>1st</th><th>2nd</th><th>3rd</th><th>Kills</th><th>Deaths</th><th>Rebuys</th><th>Addons</th><th>Win%</th><th>Cash%</th></tr></thead><tbody>
-        ${data.map(p => `<tr><td><strong>${p[0]}</strong></td><td>${p[1].played}</td><td>${p[1].wins}</td><td>${p[1].sec}</td><td>${p[1].third}</td><td>${p[1].kills}</td><td>${p[1].deaths}</td><td>${p[1].rebuys}</td><td>${p[1].addons}</td><td>${p[1].winRate}</td><td>${p[1].cashRate}</td></tr>`).join('')}</tbody></table>`;
     }
 
     function renderAllTime(data) {
