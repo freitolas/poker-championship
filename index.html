@@ -400,9 +400,16 @@
         reader.readAsText(file);
     }
 
-    // === RELIABLE UNDO SYSTEM ===
+// === ROBUST STATE MANAGEMENT ===
     function saveState() {
-        const state = JSON.stringify(players);
+        const state = {
+            players: JSON.parse(JSON.stringify(players)), // Deep copy players
+            currentRound: currentRound,
+            timeLeft: timeLeft,
+            tournamentStarted: tournamentStarted,
+            tournamentEnded: tournamentEnded,
+            // We don't save timerRunning; we always pause on undo for safety
+        };
         historyStack.push(state);
         document.getElementById('undoBtn').disabled = false;
         if(historyStack.length > 50) historyStack.shift(); 
@@ -410,13 +417,33 @@
 
     function undoLastAction() {
         if(historyStack.length === 0) return;
-        const previousState = historyStack.pop();
+        const prevState = historyStack.pop();
         if(historyStack.length === 0) document.getElementById('undoBtn').disabled = true;
         
-        players = JSON.parse(previousState);
+        // 1. Restore Variables
+        players = prevState.players;
+        currentRound = prevState.currentRound;
+        timeLeft = prevState.timeLeft;
+        tournamentStarted = prevState.tournamentStarted;
+        tournamentEnded = prevState.tournamentEnded;
+
+        // 2. Reset Timer & UI
+        pauseTimer(); // Always pause after undoing to prevent clock chaos
+        updateRoundDisplay(); // Refreshes time and round text
         renderTable();
         updatePrizeInfo();
-        showMessage("Undo Successful");
+        
+        // 3. Restore Button States (Critical for "Un-ending" a game)
+        document.getElementById('startBtn').disabled = tournamentStarted;
+        document.getElementById('endBtn').disabled = !tournamentStarted || tournamentEnded;
+        
+        // Manage Export/Save buttons based on restored state
+        const canSave = tournamentEnded;
+        document.getElementById('exportBtn').disabled = !canSave;
+        document.getElementById('loadDashboardBtn').disabled = false; // Always allow dashboard
+        document.getElementById('majorToggle').disabled = tournamentStarted;
+
+        showMessage("Undo Successful - Timer Paused");
     }
     
     document.addEventListener('keydown', function(event) {
@@ -667,27 +694,20 @@
 function checkForWinner() {
         const active = players.filter(p => !p.eliminated);
         
-        // Logic: 1 Player left AND Tournament is Active AND Not yet marked Ended
         if (active.length === 1 && tournamentStarted && !tournamentEnded) {
+            saveState(); // Save state BEFORE auto-ending
             
-            // 1. Change State
             tournamentEnded = true;
             tournamentStarted = false;
-            
-            // 2. Stop Timer
             pauseTimer();
             
-            // 3. Enable Save/Export Buttons
             document.getElementById('startBtn').disabled = false;
             document.getElementById('endBtn').disabled = true;
             document.getElementById('exportBtn').disabled = false; 
             document.getElementById('loadDashboardBtn').disabled = false;
             document.getElementById('majorToggle').disabled = false;
 
-            // 4. Update UI (Show Winner Status in table)
             renderTable();
-            
-            // 5. Trigger Webhook & Alerts
             triggerWebhook('winner');
             showMessage(`🏆 ${active[0].name} Wins!`);
             alert(`🏆 ${active[0].name} Wins! \n\nTournament has automatically ended. \nDon't forget to SAVE.`);
@@ -696,12 +716,13 @@ function checkForWinner() {
 
 
     // === TOURNAMENT CONTROL ===
-    function startTournament() {
+function startTournament() {
+        saveState(); // Save "Pre-Start" state
         tournamentStarted = true;
         document.getElementById('startBtn').disabled = true;
         document.getElementById('endBtn').disabled = false;
+        document.getElementById('majorToggle').disabled = true;
         
-        // Sort one last time before locking order
         players.sort((a,b) => a.name.localeCompare(b.name));
         renderTable();
         
@@ -709,9 +730,11 @@ function checkForWinner() {
         startTimer();
     }
 
-function endTournament() {
-        if(tournamentEnded) return; // Block double-trigger if Auto-End already ran
+    function endTournament() {
+        if(tournamentEnded) return;
         if(!confirm("End Tournament and Finalize Results?")) return;
+        
+        saveState(); // Save state BEFORE ending
         
         tournamentStarted = false;
         tournamentEnded = true;
@@ -826,7 +849,9 @@ function updatePrizeInfo() {
         displayTime();
     }
 
-    function skipRound() {
+function skipRound() {
+        saveState(); // Save round/time state BEFORE skipping
+        
         // Stop current
         clearInterval(timer);
         
