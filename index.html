@@ -664,16 +664,15 @@
         renderTable();
     }
     
-    function checkForWinner() {
+function checkForWinner() {
         const active = players.filter(p => !p.eliminated);
         if (active.length === 1 && tournamentStarted && !tournamentEnded) {
             triggerWebhook('winner');
-            tournamentEnded = true;
             pauseTimer();
-            document.getElementById('startBtn').disabled = false;
-            document.getElementById('endBtn').disabled = true;
+            // We intentionally DO NOT set tournamentEnded = true or disable the button here.
+            // This leaves the "End Tournament" button active for you to click manually.
             showMessage(`🏆 ${active[0].name} Wins!`);
-            alert(`🏆 ${active[0].name} Wins!`);
+            alert(`🏆 ${active[0].name} Wins! \n\nPlease click 'End Tournament' to finalize and save.`);
         }
     }
 
