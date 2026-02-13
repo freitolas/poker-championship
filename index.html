@@ -304,11 +304,12 @@
         updateGameSettings();
     }
 
-    function updateGameSettings() {
+function updateGameSettings() {
         const isMajor = document.getElementById('majorToggle').checked;
         const buyIn = isMajor ? 10 : 5;
+        // UPDATED: Dynamic text for 10% House Fee
         document.getElementById('gameInfoDisplay').innerHTML = 
-            `MODE: ${isMajor ? '🏆 MAJOR (2x Points/Buy-in)' : 'Standard'} | Buy-in: £${buyIn} | 1st: 80% | 2nd: 20% | House Fee: £5`;
+            `MODE: ${isMajor ? '🏆 MAJOR (2x Points)' : 'Standard'} | Buy-in: £${buyIn} | 1st: 80% | 2nd: 20% | House Fee: 10%`;
         updatePrizeInfo();
     }
 
@@ -759,22 +760,26 @@ function calculatePot() {
     }
 
 function updatePrizeInfo() {
-        // Recalculate totals for display
         let total = players.reduce((sum, p) => sum + p.totalPaid, 0);
         
-        // House Fee is ALWAYS 10% (rounded up)
+        // 1. Calculate House Fee (Always 10%, rounded UP to be safe)
         const fee = Math.ceil(total * 0.10);
         const pot = Math.max(0, total - fee);
         
-        // 80/20 Split with Rounding to nearest 5
-        let p1 = Math.round((pot * 0.8) / 5) * 5;
+        // 2. Calculate 2nd Place (20% of Pot, rounded to nearest 5)
         let p2 = Math.round((pot * 0.2) / 5) * 5;
+        
+        // 3. Calculate 1st Place (Whatever is left)
+        // This ensures 1st + 2nd ALWAYS equals the exact Pot
+        let p1 = pot - p2;
+        
+        // Edge case: If pot is tiny, ensure 1st gets everything
+        if (p1 < p2) { p1 = pot; p2 = 0; }
         
         document.getElementById('currentPrizePool').innerText = pot;
         document.getElementById('firstPrize').innerText = p1;
         document.getElementById('secondPrize').innerText = p2;
         
-        // Update Info Bar
         document.getElementById('playerCount').innerText = `Players: ${players.length} | Prize Pot: £${pot} | House Fee: 10% (£${fee})`;
     }
 
