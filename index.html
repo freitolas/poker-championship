@@ -666,15 +666,34 @@
     
 function checkForWinner() {
         const active = players.filter(p => !p.eliminated);
+        
+        // Logic: 1 Player left AND Tournament is Active AND Not yet marked Ended
         if (active.length === 1 && tournamentStarted && !tournamentEnded) {
-            triggerWebhook('winner');
+            
+            // 1. Change State
+            tournamentEnded = true;
+            tournamentStarted = false;
+            
+            // 2. Stop Timer
             pauseTimer();
-            // We intentionally DO NOT set tournamentEnded = true or disable the button here.
-            // This leaves the "End Tournament" button active for you to click manually.
+            
+            // 3. Enable Save/Export Buttons
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('endBtn').disabled = true;
+            document.getElementById('exportBtn').disabled = false; 
+            document.getElementById('loadDashboardBtn').disabled = false;
+            document.getElementById('majorToggle').disabled = false;
+
+            // 4. Update UI (Show Winner Status in table)
+            renderTable();
+            
+            // 5. Trigger Webhook & Alerts
+            triggerWebhook('winner');
             showMessage(`🏆 ${active[0].name} Wins!`);
-            alert(`🏆 ${active[0].name} Wins! \n\nPlease click 'End Tournament' to finalize and save.`);
+            alert(`🏆 ${active[0].name} Wins! \n\nTournament has automatically ended. \nDon't forget to SAVE.`);
         }
     }
+
 
     // === TOURNAMENT CONTROL ===
     function startTournament() {
@@ -690,27 +709,50 @@ function checkForWinner() {
         startTimer();
     }
 
-    function endTournament() {
+function endTournament() {
+        if(tournamentEnded) return; // Block double-trigger if Auto-End already ran
         if(!confirm("End Tournament and Finalize Results?")) return;
+        
         tournamentStarted = false;
         tournamentEnded = true;
         pauseTimer();
+        
         document.getElementById('startBtn').disabled = false;
         document.getElementById('endBtn').disabled = true;
-        showMessage("Tournament Ended!");
+        document.getElementById('exportBtn').disabled = false; 
+        document.getElementById('loadDashboardBtn').disabled = false;
+        document.getElementById('majorToggle').disabled = false;
+        
+        renderTable();
         triggerWebhook('winner');
+        showMessage("Tournament Ended Manually!");
     }
 
-    function calculatePot() {
+function calculatePot() {
         let total = players.reduce((sum, p) => sum + p.totalPaid, 0);
-        return Math.max(0, total - 5); // Subtract House Fee
+        // House Fee is ALWAYS 10% (rounded up)
+        const fee = Math.ceil(total * 0.10); 
+        return Math.max(0, total - fee);
     }
 
-    function updatePrizeInfo() {
-        const pot = calculatePot();
+function updatePrizeInfo() {
+        // Recalculate totals for display
+        let total = players.reduce((sum, p) => sum + p.totalPaid, 0);
+        
+        // House Fee is ALWAYS 10% (rounded up)
+        const fee = Math.ceil(total * 0.10);
+        const pot = Math.max(0, total - fee);
+        
+        // 80/20 Split with Rounding to nearest 5
+        let p1 = Math.round((pot * 0.8) / 5) * 5;
+        let p2 = Math.round((pot * 0.2) / 5) * 5;
+        
         document.getElementById('currentPrizePool').innerText = pot;
-        document.getElementById('firstPrize').innerText = (pot * 0.8).toFixed(2);
-        document.getElementById('secondPrize').innerText = (pot * 0.2).toFixed(2);
+        document.getElementById('firstPrize').innerText = p1;
+        document.getElementById('secondPrize').innerText = p2;
+        
+        // Update Info Bar
+        document.getElementById('playerCount').innerText = `Players: ${players.length} | Prize Pot: £${pot} | House Fee: 10% (£${fee})`;
     }
 
     function showMessage(msg) {
