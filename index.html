@@ -416,35 +416,42 @@ function updateGameSettings() {
         if(historyStack.length > 50) historyStack.shift(); 
     }
 
-    function undoLastAction() {
+function undoLastAction() {
         if(historyStack.length === 0) return;
+        
+        // Capture CURRENT time/round before overwriting
+        const actualTime = timeLeft;
+        const actualRound = currentRound;
+
         const prevState = historyStack.pop();
         if(historyStack.length === 0) document.getElementById('undoBtn').disabled = true;
         
-        // 1. Restore Variables
+        // Restore Player Data
         players = prevState.players;
-        currentRound = prevState.currentRound;
-        timeLeft = prevState.timeLeft;
         tournamentStarted = prevState.tournamentStarted;
         tournamentEnded = prevState.tournamentEnded;
 
-        // 2. Reset Timer & UI
-        pauseTimer(); // Always pause after undoing to prevent clock chaos
-        updateRoundDisplay(); // Refreshes time and round text
+        // SMART CLOCK LOGIC:
+        // Only revert time if the Undo actually moved us back a round (e.g. undoing a Skip)
+        if (prevState.currentRound !== actualRound) {
+            currentRound = prevState.currentRound;
+            timeLeft = prevState.timeLeft; // Restore time from history
+            pauseTimer(); // Pause for safety if changing rounds
+        } else {
+            // We are in the same round, just undoing a data change.
+            // KEEP the current time running. Do not revert clock.
+            // No pauseTimer() call here.
+        }
+
+        updateRoundDisplay();
         renderTable();
         updatePrizeInfo();
         
-        // 3. Restore Button States (Critical for "Un-ending" a game)
+        // Restore Button States
         document.getElementById('startBtn').disabled = tournamentStarted;
         document.getElementById('endBtn').disabled = !tournamentStarted || tournamentEnded;
         
-        // Manage Export/Save buttons based on restored state
-        const canSave = tournamentEnded;
-        document.getElementById('exportBtn').disabled = !canSave;
-        document.getElementById('loadDashboardBtn').disabled = false; // Always allow dashboard
-        document.getElementById('majorToggle').disabled = tournamentStarted;
-
-        showMessage("Undo Successful - Timer Paused");
+        showMessage("Undo Successful");
     }
     
     document.addEventListener('keydown', function(event) {
