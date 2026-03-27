@@ -20,20 +20,8 @@
     .main-content { flex: 3; padding: 20px; min-width: 500px; overflow-y: auto; position: relative; }
     h1 { text-align: center; color: #e65100; font-size: 2.2rem; margin-bottom: 15px; text-shadow: 2px 2px 4px rgba(0,0,0,0.1); }
 
-    /* TOP RIGHT BUTTON CLUSTER */
-    .top-btn-cluster { position: absolute; top: 20px; right: 20px; display: flex; gap: 8px; align-items: center; }
-    .smart-btn { background: #2E003E; color: #f7e348; border: 2px solid #dc2b71; font-size: 0.9rem; padding: 8px 12px; cursor: pointer; border-radius: 6px; }
-    .smart-btn:hover { background: #4a0060; }
-    .god-mode-btn { background: #1a1a2e; color: #c0c0c0; border: 2px solid #555; font-size: 0.9rem; padding: 8px 12px; cursor: pointer; border-radius: 6px; transition: all 0.3s; }
-    .god-mode-btn.active { background: #3e2723; color: #ffab91; border-color: #ff7043; box-shadow: 0 0 10px rgba(255,112,67,0.5); animation: godPulse 2s infinite; }
-    @keyframes godPulse { 0%,100% { box-shadow: 0 0 8px rgba(255,112,67,0.4); } 50% { box-shadow: 0 0 18px rgba(255,112,67,0.8); } }
-
-    /* GOD MODE BANNER */
-    .god-mode-banner { display: none; background: linear-gradient(90deg, #3e2723, #4e342e); border: 2px solid #ff7043; border-radius: 8px; padding: 10px 16px; margin-bottom: 15px; color: #ffab91; font-weight: 700; font-size: 0.95rem; text-align: center; letter-spacing: 1px; }
-    .god-mode-banner.active { display: block; }
-
-    .game-info { background: linear-gradient(90deg, #ffd740 0%, #ffa726 100%); padding: 15px; border-radius: 10px; text-align: center; color: #d84315; font-weight: 700; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(255, 152, 0, 0.2); }
-    .player-setup { background: #fff3e0; padding: 20px; border: 2px solid #ffa726; border-radius: 10px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(255, 152, 0, 0.1); }
+    .game-info { background: linear-gradient(90deg, #ffd740 0%, #ffa726 100%); padding: 15px; border-radius: 10px; text-align: center; color: #d84315; font-weight: 700; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(255,152,0,0.2); }
+    .player-setup { background: #fff3e0; padding: 20px; border: 2px solid #ffa726; border-radius: 10px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(255,152,0,0.1); }
     .major-controls { display: flex; align-items: center; gap: 15px; margin-bottom: 15px; background: #ffe0b2; padding: 10px; border-radius: 6px; border: 1px solid #ffcc80; }
     .player-input-row { display: flex; gap: 12px; margin-bottom: 15px; align-items: center; }
     #playerNameInput, #playerSelect, #tournamentNameSelect { flex: 1; padding: 10px; border: 2px solid #ffa726; border-radius: 6px; font-size: 16px; outline: none; }
@@ -44,37 +32,36 @@
     .rebuy-btn { background: #4caf50 !important; color: white !important; border-color: #388e3c !important; }
     .elim-btn { background: #f44336 !important; color: white !important; border-color: #d32f2f !important; }
 
-    /* God Mode Table Controls */
+    /* Stack +/- controls */
     .stack-ctrl { display: flex; align-items: center; justify-content: center; gap: 5px; }
     .stack-btn { padding: 4px 8px; font-size: 14px; min-width: 30px; cursor: pointer; background: #fff; border: 1px solid #ffa726; }
     .stack-btn:hover { background: #ffe0b2; }
+
+    /* God Mode column buttons */
     .god-btn { font-size: 10px; padding: 4px 8px; margin: 0 2px; text-transform: uppercase; letter-spacing: 0.5px; }
     .god-kill { background: #3e2723; color: #ffab91; border-color: #4e342e; }
     .god-revive { background: #e0f2f1; color: #00695c; border-color: #80cbc4; }
 
+    /* God Mode column hidden by default; CSS class on body reveals it */
+    .god-col { display: none; }
+    body.god-mode-active .god-col { display: table-cell; }
+
     .action-buttons { display: flex; gap: 12px; justify-content: center; margin-top: 15px; flex-wrap: wrap; }
 
-    table { width: 100%; border-collapse: collapse; background: #fff3e0; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 12px rgba(255, 152, 0, 0.15); margin-bottom: 20px; }
+    table { width: 100%; border-collapse: collapse; background: #fff3e0; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 12px rgba(255,152,0,0.15); margin-bottom: 20px; }
     th, td { padding: 12px 8px; text-align: center; font-weight: 600; border-bottom: 1px solid #eee; }
     thead { background: linear-gradient(90deg, #ff9800 0%, #fb8c00 100%); color: white; }
     tbody tr:nth-child(odd) { background: #fff9e5; }
     tbody tr.eliminated { background: #ffcdd2 !important; color: #c62828; opacity: 0.9; }
     th.sortable { cursor: pointer; text-decoration: underline; text-decoration-style: dotted; }
-    th.sortable:hover { background-color: #f57c00; color: white; }
+    th.sortable:hover { background-color: #f57c00; }
     .editable-cost { cursor: pointer; border-bottom: 1px dashed #7a4800; }
     .editable-cost:hover { background: #fff; }
 
     .timer-panel { flex: 1; background: linear-gradient(135deg, #ffecb3 0%, #ffd54f 100%); border-left: 7px solid #ffa726; padding: 25px; display: flex; flex-direction: column; align-items: center; height: 100vh; position: sticky; top: 0; overflow-y: auto; }
     .timer-header { font-size: 2.4rem; font-weight: 900; color: #e65100; margin-bottom: 20px; text-shadow: 2px 2px 4px rgba(0,0,0,0.1); }
     .round-info { width: 100%; background: #ffe0b2; border-radius: 12px; padding: 20px; font-size: 1.4rem; font-weight: 700; text-align: center; color: #e65100; margin-bottom: 25px; }
-    .time-remaining { font-size: 3.8rem; font-weight: 900; background: #ffd54f; color: #e65100; border-radius: 15px; padding: 20px 35px; box-shadow: 0 4px 12px rgba(255, 152, 0, 0.25); margin: 20px 0 30px; text-align: center; min-width: 200px; font-family: 'Segoe UI', sans-serif; }
-
-    /* God Mode Timer Controls */
-    .god-timer-controls { display: none; width: 100%; background: #3e2723; border: 2px solid #ff7043; border-radius: 10px; padding: 12px; margin-top: 12px; text-align: center; }
-    .god-timer-controls.active { display: block; }
-    .god-timer-controls .label { color: #ffab91; font-size: 0.75rem; font-weight: 700; letter-spacing: 1px; margin-bottom: 8px; text-transform: uppercase; }
-    .god-back-btn { background: #bf360c; color: white; border-color: #e64a19; width: 100%; font-size: 1rem; padding: 10px; }
-    .god-back-btn:hover:not(:disabled) { background: #e64a19; }
+    .time-remaining { font-size: 3.8rem; font-weight: 900; background: #ffd54f; color: #e65100; border-radius: 15px; padding: 20px 35px; box-shadow: 0 4px 12px rgba(255,152,0,0.25); margin: 20px 0 30px; text-align: center; min-width: 200px; }
 
     .dashboard-tabs { display: flex; border-bottom: 3px solid #ffa726; margin-bottom: 20px; border-radius: 10px 10px 0 0; overflow: hidden; }
     .dashboard-tab { flex: 1; padding: 15px 20px; background: #ffe0b2; color: #e65100; border: none; font-weight: 700; cursor: pointer; border-right: 2px solid #ffa726; }
@@ -92,6 +79,61 @@
     .status-message { background: #e8f5e8; border: 2px solid #4caf50; color: #2e7d32; padding: 12px; border-radius: 8px; margin: 15px 0; text-align: center; font-weight: 600; opacity: 0; transition: opacity 0.3s ease; }
     .status-message.show { opacity: 1; }
 
+    /* ── TOP-RIGHT CORNER BUTTONS ── */
+    .top-corner-btns { position: absolute; top: 20px; right: 20px; display: flex; gap: 8px; align-items: center; }
+
+    .smart-btn {
+      background: #2E003E; color: #f7e348;
+      border: 2px solid #dc2b71; font-size: 0.9rem;
+      padding: 8px 12px; cursor: pointer; border-radius: 6px; font-weight: 700;
+    }
+    .smart-btn:hover:not(:disabled) { background: #4a0060; transform: translateY(-1px); }
+
+    /* GOD MODE BUTTON — off state */
+    .god-mode-btn {
+      background: #111; color: #9ca3af;
+      border: 2px solid #374151;
+      font-size: 0.9rem; padding: 8px 12px;
+      cursor: pointer; border-radius: 6px; font-weight: 700;
+      letter-spacing: 0.5px;
+      transition: all 0.2s ease;
+    }
+    .god-mode-btn:hover { background: #1f2937; color: #d1d5db; transform: translateY(-1px); }
+    /* GOD MODE BUTTON — ON state */
+    .god-mode-btn.active {
+      background: #3b0764;
+      color: #e9d5ff;
+      border-color: #a855f7;
+      box-shadow: 0 0 12px rgba(168, 85, 247, 0.55);
+    }
+    .god-mode-btn.active:hover { background: #4c1d95; }
+
+    /* God Mode active banner above table */
+    #godModeBanner {
+      display: none;
+      background: linear-gradient(90deg, #1e1b4b, #4c1d95, #1e1b4b);
+      color: #e9d5ff;
+      text-align: center;
+      padding: 7px 14px;
+      border-radius: 6px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      margin-bottom: 10px;
+      border: 1px solid #7c3aed;
+    }
+    body.god-mode-active #godModeBanner { display: block; }
+
+    /* God Mode PREV ROUND button in timer panel — hidden until God Mode on */
+    #timerPrevBtn {
+      display: none;
+      background: #3b0764 !important;
+      color: #e9d5ff !important;
+      border-color: #7c3aed !important;
+    }
+    #timerPrevBtn:hover:not(:disabled) { background: #4c1d95 !important; }
+    body.god-mode-active #timerPrevBtn { display: inline-block; }
+
     /* Smart Home Modal */
     .sh-modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); background: white; border: 3px solid #2E003E; width: 90%; max-width: 500px; padding: 20px; z-index: 2000; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
     .sh-modal h3 { color: #2E003E; margin-top: 0; }
@@ -105,16 +147,13 @@
 <body>
   <div class="main-content">
 
-    <!-- TOP RIGHT BUTTON CLUSTER -->
-    <div class="top-btn-cluster">
+    <!-- TOP-RIGHT CORNER: God Mode + Smart Home -->
+    <div class="top-corner-btns">
       <button class="god-mode-btn" id="godModeToggleBtn" onclick="toggleGodMode()">⚡ God Mode</button>
       <button class="smart-btn" onclick="openSmartHome()">Smart Home 🏠</button>
     </div>
 
     <h1>Curupira's Head Poker 2026</h1>
-
-    <!-- GOD MODE BANNER -->
-    <div class="god-mode-banner" id="godModeBanner">⚡ GOD MODE ACTIVE — Stack Controls & Kill/Revive Unlocked ⚡</div>
 
     <div class="game-info" id="gameInfoDisplay">
       Buy-in: £5 per stack | 1st: 80% | 2nd: 20% | House Fee: 10%
@@ -139,9 +178,7 @@
 
       <h3>Add Players</h3>
       <div class="player-input-row">
-        <select id="playerSelect">
-          <option value="">Select a player...</option>
-        </select>
+        <select id="playerSelect"><option value="">Select a player...</option></select>
         <input type="text" id="playerNameInput" placeholder="Or enter new player name..." />
         <button onclick="addPlayer()">Add Player</button>
       </div>
@@ -161,15 +198,19 @@
       </div>
     </div>
 
+    <!-- GOD MODE ACTIVE BANNER -->
+    <div id="godModeBanner">⚡ GOD MODE ACTIVE — Stack +/-, Kill/Revive, and ◀ Prev Round are enabled ⚡</div>
+
     <table id="playerTable">
       <thead>
-        <tr id="tableHeaderRow">
+        <tr>
           <th>Player</th>
           <th>Stacks</th>
           <th>Addon?</th>
           <th>Paid</th>
           <th>Status</th>
           <th>Actions</th>
+          <th class="god-col">⚡ God Mode</th>
         </tr>
       </thead>
       <tbody id="playerTableBody"></tbody>
@@ -177,10 +218,11 @@
 
     <div id="dashboardSection" style="display:none; margin-top:20px;">
       <div class="dashboard-tabs">
-        <button class="dashboard-tab active" onclick="switchTab(event, 'p2026')">📊 2026 Leaderboard</button>
-        <button class="dashboard-tab" onclick="switchTab(event, 'titles')">🏆 Titles</button>
-        <button class="dashboard-tab" onclick="switchTab(event, 'detailed')">📈 Detailed Stats</button>
-        <button class="dashboard-tab" onclick="switchTab(event, 'alltime')">📅 All-Time</button>
+        <!-- FIX: event passed explicitly; was relying on unreliable implicit global -->
+        <button class="dashboard-tab active" onclick="switchTab(event,'p2026')">📊 2026 Leaderboard</button>
+        <button class="dashboard-tab" onclick="switchTab(event,'titles')">🏆 Titles</button>
+        <button class="dashboard-tab" onclick="switchTab(event,'detailed')">📈 Detailed Stats</button>
+        <button class="dashboard-tab" onclick="switchTab(event,'alltime')">📅 All-Time</button>
       </div>
       <div id="tab-p2026" class="dashboard-tab-content active"><div id="p2026Content"></div></div>
       <div id="tab-titles" class="dashboard-tab-content"><div id="titlesContent"></div></div>
@@ -189,23 +231,18 @@
     </div>
   </div>
 
-  <!-- TIMER PANEL -->
   <div class="timer-panel">
     <div class="timer-header">ROUND TIMER</div>
     <div id="roundInfo" class="round-info"></div>
     <div id="timeRemaining" class="time-remaining">00:05</div>
 
-    <div class="timer-controls">
+    <div class="timer-controls" style="display:flex; flex-wrap:wrap; gap:8px; justify-content:center;">
       <button id="timerStartBtn" onclick="startTimer()">START</button>
       <button id="timerPauseBtn" onclick="pauseTimer()" disabled>PAUSE</button>
       <button id="timerResetBtn" onclick="resetTimer()">RESET</button>
-      <button id="timerSkipBtn" onclick="skipRound()">SKIP ROUND ▶</button>
-    </div>
-
-    <!-- GOD MODE TIMER CONTROLS: Go Back Round -->
-    <div class="god-timer-controls" id="godTimerControls">
-      <div class="label">⚡ God Mode — Round Control</div>
-      <button class="god-back-btn" onclick="goBackRound()">◀ GO BACK A ROUND</button>
+      <button id="timerSkipBtn" onclick="skipRound()">SKIP ▶</button>
+      <!-- Shown only when God Mode is ON -->
+      <button id="timerPrevBtn" onclick="prevRound()">◀ PREV</button>
     </div>
 
     <div id="breakToggles" style="display:none; background:#ffcc80; padding:15px; margin:15px 0; border-radius:10px; border:2px dashed #e65100; text-align:center;">
@@ -218,7 +255,7 @@
     </div>
 
     <div id="breakNotice" style="display:none; background:#bbdefb; padding:15px; margin:15px 0; border-radius:10px; color:#0d47a1; font-weight:700; text-align:center;">
-      BREAK TIME! — Add-ons available
+      BREAK TIME! - Add-ons available
     </div>
 
     <div class="prize-info">
@@ -236,22 +273,10 @@
   <div id="smartHomeModal" class="sh-modal">
     <h3>🏠 Smart Home Config (Webhooks)</h3>
     <p style="font-size:0.8rem; color:#666;">Paste IFTTT Webhook URLs here.</p>
-    <div class="sh-row">
-      <label>Elimination (Red Lights/Sound)</label>
-      <input type="text" id="wh-elimination" placeholder="https://maker.ifttt.com/trigger/..." />
-    </div>
-    <div class="sh-row">
-      <label>Round End (Blind Increase)</label>
-      <input type="text" id="wh-roundend" placeholder="https://maker.ifttt.com/trigger/..." />
-    </div>
-    <div class="sh-row">
-      <label>Break Time (Music/Chill)</label>
-      <input type="text" id="wh-break" placeholder="https://maker.ifttt.com/trigger/..." />
-    </div>
-    <div class="sh-row">
-      <label>Winner (Victory Scene)</label>
-      <input type="text" id="wh-winner" placeholder="https://maker.ifttt.com/trigger/..." />
-    </div>
+    <div class="sh-row"><label>Elimination (Red Lights/Sound)</label><input type="text" id="wh-elimination" placeholder="https://maker.ifttt.com/trigger/..." /></div>
+    <div class="sh-row"><label>Round End (Blind Increase)</label><input type="text" id="wh-roundend" placeholder="https://maker.ifttt.com/trigger/..." /></div>
+    <div class="sh-row"><label>Break Time (Music/Chill)</label><input type="text" id="wh-break" placeholder="https://maker.ifttt.com/trigger/..." /></div>
+    <div class="sh-row"><label>Winner (Victory Scene)</label><input type="text" id="wh-winner" placeholder="https://maker.ifttt.com/trigger/..." /></div>
     <div class="sh-actions">
       <div class="sh-tools">
         <button onclick="backupSettings()" style="background:#0277bd; color:white; font-size:0.8rem;">Backup 💾</button>
@@ -273,26 +298,26 @@
     const SCOPES = 'https://www.googleapis.com/auth/spreadsheets';
 
     const rounds = [
-      { name: "Test Round", sb: 0, bb: 0, duration: 5, isTest: true },
-      { name: "Round 1",  sb: 5,      bb: 10,     duration: 20 },
-      { name: "Round 2",  sb: 10,     bb: 20,     duration: 20 },
-      { name: "Round 3",  sb: 20,     bb: 40,     duration: 20 },
-      { name: "Round 4",  sb: 40,     bb: 80,     duration: 20 },
-      { name: "Break + Add-On", sb: 0, bb: 0,     duration: 30, isBreak: true },
-      { name: "Round 5",  sb: 50,     bb: 100,    duration: 20 },
-      { name: "Round 6",  sb: 100,    bb: 200,    duration: 20 },
-      { name: "Round 7",  sb: 200,    bb: 400,    duration: 20 },
-      { name: "Round 8",  sb: 400,    bb: 800,    duration: 20 },
-      { name: "Round 9",  sb: 1000,   bb: 2000,   duration: 20 },
-      { name: "Round 10", sb: 2000,   bb: 4000,   duration: 20 },
-      { name: "Round 11", sb: 4000,   bb: 8000,   duration: 20 },
-      { name: "Round 12", sb: 8000,   bb: 16000,  duration: 20 },
-      { name: "Round 13", sb: 16000,  bb: 32000,  duration: 20 },
-      { name: "Round 14", sb: 32000,  bb: 64000,  duration: 20 },
-      { name: "Round 15", sb: 64000,  bb: 128000, duration: 20 },
-      { name: "Round 16", sb: 125000, bb: 250000, duration: 20 },
-      { name: "Round 17", sb: 250000, bb: 500000, duration: 20 },
-      { name: "Round 18", sb: 500000, bb: 1000000, duration: 20 }
+      { name: "Test Round",       sb: 0,      bb: 0,       duration: 5,  isTest: true },
+      { name: "Round 1",          sb: 5,      bb: 10,      duration: 20 },
+      { name: "Round 2",          sb: 10,     bb: 20,      duration: 20 },
+      { name: "Round 3",          sb: 20,     bb: 40,      duration: 20 },
+      { name: "Round 4",          sb: 40,     bb: 80,      duration: 20 },
+      { name: "Break + Add-On",   sb: 0,      bb: 0,       duration: 30, isBreak: true },
+      { name: "Round 5",          sb: 50,     bb: 100,     duration: 20 },
+      { name: "Round 6",          sb: 100,    bb: 200,     duration: 20 },
+      { name: "Round 7",          sb: 200,    bb: 400,     duration: 20 },
+      { name: "Round 8",          sb: 400,    bb: 800,     duration: 20 },
+      { name: "Round 9",          sb: 1000,   bb: 2000,    duration: 20 },
+      { name: "Round 10",         sb: 2000,   bb: 4000,    duration: 20 },
+      { name: "Round 11",         sb: 4000,   bb: 8000,    duration: 20 },
+      { name: "Round 12",         sb: 8000,   bb: 16000,   duration: 20 },
+      { name: "Round 13",         sb: 16000,  bb: 32000,   duration: 20 },
+      { name: "Round 14",         sb: 32000,  bb: 64000,   duration: 20 },
+      { name: "Round 15",         sb: 64000,  bb: 128000,  duration: 20 },
+      { name: "Round 16",         sb: 125000, bb: 250000,  duration: 20 },
+      { name: "Round 17",         sb: 250000, bb: 500000,  duration: 20 },
+      { name: "Round 18",         sb: 500000, bb: 1000000, duration: 20 }
     ];
 
     const regularPlayers = [
@@ -301,20 +326,20 @@
     ].sort();
 
     // === GLOBAL STATE ===
-    let players = [];
-    let customPlayers = [];
-    let currentRound = 0;
-    let timer = null;
-    let timeLeft = 0;
+    let players         = [];
+    let customPlayers   = [];
+    let currentRound    = 0;
+    let timer           = null;
+    let timeLeft        = 0;
     let tournamentStarted = false;
-    let tournamentEnded = false;
-    let timerRunning = false;
-    let googleApiReady = false;
+    let tournamentEnded   = false;
+    let timerRunning      = false;
+    let googleApiReady    = false;
     let tokenClient;
-    let historyStack = [];
-    let webhooks = {};
-    let detailedSort = { col: 'shark', asc: false };
-    let godModeActive = false;  // ← NEW: God Mode state
+    let historyStack    = [];
+    let webhooks        = {};
+    let detailedSort    = { col: 'shark', asc: false };
+    let godModeEnabled  = false;   // ← God Mode OFF by default
 
     // === INITIALIZATION ===
     window.onload = function() {
@@ -325,92 +350,69 @@
       loadSmartHome();
     };
 
-    // =============================================
+    // ══════════════════════════════════════════
     // GOD MODE TOGGLE
-    // =============================================
+    // ══════════════════════════════════════════
     function toggleGodMode() {
-      godModeActive = !godModeActive;
+      godModeEnabled = !godModeEnabled;
       const btn = document.getElementById('godModeToggleBtn');
-      const banner = document.getElementById('godModeBanner');
-      const timerControls = document.getElementById('godTimerControls');
-
-      if (godModeActive) {
+      if (godModeEnabled) {
+        document.body.classList.add('god-mode-active');
         btn.classList.add('active');
         btn.textContent = '⚡ God Mode ON';
-        banner.classList.add('active');
-        timerControls.classList.add('active');
       } else {
+        document.body.classList.remove('god-mode-active');
         btn.classList.remove('active');
         btn.textContent = '⚡ God Mode';
-        banner.classList.remove('active');
-        timerControls.classList.remove('active');
       }
-      renderTable();
+      renderTable();  // re-render to show/hide stack +/- controls
     }
 
-    // =============================================
-    // GO BACK ROUND (God Mode only)
-    // =============================================
-    function goBackRound() {
-      if (!godModeActive) return;
-      if (currentRound === 0) { showMessage("Already at the first round!"); return; }
-
+    // ══════════════════════════════════════════
+    // GOD MODE: PREV ROUND
+    // ══════════════════════════════════════════
+    function prevRound() {
+      if (currentRound === 0) { showMessage("Already at the first round."); return; }
       saveState();
       pauseTimer();
-
-      currentRound = Math.max(0, currentRound - 1);
+      currentRound = Math.max(currentRound - 1, 0);
       const r = rounds[currentRound];
       timeLeft = r.duration * (r.isTest ? 5 : 60);
       updateRoundDisplay();
-      showMessage("⏪ Went back to: " + r.name);
-
-      // Auto-restart if tournament is running
-      if (tournamentStarted && !tournamentEnded) {
-        startTimer();
-      }
+      showMessage("⚡ Went back to " + r.name);
     }
 
-    // =============================================
-    // TOURNAMENT SELECT & SETTINGS
-    // =============================================
+    // ══════════════════════════════════════════
+    // TOURNAMENT SELECT / SETTINGS
+    // ══════════════════════════════════════════
     function handleTournamentSelect() {
       const sel = document.getElementById('tournamentNameSelect').value;
-      const majorToggle = document.getElementById('majorToggle');
-      if (sel.includes("Major") || sel.includes("Cup") || sel.includes("Finale") || sel.includes("Bounty")) {
-        majorToggle.checked = true;
-      } else {
-        majorToggle.checked = false;
-      }
+      const mt  = document.getElementById('majorToggle');
+      mt.checked = sel.includes("Major") || sel.includes("Cup") || sel.includes("Finale") || sel.includes("Bounty");
       updateGameSettings();
     }
 
     function updateGameSettings() {
       const isMajor = document.getElementById('majorToggle').checked;
-      const buyIn = isMajor ? 10 : 5;
+      const buyIn   = isMajor ? 10 : 5;
       document.getElementById('gameInfoDisplay').innerHTML =
         `MODE: ${isMajor ? '🏆 MAJOR (2x Points)' : 'Standard'} | Buy-in: £${buyIn} | 1st: 80% | 2nd: 20% | House Fee: 10%`;
       updatePrizeInfo();
     }
 
     function populatePlayerDropdown() {
-      const select = document.getElementById('playerSelect');
-      if (!select) return;
-      select.innerHTML = '<option value="">Select a player...</option>';
-      const all = [...new Set([...regularPlayers, ...customPlayers])].sort();
-      all.forEach(p => select.add(new Option(p, p)));
+      const sel = document.getElementById('playerSelect');
+      if (!sel) return;
+      sel.innerHTML = '<option value="">Select a player...</option>';
+      [...new Set([...regularPlayers, ...customPlayers])].sort().forEach(p => sel.add(new Option(p, p)));
     }
 
-    // =============================================
+    // ══════════════════════════════════════════
     // SMART HOME
-    // =============================================
-    window.openSmartHome = function() {
-      document.getElementById('smartHomeModal').style.display = 'block';
-      document.getElementById('sh-overlay').style.display = 'block';
-    }
-    window.closeSmartHome = function() {
-      document.getElementById('smartHomeModal').style.display = 'none';
-      document.getElementById('sh-overlay').style.display = 'none';
-    }
+    // ══════════════════════════════════════════
+    window.openSmartHome  = () => { document.getElementById('smartHomeModal').style.display='block'; document.getElementById('sh-overlay').style.display='block'; };
+    window.closeSmartHome = () => { document.getElementById('smartHomeModal').style.display='none';  document.getElementById('sh-overlay').style.display='none'; };
+
     window.saveSmartHome = function() {
       webhooks = {
         elim:   document.getElementById('wh-elimination').value,
@@ -421,7 +423,8 @@
       localStorage.setItem('pokerWebhooks', JSON.stringify(webhooks));
       closeSmartHome();
       showMessage("Smart Home Settings Saved");
-    }
+    };
+
     function loadSmartHome() {
       const stored = localStorage.getItem('pokerWebhooks');
       if (stored) {
@@ -432,27 +435,33 @@
         document.getElementById('wh-winner').value      = webhooks.winner|| '';
       }
     }
-    function triggerWebhook(type, v1 = '', v2 = '') {
+
+    function triggerWebhook(type, v1='', v2='') {
       const url = webhooks[type];
       if (url) {
         const sep = url.includes('?') ? '&' : '?';
-        fetch(`${url}${sep}value1=${encodeURIComponent(v1)}&value2=${encodeURIComponent(v2)}`, { mode: 'no-cors' })
+        fetch(`${url}${sep}value1=${encodeURIComponent(v1)}&value2=${encodeURIComponent(v2)}`, { mode:'no-cors' })
           .catch(e => console.log("Webhook error", e));
       }
     }
+
     window.backupSettings = function() {
-      if (!webhooks || Object.keys(webhooks).length === 0) return alert("No settings to backup!");
-      const blob = new Blob([JSON.stringify(webhooks)], { type: 'application/json' });
-      const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: 'poker_settings.json' });
+      if (!webhooks || !Object.keys(webhooks).length) return alert("No settings to backup!");
+      const a = Object.assign(document.createElement('a'), {
+        href: URL.createObjectURL(new Blob([JSON.stringify(webhooks)], {type:'application/json'})),
+        download: 'poker_settings.json'
+      });
       document.body.appendChild(a); a.click(); document.body.removeChild(a);
       showMessage("Settings Downloaded");
-    }
-    window.restoreSettings = function() { document.getElementById('restoreInput').click(); }
+    };
+
+    window.restoreSettings = () => document.getElementById('restoreInput').click();
+
     window.handleFileSelect = function(event) {
       const file = event.target.files[0];
       if (!file) return;
       const reader = new FileReader();
-      reader.onload = function(e) {
+      reader.onload = e => {
         try {
           webhooks = JSON.parse(e.target.result);
           localStorage.setItem('pokerWebhooks', JSON.stringify(webhooks));
@@ -461,43 +470,42 @@
           document.getElementById('wh-break').value       = webhooks.break || '';
           document.getElementById('wh-winner').value      = webhooks.winner|| '';
           alert('Settings Restored Successfully!');
-        } catch(err) { alert('Invalid settings file.'); }
+        } catch { alert('Invalid settings file.'); }
       };
       reader.readAsText(file);
-    }
+    };
 
-    // =============================================
-    // STATE MANAGEMENT (Undo)
-    // =============================================
+    // ══════════════════════════════════════════
+    // STATE MANAGEMENT (UNDO)
+    // ══════════════════════════════════════════
     function saveState() {
       historyStack.push({
-        players: JSON.parse(JSON.stringify(players)),
-        currentRound: currentRound,
-        timeLeft: timeLeft,
+        players:           JSON.parse(JSON.stringify(players)),
+        currentRound:      currentRound,
+        timeLeft:          timeLeft,
         tournamentStarted: tournamentStarted,
-        tournamentEnded: tournamentEnded
+        tournamentEnded:   tournamentEnded,
       });
       document.getElementById('undoBtn').disabled = false;
       if (historyStack.length > 50) historyStack.shift();
     }
 
     function undoLastAction() {
-      if (historyStack.length === 0) return;
-      const actualTime  = timeLeft;
-      const actualRound = currentRound;
-      const prevState   = historyStack.pop();
-      if (historyStack.length === 0) document.getElementById('undoBtn').disabled = true;
+      if (!historyStack.length) return;
+      const actualRound  = currentRound;
+      const prev         = historyStack.pop();
+      if (!historyStack.length) document.getElementById('undoBtn').disabled = true;
 
-      players           = prevState.players;
-      tournamentStarted = prevState.tournamentStarted;
-      tournamentEnded   = prevState.tournamentEnded;
+      players           = prev.players;
+      tournamentStarted = prev.tournamentStarted;
+      tournamentEnded   = prev.tournamentEnded;
 
-      if (prevState.currentRound !== actualRound) {
-        currentRound = prevState.currentRound;
-        timeLeft     = prevState.timeLeft;
+      // Smart clock: only revert time/round if the round actually changed
+      if (prev.currentRound !== actualRound) {
+        currentRound = prev.currentRound;
+        timeLeft     = prev.timeLeft;
         pauseTimer();
       }
-      // If same round — keep the live clock running, don't revert it.
 
       updateRoundDisplay();
       renderTable();
@@ -507,20 +515,17 @@
       showMessage("Undo Successful");
     }
 
-    document.addEventListener('keydown', function(e) {
-      if (e.ctrlKey && e.key === 'z') undoLastAction();
-    });
+    document.addEventListener('keydown', e => { if (e.ctrlKey && e.key === 'z') undoLastAction(); });
 
-    // =============================================
+    // ══════════════════════════════════════════
     // PLAYER MANAGEMENT
-    // =============================================
+    // ══════════════════════════════════════════
     function addPlayer() {
-      const select = document.getElementById('playerSelect');
-      const input  = document.getElementById('playerNameInput');
-      let name = input.value.trim() || select.value;
+      const sel   = document.getElementById('playerSelect');
+      const input = document.getElementById('playerNameInput');
+      let name = input.value.trim() || sel.value;
       if (!name) return alert('Please select or enter a name.');
       if (players.find(p => p.name === name)) return alert('Player already added.');
-
       saveState();
       if (!regularPlayers.includes(name) && !customPlayers.includes(name)) {
         customPlayers.push(name);
@@ -529,39 +534,22 @@
       players.push({
         name, stacks: 1,
         totalPaid: document.getElementById('majorToggle').checked ? 10 : 5,
-        eliminated: false, hasAddon: false, eliminationTime: null, rebuyEliminations: []
+        eliminated: false, hasAddon: false,
+        eliminationTime: null, rebuyEliminations: []
       });
-      if (!tournamentStarted) players.sort((a, b) => a.name.localeCompare(b.name));
-      input.value = ''; select.value = '';
-      renderTable();
-      updatePrizeInfo();
+      if (!tournamentStarted) players.sort((a,b) => a.name.localeCompare(b.name));
+      input.value = ''; sel.value = '';
+      renderTable(); updatePrizeInfo();
     }
 
     function clearPlayers() {
-      if (confirm("Clear all players?")) {
-        saveState();
-        players = [];
-        renderTable();
-        updatePrizeInfo();
-      }
+      if (confirm("Clear all players?")) { saveState(); players = []; renderTable(); updatePrizeInfo(); }
     }
 
-    // =============================================
-    // RENDER TABLE  (God Mode aware)
-    // =============================================
+    // ══════════════════════════════════════════
+    // RENDER TABLE
+    // ══════════════════════════════════════════
     function renderTable() {
-      // Update header: add God Mode column only when active
-      const headerRow = document.getElementById('tableHeaderRow');
-      headerRow.innerHTML = `
-        <th>Player</th>
-        <th>Stacks</th>
-        <th>Addon?</th>
-        <th>Paid</th>
-        <th>Status</th>
-        <th>Actions</th>
-        ${godModeActive ? '<th style="background:#4e342e; color:#ffab91;">⚡ God Mode</th>' : ''}
-      `;
-
       const tbody = document.getElementById('playerTableBody');
       tbody.innerHTML = '';
 
@@ -569,29 +557,25 @@
         const tr = document.createElement('tr');
         if (p.eliminated) tr.classList.add('eliminated');
 
-        // Stacks: +/- only in God Mode
-        const stackHtml = godModeActive
+        // STACK CELL: +/- only visible when God Mode is ON
+        const stackHtml = godModeEnabled
           ? `<div class="stack-ctrl">
-               <button class="stack-btn" onclick="updateStack('${p.name}', -1)">−</button>
-               <span style="min-width:20px; text-align:center;">${p.stacks}</span>
-               <button class="stack-btn" onclick="updateStack('${p.name}', 1)">+</button>
+               <button class="stack-btn" onclick="updateStack('${p.name}',-1)">-</button>
+               <span style="min-width:20px;text-align:center;">${p.stacks}</span>
+               <button class="stack-btn" onclick="updateStack('${p.name}',1)">+</button>
              </div>`
           : `<span>${p.stacks}</span>`;
 
-        const addonHtml = `<input type="checkbox" ${p.hasAddon ? 'checked' : ''} onchange="toggleAddon('${p.name}')">`;
-        const paidHtml  = `<span class="editable-cost" onclick="manualEditPaid('${p.name}')">£${p.totalPaid}</span>`;
-
-        const actionsHtml = !p.eliminated
-          ? `<button class="elim-btn" onclick="initEliminate('${p.name}')">Eliminate</button>`
+        const addonHtml  = `<input type="checkbox" ${p.hasAddon?'checked':''} onchange="toggleAddon('${p.name}')">`;
+        const paidHtml   = `<span class="editable-cost" onclick="manualEditPaid('${p.name}')">£${p.totalPaid}</span>`;
+        const actionHtml = !p.eliminated
+          ? `<button class="elim-btn"  onclick="initEliminate('${p.name}')">Eliminate</button>`
           : `<button class="rebuy-btn" onclick="rebuy('${p.name}')">Rebuy</button>`;
 
-        // Kill/Revive only in God Mode
-        const godHtml = godModeActive
-          ? `<td>
-               <button class="god-btn god-kill"   onclick="godKill('${p.name}')">Kill</button>
-               <button class="god-btn god-revive" onclick="godRevive('${p.name}')">Revive</button>
-             </td>`
-          : '';
+        // GOD MODE COLUMN: Kill & Revive — hidden via CSS when god mode is off
+        const godHtml = `
+          <button class="god-btn god-kill"   onclick="godKill('${p.name}')">Kill</button>
+          <button class="god-btn god-revive" onclick="godRevive('${p.name}')">Revive</button>`;
 
         tr.innerHTML = `
           <td>${p.name}</td>
@@ -599,44 +583,35 @@
           <td>${addonHtml}</td>
           <td>${paidHtml}</td>
           <td>${p.eliminated ? 'OUT' : 'Active'}</td>
-          <td>${actionsHtml}</td>
-          ${godHtml}
-        `;
+          <td>${actionHtml}</td>
+          <td class="god-col">${godHtml}</td>`;
         tbody.appendChild(tr);
       });
 
-      // FIX: Only call updatePrizeInfo — do NOT overwrite playerCount with a hardcoded string here.
+      // FIX: removed stale "House Fee: £5" hardcode that was overwriting updatePrizeInfo()
       updatePrizeInfo();
     }
 
-    // =============================================
+    // ══════════════════════════════════════════
     // GAME ACTIONS
-    // =============================================
+    // ══════════════════════════════════════════
     function updateStack(name, change) {
-      if (!godModeActive) return;
       saveState();
       const p = players.find(x => x.name === name);
       if (!p) return;
       p.stacks = Math.max(0, p.stacks + change);
       const cost = document.getElementById('majorToggle').checked ? 10 : 5;
-      if (change > 0) p.totalPaid += cost;
-      else p.totalPaid = Math.max(0, p.totalPaid - cost);
+      p.totalPaid = change > 0 ? p.totalPaid + cost : Math.max(0, p.totalPaid - cost);
       renderTable();
     }
 
     function rebuy(name) {
       saveState();
       const p = players.find(x => x.name === name);
-      if (p.eliminated) {
-        p.rebuyEliminations.push({ eliminatedBy: p.eliminatedBy || "Unknown", timestamp: p.eliminationTime || Date.now() });
-      }
-      p.eliminated = false;
-      p.eliminationTime = null;
-      p.stacks += 1;
-      const cost = document.getElementById('majorToggle').checked ? 10 : 5;
-      p.totalPaid += cost;
-      renderTable();
-      showMessage(`${name} rebought!`);
+      if (p.eliminated) p.rebuyEliminations.push({ eliminatedBy: p.eliminatedBy||"Unknown", timestamp: p.eliminationTime||Date.now() });
+      p.eliminated = false; p.eliminationTime = null; p.stacks += 1;
+      p.totalPaid += document.getElementById('majorToggle').checked ? 10 : 5;
+      renderTable(); showMessage(`${name} rebought!`);
     }
 
     function toggleAddon(name) {
@@ -652,18 +627,18 @@
     function manualEditPaid(name) {
       saveState();
       const p = players.find(x => x.name === name);
-      const newVal = prompt("Enter new Total Paid amount:", p.totalPaid);
-      if (newVal !== null && !isNaN(newVal)) { p.totalPaid = parseInt(newVal); renderTable(); }
+      const v = prompt("Enter new Total Paid amount:", p.totalPaid);
+      if (v !== null && !isNaN(v)) { p.totalPaid = parseInt(v); renderTable(); }
     }
 
     function initEliminate(name) {
       if (document.getElementById('elim-dialog')) return;
-      const killers = players.filter(pl => pl.name !== name && !pl.eliminated).map(pl => pl.name);
-      const options = killers.map(k => `<option value="${k}">${k}</option>`).join('');
-      const dialog  = document.createElement('div');
-      dialog.id = 'elim-dialog';
-      dialog.style.cssText = "position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:white;padding:20px;border:3px solid #ffa726;z-index:1000;border-radius:10px;text-align:center;box-shadow:0 4px 15px rgba(0,0,0,0.3);";
-      dialog.innerHTML = `
+      const options = players.filter(pl => pl.name !== name && !pl.eliminated)
+                             .map(k => `<option value="${k.name}">${k.name}</option>`).join('');
+      const d = document.createElement('div');
+      d.id = 'elim-dialog';
+      d.style.cssText = "position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:white;padding:20px;border:3px solid #ffa726;z-index:1000;border-radius:10px;text-align:center;box-shadow:0 4px 15px rgba(0,0,0,0.3);";
+      d.innerHTML = `
         <h3 style="color:#e65100;margin-top:0;">Eliminate ${name}</h3>
         <p>Who eliminated them?</p>
         <select id="killerSelect" style="padding:5px;font-size:16px;width:100%;margin-bottom:15px;">
@@ -673,7 +648,7 @@
           <button onclick="confirmElimination('${name}')" style="background:#f44336;color:white;">Confirm</button>
           <button onclick="document.body.removeChild(document.getElementById('elim-dialog'))">Cancel</button>
         </div>`;
-      document.body.appendChild(dialog);
+      document.body.appendChild(d);
     }
 
     function confirmElimination(name) {
@@ -683,13 +658,12 @@
       document.body.removeChild(document.getElementById('elim-dialog'));
       p.eliminated = true; p.eliminationTime = Date.now(); p.eliminatedBy = killer;
       renderTable();
-      const activeCount = players.filter(pl => !pl.eliminated).length;
-      if (activeCount === 1) checkForWinner();
-      else if (activeCount > 1) triggerWebhook('elim', name);
+      const active = players.filter(pl => !pl.eliminated).length;
+      if (active === 1) checkForWinner();
+      else if (active > 1) triggerWebhook('elim', name, killer);
     }
 
     function godKill(name) {
-      if (!godModeActive) return;
       saveState();
       const p = players.find(x => x.name === name);
       p.eliminated = true; p.eliminationTime = Date.now(); p.eliminatedBy = "God Mode";
@@ -698,18 +672,50 @@
     }
 
     function godRevive(name) {
-      if (!godModeActive) return;
       saveState();
       const p = players.find(x => x.name === name);
       p.eliminated = false; p.eliminationTime = null;
       renderTable();
     }
 
+    // Calculates the killer bonus winner from current game data.
+    // Rules: only real kills (not God Mode), only eligible if finished 3rd or worse (didn't cash).
+    function calcKillerBonus() {
+      // Count kills per player, excluding God Mode kills
+      const killCount = {};
+      players.forEach(p => {
+        if (p.eliminatedBy && p.eliminatedBy !== 'N/A' && p.eliminatedBy !== 'God Mode') {
+          killCount[p.eliminatedBy] = (killCount[p.eliminatedBy] || 0) + 1;
+        }
+        // Also count kills from rebuy deaths
+        (p.rebuyEliminations || []).forEach(rb => {
+          if (rb.eliminatedBy && rb.eliminatedBy !== 'N/A' && rb.eliminatedBy !== 'God Mode') {
+            killCount[rb.eliminatedBy] = (killCount[rb.eliminatedBy] || 0) + 1;
+          }
+        });
+      });
+
+      // Eligible killers: finished 3rd or worse (i.e. eliminated, not in top 2 active spots)
+      // At the point this is called, active players are 1st/2nd. Everyone eliminated is 3rd+.
+      const activePlayers = players.filter(p => !p.eliminated);
+      const ineligible    = new Set(activePlayers.map(p => p.name));
+
+      const eligible = Object.entries(killCount)
+        .filter(([name]) => !ineligible.has(name))
+        .sort((a, b) => b[1] - a[1]);
+
+      if (eligible.length === 0) return 'No killer bonus';
+
+      const max     = eligible[0][1];
+      const winners = eligible.filter(([, count]) => count === max).map(([name]) => name);
+      return winners.join(' & ');
+    }
+
     function checkForWinner() {
       const active = players.filter(p => !p.eliminated);
       if (active.length === 1 && tournamentStarted && !tournamentEnded) {
         saveState();
-        tournamentStarted = false; tournamentEnded = true;
+        tournamentEnded = true; tournamentStarted = false;
         pauseTimer();
         document.getElementById('startBtn').disabled       = false;
         document.getElementById('endBtn').disabled         = true;
@@ -717,85 +723,74 @@
         document.getElementById('loadDashboardBtn').disabled = false;
         document.getElementById('majorToggle').disabled    = false;
         renderTable();
-        triggerWebhook('winner');
-        showMessage(`🏆 ${active[0].name} Wins!`);
-        alert(`🏆 ${active[0].name} Wins!\n\nTournament has automatically ended.\nDon't forget to SAVE.`);
+        const killerBonus = calcKillerBonus();
+        triggerWebhook('winner', active[0].name, killerBonus);
+        showMessage(`🏆 ${active[0].name} Wins! Killer bonus: ${killerBonus}`);
+        alert(`🏆 ${active[0].name} Wins!\n\nKiller Bonus: ${killerBonus}\n\nTournament has automatically ended.\nDon't forget to SAVE.`);
       }
     }
 
-    // =============================================
+    // ══════════════════════════════════════════
     // TOURNAMENT CONTROL
-    // =============================================
+    // ══════════════════════════════════════════
     function startTournament() {
       saveState();
       tournamentStarted = true;
       document.getElementById('startBtn').disabled    = true;
       document.getElementById('endBtn').disabled      = false;
       document.getElementById('majorToggle').disabled = true;
-      players.sort((a, b) => a.name.localeCompare(b.name));
-      renderTable();
-      showMessage("Tournament Started!");
-      startTimer();
+      players.sort((a,b) => a.name.localeCompare(b.name));
+      renderTable(); showMessage("Tournament Started!"); startTimer();
     }
 
     function endTournament() {
       if (tournamentEnded) return;
       if (!confirm("End Tournament and Finalize Results?")) return;
       saveState();
-      tournamentStarted = false; tournamentEnded = true;
-      pauseTimer();
-      document.getElementById('startBtn').disabled       = false;
-      document.getElementById('endBtn').disabled         = true;
-      document.getElementById('exportBtn').disabled      = false;
+      tournamentStarted = false; tournamentEnded = true; pauseTimer();
+      document.getElementById('startBtn').disabled         = false;
+      document.getElementById('endBtn').disabled           = true;
+      document.getElementById('exportBtn').disabled        = false;
       document.getElementById('loadDashboardBtn').disabled = false;
-      document.getElementById('majorToggle').disabled    = false;
-      renderTable();
-      triggerWebhook('winner');
-      showMessage("Tournament Ended Manually!");
+      document.getElementById('majorToggle').disabled      = false;
+      renderTable(); triggerWebhook('winner'); showMessage("Tournament Ended Manually!");
     }
 
-    // =============================================
-    // PRIZE CALCULATION
-    // FIX: Single consistent rounding logic used everywhere.
-    // House fee = 10% snapped to nearest £5.
-    // 2nd = 20% of pot snapped to nearest £5. 1st = remainder.
-    // =============================================
-    function calcPrizes(totalPaid) {
-      const rawFee = totalPaid * 0.10;
-      const fee    = Math.round(rawFee / 5) * 5;
-      const pot    = Math.max(0, totalPaid - fee);
-      let   p2     = Math.round((pot * 0.2) / 5) * 5;
-      let   p1     = pot - p2;
-      if (p1 < p2) { p1 = pot; p2 = 0; }
-      return { fee, pot, p1, p2 };
+    // FIX: calculatePot now uses Math.round to nearest £5 — same as updatePrizeInfo —
+    // so the pot value exported to Sheets always matches what's displayed on screen.
+    function calculatePot() {
+      const total = players.reduce((s,p) => s + p.totalPaid, 0);
+      const fee   = Math.round((total * 0.10) / 5) * 5;
+      return Math.max(0, total - fee);
     }
 
     function updatePrizeInfo() {
-      const totalPaid = players.reduce((sum, p) => sum + p.totalPaid, 0);
-      const { fee, pot, p1, p2 } = calcPrizes(totalPaid);
-
+      const total = players.reduce((s,p) => s + p.totalPaid, 0);
+      const fee   = Math.round((total * 0.10) / 5) * 5;
+      const pot   = Math.max(0, total - fee);
+      let p2 = Math.round((pot * 0.2) / 5) * 5;
+      let p1 = pot - p2;
+      if (p1 < p2) { p1 = pot; p2 = 0; }
       document.getElementById('currentPrizePool').innerText = pot;
       document.getElementById('firstPrize').innerText       = p1;
       document.getElementById('secondPrize').innerText      = p2;
-      // FIX: This is the only place that writes playerCount — no overwrite below.
+      // FIX: this is now the only place that writes playerCount — no stale overwrite
       document.getElementById('playerCount').innerText =
         `Players: ${players.length} | Prize Pot: £${pot} | House Fee: 10% (£${fee})`;
     }
 
     function showMessage(msg) {
       const el = document.getElementById('statusMessage');
-      el.innerText = msg;
-      el.classList.add('show');
+      el.innerText = msg; el.classList.add('show');
       setTimeout(() => el.classList.remove('show'), 3000);
     }
 
-    // =============================================
+    // ══════════════════════════════════════════
     // TIMER
-    // =============================================
+    // ══════════════════════════════════════════
     function updateRoundDisplay() {
-      const r    = rounds[currentRound];
-      const nextR= rounds[currentRound + 1];
-
+      const r     = rounds[currentRound];
+      const nextR = rounds[currentRound + 1];
       let html = `<div>${r.name}</div>`;
       if (r.isBreak) {
         html += `<div style="font-size:0.8em;color:#d84315;">BREAK</div>`;
@@ -809,36 +804,26 @@
         document.querySelectorAll('#breakToggles input[type="checkbox"]').forEach(cb => cb.checked = false);
       }
       document.getElementById('roundInfo').innerHTML = html;
-
-      if (!timerRunning) {
-        timeLeft = r.duration * (r.isTest ? 5 : 60);
-      }
+      if (!timerRunning) timeLeft = r.duration * (r.isTest ? 5 : 60);
       displayTime();
     }
 
     function displayTime() {
-      const m = Math.floor(timeLeft / 60);
-      const s = timeLeft % 60;
+      const m = Math.floor(timeLeft / 60), s = timeLeft % 60;
       document.getElementById('timeRemaining').innerText =
-        `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+        `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
     }
 
     function startTimer() {
-      if (timerRunning) return;
-      if (timeLeft <= 0) return;
-      clearInterval(timer);
-      timerRunning = true;
+      if (timerRunning || timeLeft <= 0) return;
+      clearInterval(timer); timerRunning = true;
       document.getElementById('timerStartBtn').disabled = true;
       document.getElementById('timerPauseBtn').disabled = false;
-      timer = setInterval(() => {
-        if (timeLeft > 0) { timeLeft--; displayTime(); }
-        else roundComplete();
-      }, 1000);
+      timer = setInterval(() => { timeLeft > 0 ? (timeLeft--, displayTime()) : roundComplete(); }, 1000);
     }
 
     function pauseTimer() {
-      clearInterval(timer);
-      timerRunning = false;
+      clearInterval(timer); timerRunning = false;
       document.getElementById('timerStartBtn').disabled = false;
       document.getElementById('timerPauseBtn').disabled = true;
     }
@@ -851,216 +836,191 @@
     }
 
     function skipRound() {
-      saveState();
-      pauseTimer();
+      saveState(); pauseTimer();
       currentRound = Math.min(currentRound + 1, rounds.length - 1);
       const r = rounds[currentRound];
       timeLeft = r.duration * (r.isTest ? 5 : 60);
       updateRoundDisplay();
-      if (r.isBreak) triggerWebhook('break');
-      else triggerWebhook('round', r.sb, r.bb);
+      r.isBreak ? triggerWebhook('break') : triggerWebhook('round', r.sb, r.bb);
       if (tournamentStarted && !tournamentEnded) startTimer();
     }
 
     function roundComplete() {
-      document.getElementById('roundAlarm').play().catch(e => console.log("Audio play failed"));
+      document.getElementById('roundAlarm').play().catch(() => {});
       if (currentRound < rounds.length - 1) {
         currentRound++;
         const r = rounds[currentRound];
         timeLeft = r.duration * (r.isTest ? 5 : 60);
         updateRoundDisplay();
-        if (r.isBreak) triggerWebhook('break');
-        else triggerWebhook('round', r.sb, r.bb);
+        r.isBreak ? triggerWebhook('break') : triggerWebhook('round', r.sb, r.bb);
       } else {
-        alert("Tournament Structure Complete!");
-        pauseTimer();
+        alert("Tournament Structure Complete!"); pauseTimer();
       }
     }
 
-    // =============================================
+    // ══════════════════════════════════════════
     // GOOGLE SHEETS
-    // =============================================
+    // ══════════════════════════════════════════
     function handleClientLoad() {
       tokenClient = google.accounts.oauth2.initTokenClient({
-        client_id: CLIENT_ID,
-        scope: SCOPES,
-        callback: (tokenResponse) => {
-          if (tokenResponse && tokenResponse.access_token) {
+        client_id: CLIENT_ID, scope: SCOPES,
+        callback: tok => {
+          if (tok && tok.access_token) {
             googleApiReady = true;
             if (window.pendingAction === 'export')    exportData();
             if (window.pendingAction === 'dashboard') loadDashboard();
           }
         },
       });
-      gapi.load('client', () => {
-        gapi.client.init({ discoveryDocs: ["https://sheets.googleapis.com/$discovery/rest?version=v4"] });
-      });
+      gapi.load('client', () => gapi.client.init({ discoveryDocs: ["https://sheets.googleapis.com/$discovery/rest?version=v4"] }));
     }
 
-    function signInAndExport()        { window.pendingAction = 'export';    if (googleApiReady && gapi.client.sheets) exportData();    else tokenClient.requestAccessToken(); }
-    function signInAndLoadDashboard() { window.pendingAction = 'dashboard'; if (googleApiReady && gapi.client.sheets) loadDashboard(); else tokenClient.requestAccessToken(); }
+    function signInAndExport()         { window.pendingAction = 'export';    if (googleApiReady && gapi.client.sheets) exportData();    else tokenClient.requestAccessToken(); }
+    function signInAndLoadDashboard()  { window.pendingAction = 'dashboard'; if (googleApiReady && gapi.client.sheets) loadDashboard(); else tokenClient.requestAccessToken(); }
 
     async function exportData() {
       if (!tournamentEnded && !confirm("Tournament hasn't officially ended. Save anyway?")) return;
 
-      const timestamp    = new Date().toISOString().replace(/T/,' ').replace(/\..+/,'');
-      const dateStr      = timestamp.split(' ')[0];
-      const timeStr      = timestamp.split(' ')[1];
-      const tournId      = `${dateStr}_${timeStr.replace(/:/g,'-')}`;
-      const isMajor      = document.getElementById('majorToggle').checked;
+      const ts       = new Date().toISOString().replace(/T/,' ').replace(/\..+/,'');
+      const dateStr  = ts.split(' ')[0];
+      const timeStr  = ts.split(' ')[1];
+      const tournId  = `${dateStr}_${timeStr.replace(/:/g,'-')}`;
+      const isMajor  = document.getElementById('majorToggle').checked;
       const tournamentName = document.getElementById('tournamentNameSelect').value;
 
-      const rows             = [];
-      const activePlayers    = players.filter(p => !p.eliminated);
-      const eliminatedPlayers= players.filter(p => p.eliminated).sort((a,b) => b.eliminationTime - a.eliminationTime);
-      const totalP           = players.length;
+      let rows = [];
+      const activePlayers   = players.filter(p => !p.eliminated);
+      const elimPlayers     = players.filter(p =>  p.eliminated).sort((a,b) => b.eliminationTime - a.eliminationTime);
+      const totalP          = players.length;
 
-      // Rebuy rows
+      // Process rebuys
       players.forEach(p => {
         (p.rebuyEliminations || []).forEach(rb => {
-          rows.push([dateStr, timeStr, tournId, p.name, 0, totalP, 0, 0, 0, 0, 0, rb.eliminatedBy, tournamentName, isMajor]);
+          rows.push([dateStr,timeStr,tournId,p.name,0,totalP,0,0,0,0,0,rb.eliminatedBy,tournamentName,isMajor]);
         });
       });
 
-      // Final rankings
-      let finalRankings = [];
-      activePlayers.forEach(p    => finalRankings.push({ player: p, rank: 1 }));
-      let currentRk = activePlayers.length + 1;
-      eliminatedPlayers.forEach(p => { finalRankings.push({ player: p, rank: currentRk }); currentRk++; });
+      // FIX: use same pot calculation as display (Math.round to nearest £5)
+      const pot = calculatePot();
 
-      // FIX: Use the single calcPrizes() for consistent pot/prize calculation
-      const totalPaid = players.reduce((sum, p) => sum + p.totalPaid, 0);
-      const { pot, p1: firstPrize, p2: secondPrize } = calcPrizes(totalPaid);
+      // FIX: single consistent rounding for prizes; dead duplicate/incorrect code removed
+      const p2base = Math.round((pot * 0.2) / 5) * 5;
+      const p1base = pot - p2base < p2base ? pot : pot - p2base;
+      const p2final = pot - p2base < p2base ? 0 : p2base;
 
-      finalRankings.forEach(item => {
-        const p    = item.player;
-        const rank = item.rank;
-        // FIX: Clean prize logic — no dead duplicate code
-        let prize = 0;
-        if (activePlayers.length === 1) {
-          if (rank === 1) prize = firstPrize;
-        } else {
-          if (rank === 1) prize = firstPrize;
-          if (rank === 2) prize = secondPrize;
-        }
-        const roi = p.totalPaid > 0 ? ((prize - p.totalPaid) / p.totalPaid * 100).toFixed(1) : 0;
-        rows.push([
-          dateStr, timeStr, tournId, p.name,
-          rank, totalP, p.totalPaid, prize,
-          p.stacks - 1, p.hasAddon ? 1 : 0,
-          roi, p.eliminated ? p.eliminatedBy : 'N/A',
-          tournamentName, isMajor
-        ]);
+      let rank = 1;
+      activePlayers.forEach(p => {
+        const prize = rank === 1 ? p1base : (rank === 2 ? p2final : 0);
+        const roi   = p.totalPaid > 0 ? ((prize - p.totalPaid) / p.totalPaid * 100).toFixed(1) : 0;
+        rows.push([dateStr,timeStr,tournId,p.name,rank,totalP,p.totalPaid,prize,p.stacks-1,p.hasAddon?1:0,roi,'N/A',tournamentName,isMajor]);
+        rank++;
+      });
+
+      let elimRank = activePlayers.length + 1;
+      elimPlayers.forEach(p => {
+        const prize = elimRank === 2 ? p2final : 0;
+        const roi   = p.totalPaid > 0 ? ((prize - p.totalPaid) / p.totalPaid * 100).toFixed(1) : 0;
+        rows.push([dateStr,timeStr,tournId,p.name,elimRank,totalP,p.totalPaid,prize,p.stacks-1,p.hasAddon?1:0,roi,p.eliminatedBy||'N/A',tournamentName,isMajor]);
+        elimRank++;
       });
 
       try {
         await gapi.client.sheets.spreadsheets.values.append({
-          spreadsheetId: SPREADSHEET_ID,
-          range: 'PlayerResults!A:N',
-          valueInputOption: 'USER_ENTERED',
-          resource: { values: rows }
+          spreadsheetId: SPREADSHEET_ID, range: 'PlayerResults!A:N',
+          valueInputOption: 'USER_ENTERED', resource: { values: rows },
         });
         alert("Data Exported to Google Sheets!");
       } catch (err) {
-        console.error("Export error", err);
-        if (err.status === 401) {
-          alert("Google session expired. Please re-authenticate via the popup, then click Save again.");
-          tokenClient.requestAccessToken();
-        } else {
-          alert("Error exporting data. Check console.");
-        }
+        console.error(err);
+        if (err.status === 401) { alert("Google session expired. Re-authenticate then try again."); tokenClient.requestAccessToken(); }
+        else alert("Error exporting data. Check console.");
       }
     }
 
-    // =============================================
+    // ══════════════════════════════════════════
     // DASHBOARD
-    // =============================================
+    // ══════════════════════════════════════════
     async function loadDashboard() {
       document.getElementById('dashboardSection').style.display = 'block';
       window.scrollTo(0, document.body.scrollHeight);
       try {
-        const res = await gapi.client.sheets.spreadsheets.values.get({ spreadsheetId: SPREADSHEET_ID, range: 'PlayerResults!A2:N' });
+        const res     = await gapi.client.sheets.spreadsheets.values.get({ spreadsheetId: SPREADSHEET_ID, range: 'PlayerResults!A2:N' });
         const allRows = res.result.values || [];
-        if (allRows.length === 0) { document.getElementById('tab-p2026').innerHTML = "No data found."; return; }
+        if (!allRows.length) { document.getElementById('p2026Content').innerHTML = "No data found."; return; }
         const rows2026 = allRows.filter(r => r[0].startsWith('2026'));
-        const stats2026 = calculate2026Points(rows2026);
-        const uniqueTourns = new Set(rows2026.map(r => r[2])).size;
-        const detail2026 = calculateDetailedStats(rows2026, uniqueTourns);
-        const titles  = calculateTitles(calculateDetailedStats(rows2026, uniqueTourns, true));
-        const allTime = calculateAllTime(allRows);
+        const uniq     = new Set(rows2026.map(r => r[2])).size;
+        const stats    = calculate2026Points(rows2026);
+        const detail   = calculateDetailedStats(rows2026, uniq);
+        const titles   = calculateTitles(calculateDetailedStats(rows2026, uniq, true));
+        const allTime  = calculateAllTime(allRows);
 
-        document.getElementById('p2026Content').innerHTML  = render2026Leaderboard(stats2026);
+        document.getElementById('p2026Content').innerHTML  = render2026Leaderboard(stats);
         document.getElementById('titlesContent').innerHTML = renderTitles(titles);
-        window.detailedDataCache = detail2026;
-        document.getElementById('detailedContent').innerHTML = renderDetailedTable(detail2026);
-        document.getElementById('allTimeContent').innerHTML = renderAllTime(allTime);
-      } catch(err) {
-        console.error(err);
-        alert("Error loading dashboard data.");
-      }
+        window.detailedDataCache = detail;
+        document.getElementById('detailedContent').innerHTML = renderDetailedTable(detail);
+        document.getElementById('allTimeContent').innerHTML  = renderAllTime(allTime);
+      } catch (err) { console.error(err); alert("Error loading dashboard data."); }
     }
 
     function calculate2026Points(rows) {
-      const tournaments = {}, stats = {};
+      const tourns = {}, stats = {};
       rows.forEach(r => {
-        const [d, t, tid, name, rankStr, f, paid, earn, rebuy, addon, roi, killer, tname, isMaj] = r;
-        const isMajor = isMaj === 'TRUE';
-        const rank = parseInt(rankStr);
-        const multiplier = isMajor ? 2 : 1;
-        if (!tournaments[tid]) tournaments[tid] = { kills: {}, isMajor, ranks: {} };
-        if (rank > 0) tournaments[tid].ranks[name] = rank;
-        if (killer && killer !== 'N/A') tournaments[tid].kills[killer] = (tournaments[tid].kills[killer] || 0) + 1;
+        const [d,t,tid,name,rankStr,,,,,,, killer,,isMaj] = r;
+        const rank = parseInt(rankStr), mult = isMaj==='TRUE' ? 2 : 1;
+        if (!tourns[tid]) tourns[tid] = { kills:{}, isMajor: isMaj==='TRUE', ranks:{} };
+        if (rank > 0) tourns[tid].ranks[name] = rank;
+        if (killer && killer !== 'N/A') tourns[tid].kills[killer] = (tourns[tid].kills[killer]||0)+1;
         if (rank > 0) {
           if (!stats[name]) stats[name] = { points:0, wins:0, seconds:0, thirds:0, att:0, killerWins:0 };
           stats[name].att++;
-          stats[name].points += (1 * multiplier);
-          if (rank===1) { stats[name].points += (10 * multiplier); stats[name].wins++; }
-          if (rank===2) { stats[name].points += (7  * multiplier); stats[name].seconds++; }
-          if (rank===3) { stats[name].points += (4  * multiplier); stats[name].thirds++; }
+          stats[name].points += 1*mult;
+          if (rank===1) { stats[name].points += 10*mult; stats[name].wins++; }
+          if (rank===2) { stats[name].points +=  7*mult; stats[name].seconds++; }
+          if (rank===3) { stats[name].points +=  4*mult; stats[name].thirds++; }
         }
       });
-      Object.values(tournaments).forEach(t => {
+      Object.values(tourns).forEach(t => {
         const mult = t.isMajor ? 2 : 1;
-        const eligible = [];
-        Object.keys(t.kills).forEach(k => { const rk = t.ranks[k]; if (rk && rk >= 3) eligible.push({ name: k, count: t.kills[k] }); });
-        if (eligible.length > 0) {
-          eligible.sort((a,b) => b.count - a.count);
-          const max = eligible[0].count;
-          eligible.forEach(ek => { if (ek.count === max && stats[ek.name]) { stats[ek.name].points += (2 * mult); stats[ek.name].killerWins++; } });
+        const elig = Object.keys(t.kills)
+          .filter(k => t.ranks[k] && t.ranks[k] >= 3)
+          .map(k => ({ name:k, count: t.kills[k] }));
+        if (elig.length) {
+          elig.sort((a,b) => b.count - a.count);
+          const max = elig[0].count;
+          elig.filter(e => e.count===max).forEach(e => { if (stats[e.name]) { stats[e.name].points += 2*mult; stats[e.name].killerWins++; } });
         }
       });
       return Object.entries(stats).sort((a,b) => b[1].points - a[1].points);
     }
 
-    function calculateDetailedStats(rows, totalTournaments, returnRaw = false) {
+    function calculateDetailedStats(rows, total, returnRaw=false) {
       const s = {};
       rows.forEach(r => {
-        const [d,t,id,name,rankStr,fieldStr,paid,earn,rebuy,addon,roi,killer] = r;
-        const rank = parseInt(rankStr), field = parseInt(fieldStr);
-        const cost = parseFloat(paid)||0, earnings = parseFloat(earn)||0;
-        if (!s[name]) s[name] = { played:0, wins:0, sec:0, third:0, rebuys:0, addons:0, kills:0, deaths:0, firstOuts:0, totalProfit:0 };
+        const [,,, name, rankStr, fieldStr,, earn, rebuy, addon,, killer] = r;
+        const rank=parseInt(rankStr), field=parseInt(fieldStr);
+        const cost=parseFloat(r[6])||0, earnings=parseFloat(earn)||0;
+        if (!s[name]) s[name] = { played:0,wins:0,sec:0,third:0,rebuys:0,addons:0,kills:0,deaths:0,firstOuts:0,totalProfit:0 };
         if (rank > 0) {
           s[name].played++; s[name].rebuys += parseInt(rebuy)||0; s[name].addons += parseInt(addon)||0;
-          s[name].totalProfit += (earnings - cost);
+          s[name].totalProfit += earnings - cost;
           if (rank===1) s[name].wins++;
           if (rank===2) s[name].sec++;
           if (rank===3) s[name].third++;
           if (rank > 1) s[name].deaths++;
-          if (rank === field) s[name].firstOuts++;
+          if (rank===field) s[name].firstOuts++;
         }
-        if (killer && killer !== 'N/A') {
-          if (!s[killer]) s[killer] = { played:0, wins:0, sec:0, third:0, rebuys:0, addons:0, kills:0, deaths:0, firstOuts:0, totalProfit:0 };
+        if (killer && killer!=='N/A') {
+          if (!s[killer]) s[killer] = { played:0,wins:0,sec:0,third:0,rebuys:0,addons:0,kills:0,deaths:0,firstOuts:0,totalProfit:0 };
           s[killer].kills++;
         }
       });
       if (returnRaw) return s;
-      const penaltyDivisor = Math.ceil(totalTournaments * 0.5);
-      return Object.entries(s).map(([name, d]) => {
-        const effectiveGames = Math.max(d.played, penaltyDivisor);
-        d.sharkRateVal = (d.wins / effectiveGames) * 100;
-        d.sharkRate    = d.sharkRateVal.toFixed(0) + '%';
-        d.cashRateVal  = d.played > 0 ? ((d.wins + d.sec) / d.played) * 100 : 0;
-        d.cashRate     = d.cashRateVal.toFixed(0) + '%';
+      const pen = Math.ceil(total * 0.5);
+      return Object.entries(s).map(([name,d]) => {
+        const eff = Math.max(d.played, pen);
+        d.sharkRateVal = (d.wins/eff)*100; d.sharkRate = d.sharkRateVal.toFixed(0)+'%';
+        d.cashRateVal  = d.played > 0 ? ((d.wins+d.sec)/d.played)*100 : 0;
+        d.cashRate     = d.cashRateVal.toFixed(0)+'%';
         return { name, ...d };
       }).sort((a,b) => b.sharkRateVal - a.sharkRateVal);
     }
@@ -1071,13 +1031,13 @@
       const data = window.detailedDataCache;
       if (!data) return;
       data.sort((a,b) => {
-        if (col === 'name')  return detailedSort.asc ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name);
-        if (col === 'shark') return detailedSort.asc ? a.sharkRateVal - b.sharkRateVal : b.sharkRateVal - a.sharkRateVal;
-        if (col === 'cash')  return detailedSort.asc ? a.cashRateVal  - b.cashRateVal  : b.cashRateVal  - a.cashRateVal;
-        return detailedSort.asc ? a[col] - b[col] : b[col] - a[col];
+        if (col==='name')  return detailedSort.asc ? a.name.localeCompare(b.name)       : b.name.localeCompare(a.name);
+        if (col==='shark') return detailedSort.asc ? a.sharkRateVal - b.sharkRateVal    : b.sharkRateVal - a.sharkRateVal;
+        if (col==='cash')  return detailedSort.asc ? a.cashRateVal  - b.cashRateVal     : b.cashRateVal  - a.cashRateVal;
+        return detailedSort.asc ? a[col]-b[col] : b[col]-a[col];
       });
       document.getElementById('detailedContent').innerHTML = renderDetailedTable(data);
-    }
+    };
 
     function renderDetailedTable(data) {
       return `
@@ -1095,71 +1055,76 @@
         <th class="sortable" onclick="sortDetailed('shark')" style="background:#fff3e0;">Shark %</th>
         <th class="sortable" onclick="sortDetailed('cash')">Cash %</th>
       </tr></thead><tbody>
-        ${data.map(p => `<tr>
-          <td><strong>${p.name}</strong></td>
-          <td>${p.played}</td><td>${p.wins}</td><td>${p.sec}</td><td>${p.third}</td>
-          <td>${p.kills}</td><td>${p.deaths}</td><td>${p.rebuys}</td><td>${p.addons}</td>
-          <td style="background:#fff3e0;font-weight:bold;">${p.sharkRate}</td>
-          <td>${p.cashRate}</td>
-        </tr>`).join('')}
+      ${data.map(p => `<tr>
+        <td><strong>${p.name}</strong></td><td>${p.played}</td><td>${p.wins}</td><td>${p.sec}</td><td>${p.third}</td>
+        <td>${p.kills}</td><td>${p.deaths}</td><td>${p.rebuys}</td><td>${p.addons}</td>
+        <td style="background:#fff3e0;font-weight:bold;">${p.sharkRate}</td><td>${p.cashRate}</td>
+      </tr>`).join('')}
       </tbody></table>`;
     }
 
     function calculateAllTime(rows) {
       const s = {};
       rows.forEach(r => {
-        const name = r[3], rank = parseInt(r[4]);
-        if (!s[name]) s[name] = { played:0, wins:0, sec:0, third:0, kills:0 };
+        const name=r[3], rank=parseInt(r[4]);
+        if (!s[name]) s[name] = { played:0,wins:0,sec:0,third:0,kills:0 };
         if (rank > 0) { s[name].played++; if(rank===1)s[name].wins++; if(rank===2)s[name].sec++; if(rank===3)s[name].third++; }
-        if (r[11] && r[11] !== 'N/A') {
-          if (!s[r[11]]) s[r[11]] = { played:0, wins:0, sec:0, third:0, kills:0 };
-          s[r[11]].kills++;
-        }
+        if (r[11] && r[11]!=='N/A') { if(!s[r[11]]) s[r[11]]={played:0,wins:0,sec:0,third:0,kills:0}; s[r[11]].kills++; }
       });
       return Object.entries(s).sort((a,b) => b[1].wins - a[1].wins);
     }
 
-    function calculateTitles(statsObj) {
-      let t = { champion:{n:[],v:0}, runnerup:{n:[],v:0}, musk:{n:[],v:0}, fixture:{n:[],v:0}, killer:{n:[],v:0}, early:{n:[],v:0}, phoenix:{n:[],v:0}, bubble:{n:[],v:0} };
-      const upd = (key, name, val) => { if(val>t[key].v){t[key]={n:[name],v:val};}else if(val===t[key].v&&val>0){t[key].n.push(name);} };
-      Object.entries(statsObj).forEach(([n,d]) => { upd('champion',n,d.wins); upd('runnerup',n,d.sec); upd('musk',n,d.totalProfit); upd('fixture',n,d.played); upd('killer',n,d.kills); upd('early',n,d.firstOuts); upd('phoenix',n,d.rebuys); upd('bubble',n,d.third); });
+    function calculateTitles(obj) {
+      const t = { champion:{n:[],v:0}, runnerup:{n:[],v:0}, musk:{n:[],v:0}, fixture:{n:[],v:0}, killer:{n:[],v:0}, early:{n:[],v:0}, phoenix:{n:[],v:0}, bubble:{n:[],v:0} };
+      const up = (key,name,val) => { if(val>t[key].v){t[key]={n:[name],v:val};} else if(val===t[key].v&&val>0){t[key].n.push(name);} };
+      Object.entries(obj).forEach(([n,d]) => {
+        up('champion',n,d.wins); up('runnerup',n,d.sec); up('musk',n,d.totalProfit); up('fixture',n,d.played);
+        up('killer',n,d.kills); up('early',n,d.firstOuts); up('phoenix',n,d.rebuys); up('bubble',n,d.third);
+      });
       return t;
     }
 
-    function formatNames(names) { return names.length===0?'-':names.length>3?'Many':names.join(', '); }
+    function formatNames(names) {
+      if (!names.length) return '-';
+      if (names.length > 3) return 'Many';
+      return names.join(', ');
+    }
 
     function renderTitles(t) {
+      const card = (emoji, label, holder, stat) =>
+        `<div class="title-card"><span class="title-card-emoji">${emoji}</span><div class="title-card-name">${label}</div><div class="title-card-holder">${holder}</div><div class="title-card-stat">${stat}</div></div>`;
       return `<div class="titles-grid" style="margin-top:20px;">
-        <div class="title-card"><span class="title-card-emoji">👑</span><div class="title-card-name">The Champion</div><div class="title-card-holder">${formatNames(t.champion.n)}</div><div class="title-card-stat">${t.champion.v} Wins</div></div>
-        <div class="title-card"><span class="title-card-emoji">🥈</span><div class="title-card-name">The Runner-up</div><div class="title-card-holder">${formatNames(t.runnerup.n)}</div><div class="title-card-stat">${t.runnerup.v} 2nds</div></div>
-        <div class="title-card"><span class="title-card-emoji">💰</span><div class="title-card-name">Elon Musk</div><div class="title-card-holder">${formatNames(t.musk.n)}</div><div class="title-card-stat">£${t.musk.v.toFixed(0)}</div></div>
-        <div class="title-card"><span class="title-card-emoji">🏠</span><div class="title-card-name">Permanent Fixture</div><div class="title-card-holder">${formatNames(t.fixture.n)}</div><div class="title-card-stat">${t.fixture.v} Games</div></div>
-        <div class="title-card"><span class="title-card-emoji">💀</span><div class="title-card-name">The Killer</div><div class="title-card-holder">${formatNames(t.killer.n)}</div><div class="title-card-stat">${t.killer.v} Kills</div></div>
-        <div class="title-card"><span class="title-card-emoji">🦅</span><div class="title-card-name">Early Bird</div><div class="title-card-holder">${formatNames(t.early.n)}</div><div class="title-card-stat">${t.early.v} 1st Outs</div></div>
-        <div class="title-card"><span class="title-card-emoji">🔥</span><div class="title-card-name">The Phoenix</div><div class="title-card-holder">${formatNames(t.phoenix.n)}</div><div class="title-card-stat">${t.phoenix.v} Rebuys</div></div>
-        <div class="title-card"><span class="title-card-emoji">🫧</span><div class="title-card-name">Bubble Boy</div><div class="title-card-holder">${formatNames(t.bubble.n)}</div><div class="title-card-stat">${t.bubble.v} 3rds</div></div>
+        ${card('👑','The Champion',    formatNames(t.champion.n), `${t.champion.v} Wins`)}
+        ${card('🥈','The Runner-up',   formatNames(t.runnerup.n), `${t.runnerup.v} 2nds`)}
+        ${card('💰','Elon Musk',       formatNames(t.musk.n),     `£${t.musk.v.toFixed(0)}`)}
+        ${card('🏠','Permanent Fixture',formatNames(t.fixture.n), `${t.fixture.v} Games`)}
+        ${card('💀','The Killer',      formatNames(t.killer.n),   `${t.killer.v} Kills`)}
+        ${card('🦅','Early Bird',      formatNames(t.early.n),    `${t.early.v} 1st Outs`)}
+        ${card('🔥','The Phoenix',     formatNames(t.phoenix.n),  `${t.phoenix.v} Rebuys`)}
+        ${card('🫧','Bubble Boy',      formatNames(t.bubble.n),   `${t.bubble.v} 3rds`)}
       </div>`;
     }
 
     function render2026Leaderboard(data) {
       return `<h3>2026 Points Leaderboard</h3>
-      <table><thead><tr><th>Rank</th><th>Player</th><th>Points</th><th>1st</th><th>2nd</th><th>3rd</th><th>Att</th><th>Killer Bonus</th></tr></thead>
-      <tbody>${data.map((p,i) => `<tr><td>#${i+1}</td><td><strong>${p[0]}</strong></td><td style="color:#d84315;font-weight:bold;">${p[1].points}</td><td>${p[1].wins}</td><td>${p[1].seconds}</td><td>${p[1].thirds}</td><td>${p[1].att}</td><td>${p[1].killerWins}</td></tr>`).join('')}</tbody></table>`;
+      <table><thead><tr><th>Rank</th><th>Player</th><th>Points</th><th>1st</th><th>2nd</th><th>3rd</th><th>Att</th><th>Killer Bonus</th></tr></thead><tbody>
+      ${data.map((p,i) => `<tr><td>#${i+1}</td><td><strong>${p[0]}</strong></td><td style="color:#d84315;font-weight:bold;">${p[1].points}</td><td>${p[1].wins}</td><td>${p[1].seconds}</td><td>${p[1].thirds}</td><td>${p[1].att}</td><td>${p[1].killerWins}</td></tr>`).join('')}
+      </tbody></table>`;
     }
 
     function renderAllTime(data) {
-      return `<table><thead><tr><th>Rank</th><th>Player</th><th>🥇 Wins</th><th>🥈 2nd</th><th>3rd</th><th>Games</th><th>Kills</th></tr></thead>
-      <tbody>${data.map((p,i) => `<tr><td>${i+1}</td><td>${p[0]}</td><td>${p[1].wins}</td><td>${p[1].sec}</td><td>${p[1].third}</td><td>${p[1].played}</td><td>${p[1].kills}</td></tr>`).join('')}</tbody></table>`;
+      return `<table><thead><tr><th>Rank</th><th>Player</th><th>🥇 Wins</th><th>🥈 2nd</th><th>3rd</th><th>Games</th><th>Kills</th></tr></thead><tbody>
+      ${data.map((p,i) => `<tr><td>${i+1}</td><td>${p[0]}</td><td>${p[1].wins}</td><td>${p[1].sec}</td><td>${p[1].third}</td><td>${p[1].played}</td><td>${p[1].kills}</td></tr>`).join('')}
+      </tbody></table>`;
     }
 
-    // FIX: switchTab now receives event explicitly — no implicit global
+    // FIX: event now passed explicitly as a parameter instead of relying on implicit global
     function switchTab(event, tabName) {
       document.querySelectorAll('.dashboard-tab').forEach(t => t.classList.remove('active'));
       document.querySelectorAll('.dashboard-tab-content').forEach(c => c.classList.remove('active'));
       event.target.classList.add('active');
       document.getElementById(`tab-${tabName}`).classList.add('active');
     }
-
   </script>
 </body>
 </html>
