@@ -188,6 +188,15 @@
       <button id="timerSkipBtn" onclick="skipRound()">SKIP ROUND</button>
     </div>
     
+<div id="breakToggles" style="display:none; background:#ffcc80; padding:15px; margin:15px 0; border-radius:10px; border:2px dashed #e65100; text-align:center;">
+      <div style="font-weight:bold; color:#e65100; margin-bottom:10px;">BREAK MINIGAMES</div>
+      <div style="display:flex; justify-content:center; gap:15px; flex-wrap:wrap;">
+        <label style="color:#d84315; font-weight:bold; cursor:pointer;"><input type="checkbox" style="transform:scale(1.2); margin-right:5px;"> Round 1</label>
+        <label style="color:#d84315; font-weight:bold; cursor:pointer;"><input type="checkbox" style="transform:scale(1.2); margin-right:5px;"> Round 2</label>
+        <label style="color:#d84315; font-weight:bold; cursor:pointer;"><input type="checkbox" style="transform:scale(1.2); margin-right:5px;"> Round 3</label>
+      </div>
+    </div>
+
     <div id="breakNotice" class="break-notice" style="display:none; background:#bbdefb; padding:15px; margin:15px 0; border-radius:10px; color:#0d47a1; font-weight:700; text-align:center;">
       BREAK TIME! - Add-ons available
     </div>
@@ -266,7 +275,7 @@
     ];
 
     const regularPlayers = [
-      'Andre', 'Craig', 'Dale', 'Declan', 'Elton', 'Graham', 'Jacques', 'James', 'Lachy', 'Luciano', 'Malzo', 'Matt', 'Nick', 'Rafa', 'Rhys', 'Roberto'
+      'Andre', 'Craig', 'Dale', 'Declan', 'Elton', 'Graham', 'Jacques', 'James', 'Lachy', 'Luciano', 'Malzo', 'Matt', 'Nick', 'Rafa', 'Rhys', 'Roberto', 'Egli' , 'Gus' , 'Jordan'
     ].sort();
 
     // === GLOBAL STATE ===
@@ -798,7 +807,8 @@ function updatePrizeInfo() {
         setTimeout(() => el.classList.remove('show'), 3000);
     }
 
-    // === TIMER LOGIC ===
+
+   // === TIMER LOGIC ===
     function updateRoundDisplay() {
       const r = rounds[currentRound];
       const nextR = rounds[currentRound + 1];
@@ -808,17 +818,22 @@ function updatePrizeInfo() {
       if (isBreak) {
         html += `<div style="font-size:0.8em; color:#d84315;">BREAK</div>`;
         document.getElementById('breakNotice').style.display = 'block';
+        document.getElementById('breakToggles').style.display = 'block'; // Show toggles
       } else {
         html += `<div style="font-size:1.8rem; margin-top:5px;">${r.sb.toLocaleString()} / ${r.bb.toLocaleString()}</div>`;
         if (nextR) html += `<div style="font-size:0.8rem; color:#777; margin-top:5px;">Next: ${nextR.sb}/${nextR.bb}</div>`;
         document.getElementById('breakNotice').style.display = 'none';
+        document.getElementById('breakToggles').style.display = 'none'; // Hide toggles
+        
+        // Auto-uncheck toggles when moving to a new round
+        document.querySelectorAll('#breakToggles input[type="checkbox"]').forEach(cb => cb.checked = false);
       }
       
       document.getElementById('roundInfo').innerHTML = html;
       
       // Calculate mins/secs if not running
       if (!timerRunning) {
-          timeLeft = r.duration * (r.isTest ? 5 : 60); // Fix: 5 seconds for test
+          timeLeft = r.duration * (r.isTest ? 5 : 60); 
       }
       displayTime();
     }
@@ -832,8 +847,10 @@ function updatePrizeInfo() {
 
     function startTimer() {
         if (timerRunning) return;
-        if (timeLeft === 0) updateRoundDisplay(); 
-        
+        if (timeLeft <= 0) return; // Prevent starting if time is empty
+
+        clearInterval(timer); // Bulletproof safety to prevent double-intervals
+
         timerRunning = true;
         document.getElementById('timerStartBtn').disabled = true;
         document.getElementById('timerPauseBtn').disabled = false;
@@ -858,17 +875,17 @@ function updatePrizeInfo() {
     function resetTimer() {
         pauseTimer();
         const r = rounds[currentRound];
-        timeLeft = r.duration * (r.isTest ? 5 : 60); // Fix 5s
+        timeLeft = r.duration * (r.isTest ? 5 : 60); 
         displayTime();
     }
 
-function skipRound() {
-        saveState(); // Save round/time state BEFORE skipping
+    function skipRound() {
+        saveState(); 
         
-        // Stop current
-        clearInterval(timer);
-        
-        // Advance
+        // 1. Fully pause to reset UI states and clear interval
+        pauseTimer(); 
+
+        // 2. Advance round
         currentRound = Math.min(currentRound + 1, rounds.length - 1);
         const r = rounds[currentRound];
         timeLeft = r.duration * (r.isTest ? 5 : 60); 
@@ -878,15 +895,13 @@ function skipRound() {
         if(r.isBreak) triggerWebhook('break');
         else triggerWebhook('round', r.sb, r.bb);
         
-        // Force Start if in game
-        timerRunning = false;
+        // 3. Auto-start if tournament is active (unless it's over)
         if (tournamentStarted && !tournamentEnded) {
             startTimer();
         }
     }
 
     function roundComplete() {
-        // SMOOTH TRANSITION: No pause, no alert
         document.getElementById('roundAlarm').play().catch(e=>console.log("Audio play failed"));
         
         if (currentRound < rounds.length - 1) {
@@ -897,11 +912,14 @@ function skipRound() {
             
             if(r.isBreak) triggerWebhook('break');
             else triggerWebhook('round', r.sb, r.bb);
+            // The interval keeps firing from startTimer(), automatically counting down the new round!
         } else {
             alert("Tournament Structure Complete!");
             pauseTimer();
         }
     }
+
+
 
     // === GOOGLE SHEETS INTEGRATION ===
     function handleClientLoad() {
