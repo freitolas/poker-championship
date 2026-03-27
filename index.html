@@ -769,18 +769,17 @@ function calculatePot() {
 function updatePrizeInfo() {
         let total = players.reduce((sum, p) => sum + p.totalPaid, 0);
         
-        // 1. Calculate House Fee (Always 10%, rounded UP to be safe)
+        // House Fee is ALWAYS 10% (rounded up)
         const fee = Math.ceil(total * 0.10);
         const pot = Math.max(0, total - fee);
         
-        // 2. Calculate 2nd Place (20% of Pot, rounded to nearest 5)
-        let p2 = Math.round((pot * 0.2) / 5) * 5;
+        // 2nd Place: 20% of Pot, ALWAYS rounded UP to nearest 5
+        let p2 = Math.ceil((pot * 0.2) / 5) * 5;
         
-        // 3. Calculate 1st Place (Whatever is left)
-        // This ensures 1st + 2nd ALWAYS equals the exact Pot
+        // 1st Place: The exact remainder
         let p1 = pot - p2;
         
-        // Edge case: If pot is tiny, ensure 1st gets everything
+        // Edge case fallback
         if (p1 < p2) { p1 = pot; p2 = 0; }
         
         document.getElementById('currentPrizePool').innerText = pot;
@@ -934,7 +933,7 @@ function skipRound() {
         else tokenClient.requestAccessToken();
     }
 
-    async function exportData() {
+  async function exportData() {
         if(!tournamentEnded && !confirm("Tournament hasn't officially ended. Save anyway?")) return;
         
         const timestamp = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
@@ -976,9 +975,19 @@ function skipRound() {
             const rank = item.rank;
             let prize = 0;
             const pot = calculatePot();
+            
+            // Standard Split
             if(rank === 1) prize = activePlayers.length === 1 ? pot * 0.8 : (pot / activePlayers.length); 
             if(activePlayers.length === 1 && rank === 1) prize = pot * 0.8;
             if(rank === 2) prize = pot * 0.2;
+            
+            // NEW ROUNDING LOGIC: Apply the "Round UP to nearest 5" rule for the database
+            if (rank === 1 || rank === 2) {
+                let p2 = Math.ceil((pot * 0.2) / 5) * 5;
+                let p1 = pot - p2;
+                if (p1 < p2) { p1 = pot; p2 = 0; }
+                prize = rank === 1 ? p1 : p2;
+            }
             
             const earnings = prize;
             const roi = p.totalPaid > 0 ? ((earnings - p.totalPaid)/p.totalPaid)*100 : 0;
@@ -1002,7 +1011,13 @@ function skipRound() {
             alert("Data Exported to Google Sheets!");
         } catch (err) {
             console.error("Export error", err);
-            alert("Error exporting data. Check console.");
+            // 401 Catch - Automatically request a new token if expired
+            if (err.status === 401) {
+                alert("Google session expired. Please re-authenticate via the popup, then click Save again.");
+                tokenClient.requestAccessToken();
+            } else {
+                alert("Error exporting data. Check console.");
+            }
         }
     }
 
