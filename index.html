@@ -18,68 +18,81 @@
       color: #7a4800; display: flex; min-height: 100vh;
     }
     .main-content { flex: 3; padding: 20px; min-width: 500px; overflow-y: auto; position: relative; }
-    h1 { text-align: center; color: #e65100; font-size: 2.2rem; margin-bottom: 15px; text-shadow: 2px 2px 4px rgba(0,0,0,0.1); position: relative; }
-    
+    h1 { text-align: center; color: #e65100; font-size: 2.2rem; margin-bottom: 15px; text-shadow: 2px 2px 4px rgba(0,0,0,0.1); }
+
+    /* TOP RIGHT BUTTON CLUSTER */
+    .top-btn-cluster { position: absolute; top: 20px; right: 20px; display: flex; gap: 8px; align-items: center; }
+    .smart-btn { background: #2E003E; color: #f7e348; border: 2px solid #dc2b71; font-size: 0.9rem; padding: 8px 12px; cursor: pointer; border-radius: 6px; }
+    .smart-btn:hover { background: #4a0060; }
+    .god-mode-btn { background: #1a1a2e; color: #c0c0c0; border: 2px solid #555; font-size: 0.9rem; padding: 8px 12px; cursor: pointer; border-radius: 6px; transition: all 0.3s; }
+    .god-mode-btn.active { background: #3e2723; color: #ffab91; border-color: #ff7043; box-shadow: 0 0 10px rgba(255,112,67,0.5); animation: godPulse 2s infinite; }
+    @keyframes godPulse { 0%,100% { box-shadow: 0 0 8px rgba(255,112,67,0.4); } 50% { box-shadow: 0 0 18px rgba(255,112,67,0.8); } }
+
+    /* GOD MODE BANNER */
+    .god-mode-banner { display: none; background: linear-gradient(90deg, #3e2723, #4e342e); border: 2px solid #ff7043; border-radius: 8px; padding: 10px 16px; margin-bottom: 15px; color: #ffab91; font-weight: 700; font-size: 0.95rem; text-align: center; letter-spacing: 1px; }
+    .god-mode-banner.active { display: block; }
+
     .game-info { background: linear-gradient(90deg, #ffd740 0%, #ffa726 100%); padding: 15px; border-radius: 10px; text-align: center; color: #d84315; font-weight: 700; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(255, 152, 0, 0.2); }
     .player-setup { background: #fff3e0; padding: 20px; border: 2px solid #ffa726; border-radius: 10px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(255, 152, 0, 0.1); }
     .major-controls { display: flex; align-items: center; gap: 15px; margin-bottom: 15px; background: #ffe0b2; padding: 10px; border-radius: 6px; border: 1px solid #ffcc80; }
     .player-input-row { display: flex; gap: 12px; margin-bottom: 15px; align-items: center; }
     #playerNameInput, #playerSelect, #tournamentNameSelect { flex: 1; padding: 10px; border: 2px solid #ffa726; border-radius: 6px; font-size: 16px; outline: none; }
-    
+
     button { padding: 10px 16px; border: 2px solid #ffa726; border-radius: 6px; background: #ffb74d; color: #7a4800; font-weight: 700; cursor: pointer; transition: all 0.3s ease; font-size: 14px; }
     button:hover:not(:disabled) { background: #ff9800; color: #fff; transform: translateY(-1px); }
     button:disabled { background: #e0e0e0; color: #999; cursor: not-allowed; border-color: #bdbdbd; }
     .rebuy-btn { background: #4caf50 !important; color: white !important; border-color: #388e3c !important; }
     .elim-btn { background: #f44336 !important; color: white !important; border-color: #d32f2f !important; }
-    
-    /* God Mode Controls */
+
+    /* God Mode Table Controls */
     .stack-ctrl { display: flex; align-items: center; justify-content: center; gap: 5px; }
     .stack-btn { padding: 4px 8px; font-size: 14px; min-width: 30px; cursor: pointer; background: #fff; border: 1px solid #ffa726; }
     .stack-btn:hover { background: #ffe0b2; }
-    
     .god-btn { font-size: 10px; padding: 4px 8px; margin: 0 2px; text-transform: uppercase; letter-spacing: 0.5px; }
     .god-kill { background: #3e2723; color: #ffab91; border-color: #4e342e; }
     .god-revive { background: #e0f2f1; color: #00695c; border-color: #80cbc4; }
 
     .action-buttons { display: flex; gap: 12px; justify-content: center; margin-top: 15px; flex-wrap: wrap; }
-    
+
     table { width: 100%; border-collapse: collapse; background: #fff3e0; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 12px rgba(255, 152, 0, 0.15); margin-bottom: 20px; }
     th, td { padding: 12px 8px; text-align: center; font-weight: 600; border-bottom: 1px solid #eee; }
     thead { background: linear-gradient(90deg, #ff9800 0%, #fb8c00 100%); color: white; }
     tbody tr:nth-child(odd) { background: #fff9e5; }
     tbody tr.eliminated { background: #ffcdd2 !important; color: #c62828; opacity: 0.9; }
-    
-    /* Sortable Headers */
     th.sortable { cursor: pointer; text-decoration: underline; text-decoration-style: dotted; }
     th.sortable:hover { background-color: #f57c00; color: white; }
-
-    /* Paid Amount Editable */
     .editable-cost { cursor: pointer; border-bottom: 1px dashed #7a4800; }
     .editable-cost:hover { background: #fff; }
 
     .timer-panel { flex: 1; background: linear-gradient(135deg, #ffecb3 0%, #ffd54f 100%); border-left: 7px solid #ffa726; padding: 25px; display: flex; flex-direction: column; align-items: center; height: 100vh; position: sticky; top: 0; overflow-y: auto; }
-    .timer-header { font-size: 2.4rem; font-weight: 900; color: #e65100; margin-bottom: 20px; text-shadow: 2px 2px 4px rgba(0,0,0,0.1); position: relative; }
+    .timer-header { font-size: 2.4rem; font-weight: 900; color: #e65100; margin-bottom: 20px; text-shadow: 2px 2px 4px rgba(0,0,0,0.1); }
     .round-info { width: 100%; background: #ffe0b2; border-radius: 12px; padding: 20px; font-size: 1.4rem; font-weight: 700; text-align: center; color: #e65100; margin-bottom: 25px; }
     .time-remaining { font-size: 3.8rem; font-weight: 900; background: #ffd54f; color: #e65100; border-radius: 15px; padding: 20px 35px; box-shadow: 0 4px 12px rgba(255, 152, 0, 0.25); margin: 20px 0 30px; text-align: center; min-width: 200px; font-family: 'Segoe UI', sans-serif; }
-    
+
+    /* God Mode Timer Controls */
+    .god-timer-controls { display: none; width: 100%; background: #3e2723; border: 2px solid #ff7043; border-radius: 10px; padding: 12px; margin-top: 12px; text-align: center; }
+    .god-timer-controls.active { display: block; }
+    .god-timer-controls .label { color: #ffab91; font-size: 0.75rem; font-weight: 700; letter-spacing: 1px; margin-bottom: 8px; text-transform: uppercase; }
+    .god-back-btn { background: #bf360c; color: white; border-color: #e64a19; width: 100%; font-size: 1rem; padding: 10px; }
+    .god-back-btn:hover:not(:disabled) { background: #e64a19; }
+
     .dashboard-tabs { display: flex; border-bottom: 3px solid #ffa726; margin-bottom: 20px; border-radius: 10px 10px 0 0; overflow: hidden; }
     .dashboard-tab { flex: 1; padding: 15px 20px; background: #ffe0b2; color: #e65100; border: none; font-weight: 700; cursor: pointer; border-right: 2px solid #ffa726; }
     .dashboard-tab.active { background: #ff9800; color: white; }
     .dashboard-tab-content { background: #fff3e0; padding: 25px; border-radius: 0 0 10px 10px; min-height: 400px; display: none; }
     .dashboard-tab-content.active { display: block; }
-    
+
     .titles-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
     .title-card { background: linear-gradient(135deg, #fff3e0 0%, #ffecb3 100%); border: 3px solid #ffa726; border-radius: 15px; padding: 20px; text-align: center; }
     .title-card-emoji { font-size: 3rem; display: block; margin-bottom: 10px; }
     .title-card-name { font-size: 1.1rem; font-weight: bold; color: #e65100; margin-bottom: 5px; }
     .title-card-holder { font-size: 1.4rem; font-weight: 900; color: #d84315; margin-bottom: 5px; line-height: 1.2; }
     .title-card-stat { color: #bf360c; font-weight: 600; }
-    
+
     .status-message { background: #e8f5e8; border: 2px solid #4caf50; color: #2e7d32; padding: 12px; border-radius: 8px; margin: 15px 0; text-align: center; font-weight: 600; opacity: 0; transition: opacity 0.3s ease; }
     .status-message.show { opacity: 1; }
 
     /* Smart Home Modal */
-    .smart-btn { position: absolute; top: 20px; right: 20px; background: #2E003E; color: #f7e348; border: 2px solid #dc2b71; font-size: 0.9rem; padding: 8px 12px; cursor: pointer; }
     .sh-modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); background: white; border: 3px solid #2E003E; width: 90%; max-width: 500px; padding: 20px; z-index: 2000; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
     .sh-modal h3 { color: #2E003E; margin-top: 0; }
     .sh-row { margin-bottom: 15px; }
@@ -91,20 +104,29 @@
 </head>
 <body>
   <div class="main-content">
-    <button class="smart-btn" onclick="openSmartHome()">Smart Home 🏠</button>
-    <h1>Curupira's Head Poker 2026</h1>
-    
-    <div class="game-info" id="gameInfoDisplay">
-      Buy-in: £5 per stack | 1st: 80% | 2nd: 20% | House Fee: £5
+
+    <!-- TOP RIGHT BUTTON CLUSTER -->
+    <div class="top-btn-cluster">
+      <button class="god-mode-btn" id="godModeToggleBtn" onclick="toggleGodMode()">⚡ God Mode</button>
+      <button class="smart-btn" onclick="openSmartHome()">Smart Home 🏠</button>
     </div>
-    
+
+    <h1>Curupira's Head Poker 2026</h1>
+
+    <!-- GOD MODE BANNER -->
+    <div class="god-mode-banner" id="godModeBanner">⚡ GOD MODE ACTIVE — Stack Controls & Kill/Revive Unlocked ⚡</div>
+
+    <div class="game-info" id="gameInfoDisplay">
+      Buy-in: £5 per stack | 1st: 80% | 2nd: 20% | House Fee: 10%
+    </div>
+
     <div class="status-message" id="statusMessage"></div>
-    
+
     <div class="player-setup">
       <div class="major-controls">
         <div>
-            <label style="font-weight:bold; color:#e65100; margin-right:5px;">Major Mode:</label>
-            <input type="checkbox" id="majorToggle" onchange="updateGameSettings()">
+          <label style="font-weight:bold; color:#e65100; margin-right:5px;">Major Mode:</label>
+          <input type="checkbox" id="majorToggle" onchange="updateGameSettings()">
         </div>
         <select id="tournamentNameSelect" style="flex:1;" onchange="handleTournamentSelect()">
           <option value="Regular Game">Regular Game</option>
@@ -123,73 +145,71 @@
         <input type="text" id="playerNameInput" placeholder="Or enter new player name..." />
         <button onclick="addPlayer()">Add Player</button>
       </div>
-      
+
       <div class="setup-buttons">
         <button onclick="startTournament()" id="startBtn">Start Tournament</button>
         <button onclick="endTournament()" id="endBtn" disabled>End Tournament</button>
         <button onclick="clearPlayers()">Clear All Players</button>
         <button onclick="undoLastAction()" id="undoBtn" disabled>Undo (CTRL+Z)</button>
       </div>
-      
-      <div id="playerCount">Players: 0 | Prize Pot: £0 | House Fee: £5</div>
-      
+
+      <div id="playerCount">Players: 0 | Prize Pot: £0 | House Fee: 10% (£0)</div>
+
       <div class="action-buttons">
         <button onclick="signInAndExport()" id="exportBtn">Save Tournament Data</button>
         <button onclick="signInAndLoadDashboard()" id="loadDashboardBtn">Load Championship Dashboard</button>
       </div>
     </div>
-    
+
     <table id="playerTable">
       <thead>
-        <tr>
-            <th>Player</th>
-            <th>Stacks</th>
-            <th>Addon?</th>
-            <th>Paid</th>
-            <th>Status</th>
-            <th>Actions</th>
-            <th>God Mode</th>
+        <tr id="tableHeaderRow">
+          <th>Player</th>
+          <th>Stacks</th>
+          <th>Addon?</th>
+          <th>Paid</th>
+          <th>Status</th>
+          <th>Actions</th>
         </tr>
       </thead>
       <tbody id="playerTableBody"></tbody>
     </table>
-    
+
     <div id="dashboardSection" style="display:none; margin-top:20px;">
-        <div class="dashboard-tabs">
-            <button class="dashboard-tab active" onclick="switchTab('p2026')">📊 2026 Leaderboard</button>
-            <button class="dashboard-tab" onclick="switchTab('titles')">🏆 Titles</button>
-            <button class="dashboard-tab" onclick="switchTab('detailed')">📈 Detailed Stats</button>
-            <button class="dashboard-tab" onclick="switchTab('alltime')">📅 All-Time</button>
-        </div>
-        <div id="tab-p2026" class="dashboard-tab-content active">
-             <div id="p2026Content"></div>
-        </div>
-        <div id="tab-titles" class="dashboard-tab-content">
-             <div id="titlesContent"></div>
-        </div>
-        <div id="tab-detailed" class="dashboard-tab-content">
-             <div id="detailedContent"></div>
-        </div>
-        <div id="tab-alltime" class="dashboard-tab-content">
-             <div id="allTimeContent"></div>
-        </div>
+      <div class="dashboard-tabs">
+        <button class="dashboard-tab active" onclick="switchTab(event, 'p2026')">📊 2026 Leaderboard</button>
+        <button class="dashboard-tab" onclick="switchTab(event, 'titles')">🏆 Titles</button>
+        <button class="dashboard-tab" onclick="switchTab(event, 'detailed')">📈 Detailed Stats</button>
+        <button class="dashboard-tab" onclick="switchTab(event, 'alltime')">📅 All-Time</button>
+      </div>
+      <div id="tab-p2026" class="dashboard-tab-content active"><div id="p2026Content"></div></div>
+      <div id="tab-titles" class="dashboard-tab-content"><div id="titlesContent"></div></div>
+      <div id="tab-detailed" class="dashboard-tab-content"><div id="detailedContent"></div></div>
+      <div id="tab-alltime" class="dashboard-tab-content"><div id="allTimeContent"></div></div>
     </div>
   </div>
-  
+
+  <!-- TIMER PANEL -->
   <div class="timer-panel">
     <div class="timer-header">ROUND TIMER</div>
     <div id="roundInfo" class="round-info"></div>
     <div id="timeRemaining" class="time-remaining">00:05</div>
-    
+
     <div class="timer-controls">
       <button id="timerStartBtn" onclick="startTimer()">START</button>
       <button id="timerPauseBtn" onclick="pauseTimer()" disabled>PAUSE</button>
       <button id="timerResetBtn" onclick="resetTimer()">RESET</button>
-      <button id="timerSkipBtn" onclick="skipRound()">SKIP ROUND</button>
+      <button id="timerSkipBtn" onclick="skipRound()">SKIP ROUND ▶</button>
     </div>
-    
-<div id="breakToggles" style="display:none; background:#ffcc80; padding:15px; margin:15px 0; border-radius:10px; border:2px dashed #e65100; text-align:center;">
-      <div style="font-weight:bold; color:#e65100; margin-bottom:10px;">BREAK MINIGAMES</div>
+
+    <!-- GOD MODE TIMER CONTROLS: Go Back Round -->
+    <div class="god-timer-controls" id="godTimerControls">
+      <div class="label">⚡ God Mode — Round Control</div>
+      <button class="god-back-btn" onclick="goBackRound()">◀ GO BACK A ROUND</button>
+    </div>
+
+    <div id="breakToggles" style="display:none; background:#ffcc80; padding:15px; margin:15px 0; border-radius:10px; border:2px dashed #e65100; text-align:center;">
+      <div style="font-weight:bold; color:#e65100; margin-bottom:10px;">3 ROUNDS OF CURUPIRA'S HEAD FIRE</div>
       <div style="display:flex; justify-content:center; gap:15px; flex-wrap:wrap;">
         <label style="color:#d84315; font-weight:bold; cursor:pointer;"><input type="checkbox" style="transform:scale(1.2); margin-right:5px;"> Round 1</label>
         <label style="color:#d84315; font-weight:bold; cursor:pointer;"><input type="checkbox" style="transform:scale(1.2); margin-right:5px;"> Round 2</label>
@@ -197,49 +217,50 @@
       </div>
     </div>
 
-    <div id="breakNotice" class="break-notice" style="display:none; background:#bbdefb; padding:15px; margin:15px 0; border-radius:10px; color:#0d47a1; font-weight:700; text-align:center;">
-      BREAK TIME! - Add-ons available
+    <div id="breakNotice" style="display:none; background:#bbdefb; padding:15px; margin:15px 0; border-radius:10px; color:#0d47a1; font-weight:700; text-align:center;">
+      BREAK TIME! — Add-ons available
     </div>
-    
+
     <div class="prize-info">
       <div><strong>Current Prize Pool: £<span id="currentPrizePool">0</span></strong></div>
       <div>1st Place: £<span id="firstPrize">0</span></div>
       <div>2nd Place: £<span id="secondPrize">0</span></div>
     </div>
-    
+
     <audio id="roundAlarm" preload="auto">
       <source src="alarm.mp3" type="audio/mpeg">
     </audio>
   </div>
 
+  <!-- SMART HOME MODAL -->
   <div id="smartHomeModal" class="sh-modal">
     <h3>🏠 Smart Home Config (Webhooks)</h3>
     <p style="font-size:0.8rem; color:#666;">Paste IFTTT Webhook URLs here.</p>
     <div class="sh-row">
-        <label>Elimination (Red Lights/Sound)</label>
-        <input type="text" id="wh-elimination" placeholder="https://maker.ifttt.com/trigger/..." />
+      <label>Elimination (Red Lights/Sound)</label>
+      <input type="text" id="wh-elimination" placeholder="https://maker.ifttt.com/trigger/..." />
     </div>
     <div class="sh-row">
-        <label>Round End (Blind Increase)</label>
-        <input type="text" id="wh-roundend" placeholder="https://maker.ifttt.com/trigger/..." />
+      <label>Round End (Blind Increase)</label>
+      <input type="text" id="wh-roundend" placeholder="https://maker.ifttt.com/trigger/..." />
     </div>
     <div class="sh-row">
-        <label>Break Time (Music/Chill)</label>
-        <input type="text" id="wh-break" placeholder="https://maker.ifttt.com/trigger/..." />
+      <label>Break Time (Music/Chill)</label>
+      <input type="text" id="wh-break" placeholder="https://maker.ifttt.com/trigger/..." />
     </div>
     <div class="sh-row">
-        <label>Winner (Victory Scene)</label>
-        <input type="text" id="wh-winner" placeholder="https://maker.ifttt.com/trigger/..." />
+      <label>Winner (Victory Scene)</label>
+      <input type="text" id="wh-winner" placeholder="https://maker.ifttt.com/trigger/..." />
     </div>
     <div class="sh-actions">
-        <div class="sh-tools">
-            <button onclick="backupSettings()" style="background:#0277bd; color:white; font-size:0.8rem;">Backup 💾</button>
-            <button onclick="restoreSettings()" style="background:#0277bd; color:white; font-size:0.8rem;">Restore 📂</button>
-        </div>
-        <div>
-            <button onclick="saveSmartHome()" style="background:#2e7d32; color:white;">Save & Close</button>
-            <button onclick="closeSmartHome()" style="background:#666; color:white;">Cancel</button>
-        </div>
+      <div class="sh-tools">
+        <button onclick="backupSettings()" style="background:#0277bd; color:white; font-size:0.8rem;">Backup 💾</button>
+        <button onclick="restoreSettings()" style="background:#0277bd; color:white; font-size:0.8rem;">Restore 📂</button>
+      </div>
+      <div>
+        <button onclick="saveSmartHome()" style="background:#2e7d32; color:white;">Save & Close</button>
+        <button onclick="closeSmartHome()" style="background:#666; color:white;">Cancel</button>
+      </div>
     </div>
     <input type="file" id="restoreInput" style="display:none" onchange="handleFileSelect(event)" accept=".json">
   </div>
@@ -253,29 +274,30 @@
 
     const rounds = [
       { name: "Test Round", sb: 0, bb: 0, duration: 5, isTest: true },
-      { name: "Round 1", sb: 5, bb: 10, duration: 20 },
-      { name: "Round 2", sb: 10, bb: 20, duration: 20 },
-      { name: "Round 3", sb: 20, bb: 40, duration: 20 },
-      { name: "Round 4", sb: 40, bb: 80, duration: 20 },
-      { name: "Break + Add-On", sb: 0, bb: 0, duration: 30, isBreak: true },
-      { name: "Round 5", sb: 50, bb: 100, duration: 20 },
-      { name: "Round 6", sb: 100, bb: 200, duration: 20 },
-      { name: "Round 7", sb: 200, bb: 400, duration: 20 },
-      { name: "Round 8", sb: 400, bb: 800, duration: 20 },
-      { name: "Round 9", sb: 1000, bb: 2000, duration: 20 },
-      { name: "Round 10", sb: 2000, bb: 4000, duration: 20 },
-      { name: "Round 11", sb: 4000, bb: 8000, duration: 20 },
-      { name: "Round 12", sb: 8000, bb: 16000, duration: 20 },
-      { name: "Round 13", sb: 16000, bb: 32000, duration: 20 },
-      { name: "Round 14", sb: 32000, bb: 64000, duration: 20 },
-      { name: "Round 15", sb: 64000, bb: 128000, duration: 20 },
+      { name: "Round 1",  sb: 5,      bb: 10,     duration: 20 },
+      { name: "Round 2",  sb: 10,     bb: 20,     duration: 20 },
+      { name: "Round 3",  sb: 20,     bb: 40,     duration: 20 },
+      { name: "Round 4",  sb: 40,     bb: 80,     duration: 20 },
+      { name: "Break + Add-On", sb: 0, bb: 0,     duration: 30, isBreak: true },
+      { name: "Round 5",  sb: 50,     bb: 100,    duration: 20 },
+      { name: "Round 6",  sb: 100,    bb: 200,    duration: 20 },
+      { name: "Round 7",  sb: 200,    bb: 400,    duration: 20 },
+      { name: "Round 8",  sb: 400,    bb: 800,    duration: 20 },
+      { name: "Round 9",  sb: 1000,   bb: 2000,   duration: 20 },
+      { name: "Round 10", sb: 2000,   bb: 4000,   duration: 20 },
+      { name: "Round 11", sb: 4000,   bb: 8000,   duration: 20 },
+      { name: "Round 12", sb: 8000,   bb: 16000,  duration: 20 },
+      { name: "Round 13", sb: 16000,  bb: 32000,  duration: 20 },
+      { name: "Round 14", sb: 32000,  bb: 64000,  duration: 20 },
+      { name: "Round 15", sb: 64000,  bb: 128000, duration: 20 },
       { name: "Round 16", sb: 125000, bb: 250000, duration: 20 },
       { name: "Round 17", sb: 250000, bb: 500000, duration: 20 },
       { name: "Round 18", sb: 500000, bb: 1000000, duration: 20 }
     ];
 
     const regularPlayers = [
-      'Andre', 'Craig', 'Dale', 'Declan', 'Elton', 'Graham', 'Jacques', 'James', 'Lachy', 'Luciano', 'Malzo', 'Matt', 'Nick', 'Rafa', 'Rhys', 'Roberto', 'Egli' , 'Gus' , 'Jordan'
+      'Andre','Craig','Dale','Declan','Elton','Graham','Jacques','James',
+      'Lachy','Luciano','Malzo','Matt','Nick','Rafa','Rhys','Roberto','Egli','Gus','Jordan'
     ].sort();
 
     // === GLOBAL STATE ===
@@ -289,274 +311,287 @@
     let timerRunning = false;
     let googleApiReady = false;
     let tokenClient;
-    let historyStack = []; 
+    let historyStack = [];
     let webhooks = {};
     let detailedSort = { col: 'shark', asc: false };
+    let godModeActive = false;  // ← NEW: God Mode state
 
     // === INITIALIZATION ===
     window.onload = function() {
-        populatePlayerDropdown();
-        updateRoundDisplay();
-        updateGameSettings();
-        handleClientLoad(); 
-        loadSmartHome();
+      populatePlayerDropdown();
+      updateRoundDisplay();
+      updateGameSettings();
+      handleClientLoad();
+      loadSmartHome();
     };
 
-    function handleTournamentSelect() {
-        const sel = document.getElementById('tournamentNameSelect').value;
-        const majorToggle = document.getElementById('majorToggle');
-        if(sel.includes("Major") || sel.includes("Cup") || sel.includes("Finale") || sel.includes("Bounty")) {
-            majorToggle.checked = true;
-        } else {
-            majorToggle.checked = false;
-        }
-        updateGameSettings();
+    // =============================================
+    // GOD MODE TOGGLE
+    // =============================================
+    function toggleGodMode() {
+      godModeActive = !godModeActive;
+      const btn = document.getElementById('godModeToggleBtn');
+      const banner = document.getElementById('godModeBanner');
+      const timerControls = document.getElementById('godTimerControls');
+
+      if (godModeActive) {
+        btn.classList.add('active');
+        btn.textContent = '⚡ God Mode ON';
+        banner.classList.add('active');
+        timerControls.classList.add('active');
+      } else {
+        btn.classList.remove('active');
+        btn.textContent = '⚡ God Mode';
+        banner.classList.remove('active');
+        timerControls.classList.remove('active');
+      }
+      renderTable();
     }
 
-function updateGameSettings() {
-        const isMajor = document.getElementById('majorToggle').checked;
-        const buyIn = isMajor ? 10 : 5;
-        // UPDATED: Dynamic text for 10% House Fee
-        document.getElementById('gameInfoDisplay').innerHTML = 
-            `MODE: ${isMajor ? '🏆 MAJOR (2x Points)' : 'Standard'} | Buy-in: £${buyIn} | 1st: 80% | 2nd: 20% | House Fee: 10%`;
-        updatePrizeInfo();
+    // =============================================
+    // GO BACK ROUND (God Mode only)
+    // =============================================
+    function goBackRound() {
+      if (!godModeActive) return;
+      if (currentRound === 0) { showMessage("Already at the first round!"); return; }
+
+      saveState();
+      pauseTimer();
+
+      currentRound = Math.max(0, currentRound - 1);
+      const r = rounds[currentRound];
+      timeLeft = r.duration * (r.isTest ? 5 : 60);
+      updateRoundDisplay();
+      showMessage("⏪ Went back to: " + r.name);
+
+      // Auto-restart if tournament is running
+      if (tournamentStarted && !tournamentEnded) {
+        startTimer();
+      }
+    }
+
+    // =============================================
+    // TOURNAMENT SELECT & SETTINGS
+    // =============================================
+    function handleTournamentSelect() {
+      const sel = document.getElementById('tournamentNameSelect').value;
+      const majorToggle = document.getElementById('majorToggle');
+      if (sel.includes("Major") || sel.includes("Cup") || sel.includes("Finale") || sel.includes("Bounty")) {
+        majorToggle.checked = true;
+      } else {
+        majorToggle.checked = false;
+      }
+      updateGameSettings();
+    }
+
+    function updateGameSettings() {
+      const isMajor = document.getElementById('majorToggle').checked;
+      const buyIn = isMajor ? 10 : 5;
+      document.getElementById('gameInfoDisplay').innerHTML =
+        `MODE: ${isMajor ? '🏆 MAJOR (2x Points)' : 'Standard'} | Buy-in: £${buyIn} | 1st: 80% | 2nd: 20% | House Fee: 10%`;
+      updatePrizeInfo();
     }
 
     function populatePlayerDropdown() {
       const select = document.getElementById('playerSelect');
-      if(!select) return;
+      if (!select) return;
       select.innerHTML = '<option value="">Select a player...</option>';
       const all = [...new Set([...regularPlayers, ...customPlayers])].sort();
       all.forEach(p => select.add(new Option(p, p)));
     }
 
-    // === SMART HOME ===
+    // =============================================
+    // SMART HOME
+    // =============================================
     window.openSmartHome = function() {
-        document.getElementById('smartHomeModal').style.display = 'block';
-        document.getElementById('sh-overlay').style.display = 'block';
+      document.getElementById('smartHomeModal').style.display = 'block';
+      document.getElementById('sh-overlay').style.display = 'block';
     }
     window.closeSmartHome = function() {
-        document.getElementById('smartHomeModal').style.display = 'none';
-        document.getElementById('sh-overlay').style.display = 'none';
+      document.getElementById('smartHomeModal').style.display = 'none';
+      document.getElementById('sh-overlay').style.display = 'none';
     }
     window.saveSmartHome = function() {
-        webhooks = {
-            elim: document.getElementById('wh-elimination').value,
-            round: document.getElementById('wh-roundend').value,
-            break: document.getElementById('wh-break').value,
-            winner: document.getElementById('wh-winner').value
-        };
-        localStorage.setItem('pokerWebhooks', JSON.stringify(webhooks));
-        closeSmartHome();
-        showMessage("Smart Home Settings Saved");
+      webhooks = {
+        elim:   document.getElementById('wh-elimination').value,
+        round:  document.getElementById('wh-roundend').value,
+        break:  document.getElementById('wh-break').value,
+        winner: document.getElementById('wh-winner').value
+      };
+      localStorage.setItem('pokerWebhooks', JSON.stringify(webhooks));
+      closeSmartHome();
+      showMessage("Smart Home Settings Saved");
     }
     function loadSmartHome() {
-        const stored = localStorage.getItem('pokerWebhooks');
-        if(stored) {
-            webhooks = JSON.parse(stored);
-            document.getElementById('wh-elimination').value = webhooks.elim || '';
-            document.getElementById('wh-roundend').value = webhooks.round || '';
-            document.getElementById('wh-break').value = webhooks.break || '';
-            document.getElementById('wh-winner').value = webhooks.winner || '';
-        }
+      const stored = localStorage.getItem('pokerWebhooks');
+      if (stored) {
+        webhooks = JSON.parse(stored);
+        document.getElementById('wh-elimination').value = webhooks.elim  || '';
+        document.getElementById('wh-roundend').value    = webhooks.round || '';
+        document.getElementById('wh-break').value       = webhooks.break || '';
+        document.getElementById('wh-winner').value      = webhooks.winner|| '';
+      }
     }
     function triggerWebhook(type, v1 = '', v2 = '') {
-        const url = webhooks[type];
-        if(url) {
-            const separator = url.includes('?') ? '&' : '?';
-            const finalUrl = `${url}${separator}value1=${encodeURIComponent(v1)}&value2=${encodeURIComponent(v2)}`;
-            console.log("Triggering Webhook:", type, "Data:", v1, v2);
-            fetch(finalUrl, { mode: 'no-cors' }).catch(e => console.log("Webhook error", e));
-        }
+      const url = webhooks[type];
+      if (url) {
+        const sep = url.includes('?') ? '&' : '?';
+        fetch(`${url}${sep}value1=${encodeURIComponent(v1)}&value2=${encodeURIComponent(v2)}`, { mode: 'no-cors' })
+          .catch(e => console.log("Webhook error", e));
+      }
     }
-    
-    // BACKUP AND RESTORE SETTINGS
     window.backupSettings = function() {
-        if(!webhooks || Object.keys(webhooks).length === 0) return alert("No settings to backup!");
-        const data = JSON.stringify(webhooks);
-        const blob = new Blob([data], {type: 'application/json'});
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'poker_settings.json';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        showMessage("Settings Downloaded");
+      if (!webhooks || Object.keys(webhooks).length === 0) return alert("No settings to backup!");
+      const blob = new Blob([JSON.stringify(webhooks)], { type: 'application/json' });
+      const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: 'poker_settings.json' });
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      showMessage("Settings Downloaded");
     }
-
-    window.restoreSettings = function() {
-        document.getElementById('restoreInput').click();
-    }
-
+    window.restoreSettings = function() { document.getElementById('restoreInput').click(); }
     window.handleFileSelect = function(event) {
-        const file = event.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            try {
-                const data = JSON.parse(e.target.result);
-                webhooks = data;
-                localStorage.setItem('pokerWebhooks', JSON.stringify(webhooks));
-                document.getElementById('wh-elimination').value = webhooks.elim || '';
-                document.getElementById('wh-roundend').value = webhooks.round || '';
-                document.getElementById('wh-break').value = webhooks.break || '';
-                document.getElementById('wh-winner').value = webhooks.winner || '';
-                alert('Settings Restored Successfully!');
-            } catch(err) {
-                alert('Invalid settings file.');
-            }
-        };
-        reader.readAsText(file);
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          webhooks = JSON.parse(e.target.result);
+          localStorage.setItem('pokerWebhooks', JSON.stringify(webhooks));
+          document.getElementById('wh-elimination').value = webhooks.elim  || '';
+          document.getElementById('wh-roundend').value    = webhooks.round || '';
+          document.getElementById('wh-break').value       = webhooks.break || '';
+          document.getElementById('wh-winner').value      = webhooks.winner|| '';
+          alert('Settings Restored Successfully!');
+        } catch(err) { alert('Invalid settings file.'); }
+      };
+      reader.readAsText(file);
     }
 
-// === ROBUST STATE MANAGEMENT ===
+    // =============================================
+    // STATE MANAGEMENT (Undo)
+    // =============================================
     function saveState() {
-        const state = {
-            players: JSON.parse(JSON.stringify(players)), // Deep copy players
-            currentRound: currentRound,
-            timeLeft: timeLeft,
-            tournamentStarted: tournamentStarted,
-            tournamentEnded: tournamentEnded,
-            // We don't save timerRunning; we always pause on undo for safety
-        };
-        historyStack.push(state);
-        document.getElementById('undoBtn').disabled = false;
-        if(historyStack.length > 50) historyStack.shift(); 
+      historyStack.push({
+        players: JSON.parse(JSON.stringify(players)),
+        currentRound: currentRound,
+        timeLeft: timeLeft,
+        tournamentStarted: tournamentStarted,
+        tournamentEnded: tournamentEnded
+      });
+      document.getElementById('undoBtn').disabled = false;
+      if (historyStack.length > 50) historyStack.shift();
     }
 
-function undoLastAction() {
-        if(historyStack.length === 0) return;
-        
-        // Capture CURRENT time/round before overwriting
-        const actualTime = timeLeft;
-        const actualRound = currentRound;
+    function undoLastAction() {
+      if (historyStack.length === 0) return;
+      const actualTime  = timeLeft;
+      const actualRound = currentRound;
+      const prevState   = historyStack.pop();
+      if (historyStack.length === 0) document.getElementById('undoBtn').disabled = true;
 
-        const prevState = historyStack.pop();
-        if(historyStack.length === 0) document.getElementById('undoBtn').disabled = true;
-        
-        // Restore Player Data
-        players = prevState.players;
-        tournamentStarted = prevState.tournamentStarted;
-        tournamentEnded = prevState.tournamentEnded;
+      players           = prevState.players;
+      tournamentStarted = prevState.tournamentStarted;
+      tournamentEnded   = prevState.tournamentEnded;
 
-        // SMART CLOCK LOGIC:
-        // Only revert time if the Undo actually moved us back a round (e.g. undoing a Skip)
-        if (prevState.currentRound !== actualRound) {
-            currentRound = prevState.currentRound;
-            timeLeft = prevState.timeLeft; // Restore time from history
-            pauseTimer(); // Pause for safety if changing rounds
-        } else {
-            // We are in the same round, just undoing a data change.
-            // KEEP the current time running. Do not revert clock.
-            // No pauseTimer() call here.
-        }
+      if (prevState.currentRound !== actualRound) {
+        currentRound = prevState.currentRound;
+        timeLeft     = prevState.timeLeft;
+        pauseTimer();
+      }
+      // If same round — keep the live clock running, don't revert it.
 
-        updateRoundDisplay();
-        renderTable();
-        updatePrizeInfo();
-        
-        // Restore Button States
-        document.getElementById('startBtn').disabled = tournamentStarted;
-        document.getElementById('endBtn').disabled = !tournamentStarted || tournamentEnded;
-        
-        showMessage("Undo Successful");
+      updateRoundDisplay();
+      renderTable();
+      updatePrizeInfo();
+      document.getElementById('startBtn').disabled = tournamentStarted;
+      document.getElementById('endBtn').disabled   = !tournamentStarted || tournamentEnded;
+      showMessage("Undo Successful");
     }
-    
-    document.addEventListener('keydown', function(event) {
-        if (event.ctrlKey && event.key === 'z') {
-            undoLastAction();
-        }
+
+    document.addEventListener('keydown', function(e) {
+      if (e.ctrlKey && e.key === 'z') undoLastAction();
     });
 
-    // === PLAYER MANAGEMENT ===
+    // =============================================
+    // PLAYER MANAGEMENT
+    // =============================================
     function addPlayer() {
       const select = document.getElementById('playerSelect');
-      const input = document.getElementById('playerNameInput');
-      
-      // PRIORITY FIX: Check Input first
-      let name = input.value.trim();
-      if (!name) name = select.value;
-      
+      const input  = document.getElementById('playerNameInput');
+      let name = input.value.trim() || select.value;
       if (!name) return alert('Please select or enter a name.');
       if (players.find(p => p.name === name)) return alert('Player already added.');
-      
-      saveState();
 
+      saveState();
       if (!regularPlayers.includes(name) && !customPlayers.includes(name)) {
         customPlayers.push(name);
         populatePlayerDropdown();
       }
-      
       players.push({
-        name: name,
-        stacks: 1,
+        name, stacks: 1,
         totalPaid: document.getElementById('majorToggle').checked ? 10 : 5,
-        eliminated: false,
-        hasAddon: false,
-        eliminationTime: null,
-        rebuyEliminations: [] // Track previous deaths (rebuys)
+        eliminated: false, hasAddon: false, eliminationTime: null, rebuyEliminations: []
       });
-      
-      // AUTO SORT only if tournament hasn't started
-      if (!tournamentStarted) {
-          players.sort((a,b) => a.name.localeCompare(b.name));
-      }
-      
-      input.value = '';
-      select.value = '';
+      if (!tournamentStarted) players.sort((a, b) => a.name.localeCompare(b.name));
+      input.value = ''; select.value = '';
       renderTable();
       updatePrizeInfo();
     }
 
     function clearPlayers() {
-        if(confirm("Clear all players?")) {
-            saveState();
-            players = [];
-            renderTable();
-            updatePrizeInfo();
-        }
+      if (confirm("Clear all players?")) {
+        saveState();
+        players = [];
+        renderTable();
+        updatePrizeInfo();
+      }
     }
 
+    // =============================================
+    // RENDER TABLE  (God Mode aware)
+    // =============================================
     function renderTable() {
+      // Update header: add God Mode column only when active
+      const headerRow = document.getElementById('tableHeaderRow');
+      headerRow.innerHTML = `
+        <th>Player</th>
+        <th>Stacks</th>
+        <th>Addon?</th>
+        <th>Paid</th>
+        <th>Status</th>
+        <th>Actions</th>
+        ${godModeActive ? '<th style="background:#4e342e; color:#ffab91;">⚡ God Mode</th>' : ''}
+      `;
+
       const tbody = document.getElementById('playerTableBody');
       tbody.innerHTML = '';
-      
-      // NO DYNAMIC SORTING - Keeps lines fixed
+
       players.forEach(p => {
         const tr = document.createElement('tr');
         if (p.eliminated) tr.classList.add('eliminated');
-        
-        // GOD MODE: Stacks always editable
-        const stackHtml = `
-            <div class="stack-ctrl">
-                <button class="stack-btn" onclick="updateStack('${p.name}', -1)">-</button>
-                <span style="min-width:20px; text-align:center;">${p.stacks}</span>
-                <button class="stack-btn" onclick="updateStack('${p.name}', 1)">+</button>
-            </div>
-        `;
 
-        // GOD MODE: Addon always editable
+        // Stacks: +/- only in God Mode
+        const stackHtml = godModeActive
+          ? `<div class="stack-ctrl">
+               <button class="stack-btn" onclick="updateStack('${p.name}', -1)">−</button>
+               <span style="min-width:20px; text-align:center;">${p.stacks}</span>
+               <button class="stack-btn" onclick="updateStack('${p.name}', 1)">+</button>
+             </div>`
+          : `<span>${p.stacks}</span>`;
+
         const addonHtml = `<input type="checkbox" ${p.hasAddon ? 'checked' : ''} onchange="toggleAddon('${p.name}')">`;
+        const paidHtml  = `<span class="editable-cost" onclick="manualEditPaid('${p.name}')">£${p.totalPaid}</span>`;
 
-        // GOD MODE: Paid always editable
-        const paidHtml = `<span class="editable-cost" onclick="manualEditPaid('${p.name}')">£${p.totalPaid}</span>`;
+        const actionsHtml = !p.eliminated
+          ? `<button class="elim-btn" onclick="initEliminate('${p.name}')">Eliminate</button>`
+          : `<button class="rebuy-btn" onclick="rebuy('${p.name}')">Rebuy</button>`;
 
-        // Actions: Eliminate OR Rebuy
-        let actionsHtml = '';
-        if (!p.eliminated) {
-            // Active Player -> Show Eliminate
-            actionsHtml = `<button class="elim-btn" onclick="initEliminate('${p.name}')">Eliminate</button>`;
-        } else {
-            // Eliminated Player -> Show Rebuy
-             actionsHtml = `<button class="rebuy-btn" onclick="rebuy('${p.name}')">Rebuy</button>`;
-        }
-        
-        // God Mode Column: Kill & Revive
-        const godHtml = `
-            <button class="god-btn god-kill" onclick="godKill('${p.name}')">Kill</button>
-            <button class="god-btn god-revive" onclick="godRevive('${p.name}')">Revive</button>
-        `;
+        // Kill/Revive only in God Mode
+        const godHtml = godModeActive
+          ? `<td>
+               <button class="god-btn god-kill"   onclick="godKill('${p.name}')">Kill</button>
+               <button class="god-btn god-revive" onclick="godRevive('${p.name}')">Revive</button>
+             </td>`
+          : '';
 
         tr.innerHTML = `
           <td>${p.name}</td>
@@ -565,363 +600,286 @@ function undoLastAction() {
           <td>${paidHtml}</td>
           <td>${p.eliminated ? 'OUT' : 'Active'}</td>
           <td>${actionsHtml}</td>
-          <td>${godHtml}</td>
+          ${godHtml}
         `;
         tbody.appendChild(tr);
       });
-      
+
+      // FIX: Only call updatePrizeInfo — do NOT overwrite playerCount with a hardcoded string here.
       updatePrizeInfo();
-      document.getElementById('playerCount').innerText = `Players: ${players.length} | Prize Pot: £${calculatePot()} | House Fee: £5`;
     }
 
-    // === GAME ACTIONS (TRUE GOD MODE) ===
+    // =============================================
+    // GAME ACTIONS
+    // =============================================
     function updateStack(name, change) {
-        saveState();
-        const p = players.find(x => x.name === name);
-        if(!p) return;
-        
-        p.stacks += change;
-        if(p.stacks < 0) p.stacks = 0; 
-        
-        // Adjust cost automatically
-        const cost = document.getElementById('majorToggle').checked ? 10 : 5;
-        if(change > 0) p.totalPaid += cost;
-        else p.totalPaid = Math.max(0, p.totalPaid - cost);
-        
-        renderTable();
+      if (!godModeActive) return;
+      saveState();
+      const p = players.find(x => x.name === name);
+      if (!p) return;
+      p.stacks = Math.max(0, p.stacks + change);
+      const cost = document.getElementById('majorToggle').checked ? 10 : 5;
+      if (change > 0) p.totalPaid += cost;
+      else p.totalPaid = Math.max(0, p.totalPaid - cost);
+      renderTable();
     }
-    
-    function rebuy(name) {
-        saveState();
-        const p = players.find(x => x.name === name);
-        
-        // FIX: Archive previous kill before resetting
-        if (p.eliminated) {
-             p.rebuyEliminations.push({
-                 eliminatedBy: p.eliminatedBy || "Unknown",
-                 timestamp: p.eliminationTime || Date.now()
-             });
-        }
 
-        p.eliminated = false;
-        p.eliminationTime = null;
-        
-        // Add stack & cost
-        p.stacks += 1;
-        const cost = document.getElementById('majorToggle').checked ? 10 : 5;
-        p.totalPaid += cost;
-        
-        renderTable();
-        showMessage(`${name} rebought!`);
+    function rebuy(name) {
+      saveState();
+      const p = players.find(x => x.name === name);
+      if (p.eliminated) {
+        p.rebuyEliminations.push({ eliminatedBy: p.eliminatedBy || "Unknown", timestamp: p.eliminationTime || Date.now() });
+      }
+      p.eliminated = false;
+      p.eliminationTime = null;
+      p.stacks += 1;
+      const cost = document.getElementById('majorToggle').checked ? 10 : 5;
+      p.totalPaid += cost;
+      renderTable();
+      showMessage(`${name} rebought!`);
     }
 
     function toggleAddon(name) {
-        saveState();
-        const p = players.find(x => x.name === name);
-        const cost = document.getElementById('majorToggle').checked ? 10 : 5;
-        
-        p.hasAddon = !p.hasAddon;
-        
-        if(p.hasAddon) {
-            p.totalPaid += cost;
-            p.stacks += 1; // FIX: Addon increases stack count
-        } else {
-            p.totalPaid = Math.max(0, p.totalPaid - cost);
-            p.stacks = Math.max(0, p.stacks - 1); // FIX: Removing addon decreases stack count
-        }
-        renderTable();
-    }
-    
-    function manualEditPaid(name) {
-        saveState();
-        const p = players.find(x => x.name === name);
-        const newVal = prompt("Enter new Total Paid amount:", p.totalPaid);
-        if(newVal !== null && !isNaN(newVal)) {
-            p.totalPaid = parseInt(newVal);
-            renderTable();
-        }
+      saveState();
+      const p    = players.find(x => x.name === name);
+      const cost = document.getElementById('majorToggle').checked ? 10 : 5;
+      p.hasAddon = !p.hasAddon;
+      if (p.hasAddon) { p.totalPaid += cost; p.stacks += 1; }
+      else            { p.totalPaid = Math.max(0, p.totalPaid - cost); p.stacks = Math.max(0, p.stacks - 1); }
+      renderTable();
     }
 
-    // ELIMINATION DIALOG
+    function manualEditPaid(name) {
+      saveState();
+      const p = players.find(x => x.name === name);
+      const newVal = prompt("Enter new Total Paid amount:", p.totalPaid);
+      if (newVal !== null && !isNaN(newVal)) { p.totalPaid = parseInt(newVal); renderTable(); }
+    }
+
     function initEliminate(name) {
-        if (document.getElementById('elim-dialog')) return; 
-        
-        const killers = players.filter(pl => pl.name !== name && !pl.eliminated).map(pl => pl.name);
-        const options = killers.map(k => `<option value="${k}">${k}</option>`).join('');
-        
-        const dialog = document.createElement('div');
-        dialog.id = 'elim-dialog';
-        dialog.style.cssText = "position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:white; padding:20px; border:3px solid #ffa726; z-index:1000; border-radius:10px; text-align:center; box-shadow:0 4px 15px rgba(0,0,0,0.3);";
-        dialog.innerHTML = `
-            <h3 style="color:#e65100; margin-top:0;">Eliminate ${name}</h3>
-            <p>Who eliminated them?</p>
-            <select id="killerSelect" style="padding:5px; font-size:16px; width:100%; margin-bottom:15px;">
-                <option value="N/A">N/A (Self/Unknown)</option>
-                ${options}
-            </select>
-            <div>
-                <button onclick="confirmElimination('${name}')" style="background:#f44336; color:white;">Confirm</button>
-                <button onclick="document.body.removeChild(document.getElementById('elim-dialog'))">Cancel</button>
-            </div>
-        `;
-        document.body.appendChild(dialog);
+      if (document.getElementById('elim-dialog')) return;
+      const killers = players.filter(pl => pl.name !== name && !pl.eliminated).map(pl => pl.name);
+      const options = killers.map(k => `<option value="${k}">${k}</option>`).join('');
+      const dialog  = document.createElement('div');
+      dialog.id = 'elim-dialog';
+      dialog.style.cssText = "position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:white;padding:20px;border:3px solid #ffa726;z-index:1000;border-radius:10px;text-align:center;box-shadow:0 4px 15px rgba(0,0,0,0.3);";
+      dialog.innerHTML = `
+        <h3 style="color:#e65100;margin-top:0;">Eliminate ${name}</h3>
+        <p>Who eliminated them?</p>
+        <select id="killerSelect" style="padding:5px;font-size:16px;width:100%;margin-bottom:15px;">
+          <option value="N/A">N/A (Self/Unknown)</option>${options}
+        </select>
+        <div>
+          <button onclick="confirmElimination('${name}')" style="background:#f44336;color:white;">Confirm</button>
+          <button onclick="document.body.removeChild(document.getElementById('elim-dialog'))">Cancel</button>
+        </div>`;
+      document.body.appendChild(dialog);
     }
 
     function confirmElimination(name) {
-        saveState();
-        const p = players.find(x => x.name === name);
-        const killer = document.getElementById('killerSelect').value;
-        document.body.removeChild(document.getElementById('elim-dialog'));
-
-        p.eliminated = true;
-        p.eliminationTime = Date.now();
-        p.eliminatedBy = killer;
-        
-        renderTable();
-        
-        // Auto-End Logic
-        const activeCount = players.filter(pl => !pl.eliminated).length;
-        if (activeCount === 1) {
-            checkForWinner();
-        } else if (activeCount > 1) {
-             triggerWebhook('elim', name);
-        }
+      saveState();
+      const p      = players.find(x => x.name === name);
+      const killer = document.getElementById('killerSelect').value;
+      document.body.removeChild(document.getElementById('elim-dialog'));
+      p.eliminated = true; p.eliminationTime = Date.now(); p.eliminatedBy = killer;
+      renderTable();
+      const activeCount = players.filter(pl => !pl.eliminated).length;
+      if (activeCount === 1) checkForWinner();
+      else if (activeCount > 1) triggerWebhook('elim', name);
     }
 
-    // GOD MODE FUNCTIONS (Silent)
     function godKill(name) {
-        saveState();
-        const p = players.find(x => x.name === name);
-        p.eliminated = true;
-        p.eliminationTime = Date.now();
-        p.eliminatedBy = "God Mode";
-        renderTable();
-        
-        if (players.filter(pl => !pl.eliminated).length === 1) checkForWinner();
+      if (!godModeActive) return;
+      saveState();
+      const p = players.find(x => x.name === name);
+      p.eliminated = true; p.eliminationTime = Date.now(); p.eliminatedBy = "God Mode";
+      renderTable();
+      if (players.filter(pl => !pl.eliminated).length === 1) checkForWinner();
     }
 
     function godRevive(name) {
+      if (!godModeActive) return;
+      saveState();
+      const p = players.find(x => x.name === name);
+      p.eliminated = false; p.eliminationTime = null;
+      renderTable();
+    }
+
+    function checkForWinner() {
+      const active = players.filter(p => !p.eliminated);
+      if (active.length === 1 && tournamentStarted && !tournamentEnded) {
         saveState();
-        const p = players.find(x => x.name === name);
-        p.eliminated = false;
-        p.eliminationTime = null;
+        tournamentStarted = false; tournamentEnded = true;
+        pauseTimer();
+        document.getElementById('startBtn').disabled       = false;
+        document.getElementById('endBtn').disabled         = true;
+        document.getElementById('exportBtn').disabled      = false;
+        document.getElementById('loadDashboardBtn').disabled = false;
+        document.getElementById('majorToggle').disabled    = false;
         renderTable();
-    }
-    
-function checkForWinner() {
-        const active = players.filter(p => !p.eliminated);
-        
-        if (active.length === 1 && tournamentStarted && !tournamentEnded) {
-            saveState(); // Save state BEFORE auto-ending
-            
-            tournamentEnded = true;
-            tournamentStarted = false;
-            pauseTimer();
-            
-            document.getElementById('startBtn').disabled = false;
-            document.getElementById('endBtn').disabled = true;
-            document.getElementById('exportBtn').disabled = false; 
-            document.getElementById('loadDashboardBtn').disabled = false;
-            document.getElementById('majorToggle').disabled = false;
-
-            renderTable();
-            triggerWebhook('winner');
-            showMessage(`🏆 ${active[0].name} Wins!`);
-            alert(`🏆 ${active[0].name} Wins! \n\nTournament has automatically ended. \nDon't forget to SAVE.`);
-        }
+        triggerWebhook('winner');
+        showMessage(`🏆 ${active[0].name} Wins!`);
+        alert(`🏆 ${active[0].name} Wins!\n\nTournament has automatically ended.\nDon't forget to SAVE.`);
+      }
     }
 
-
-    // === TOURNAMENT CONTROL ===
-function startTournament() {
-        saveState(); // Save "Pre-Start" state
-        tournamentStarted = true;
-        document.getElementById('startBtn').disabled = true;
-        document.getElementById('endBtn').disabled = false;
-        document.getElementById('majorToggle').disabled = true;
-        
-        players.sort((a,b) => a.name.localeCompare(b.name));
-        renderTable();
-        
-        showMessage("Tournament Started!");
-        startTimer();
+    // =============================================
+    // TOURNAMENT CONTROL
+    // =============================================
+    function startTournament() {
+      saveState();
+      tournamentStarted = true;
+      document.getElementById('startBtn').disabled    = true;
+      document.getElementById('endBtn').disabled      = false;
+      document.getElementById('majorToggle').disabled = true;
+      players.sort((a, b) => a.name.localeCompare(b.name));
+      renderTable();
+      showMessage("Tournament Started!");
+      startTimer();
     }
 
     function endTournament() {
-        if(tournamentEnded) return;
-        if(!confirm("End Tournament and Finalize Results?")) return;
-        
-        saveState(); // Save state BEFORE ending
-        
-        tournamentStarted = false;
-        tournamentEnded = true;
-        pauseTimer();
-        
-        document.getElementById('startBtn').disabled = false;
-        document.getElementById('endBtn').disabled = true;
-        document.getElementById('exportBtn').disabled = false; 
-        document.getElementById('loadDashboardBtn').disabled = false;
-        document.getElementById('majorToggle').disabled = false;
-        
-        renderTable();
-        triggerWebhook('winner');
-        showMessage("Tournament Ended Manually!");
+      if (tournamentEnded) return;
+      if (!confirm("End Tournament and Finalize Results?")) return;
+      saveState();
+      tournamentStarted = false; tournamentEnded = true;
+      pauseTimer();
+      document.getElementById('startBtn').disabled       = false;
+      document.getElementById('endBtn').disabled         = true;
+      document.getElementById('exportBtn').disabled      = false;
+      document.getElementById('loadDashboardBtn').disabled = false;
+      document.getElementById('majorToggle').disabled    = false;
+      renderTable();
+      triggerWebhook('winner');
+      showMessage("Tournament Ended Manually!");
     }
 
-function calculatePot() {
-        let total = players.reduce((sum, p) => sum + p.totalPaid, 0);
-        // House Fee is ALWAYS 10% (rounded up)
-        const fee = Math.ceil(total * 0.10); 
-        return Math.max(0, total - fee);
+    // =============================================
+    // PRIZE CALCULATION
+    // FIX: Single consistent rounding logic used everywhere.
+    // House fee = 10% snapped to nearest £5.
+    // 2nd = 20% of pot snapped to nearest £5. 1st = remainder.
+    // =============================================
+    function calcPrizes(totalPaid) {
+      const rawFee = totalPaid * 0.10;
+      const fee    = Math.round(rawFee / 5) * 5;
+      const pot    = Math.max(0, totalPaid - fee);
+      let   p2     = Math.round((pot * 0.2) / 5) * 5;
+      let   p1     = pot - p2;
+      if (p1 < p2) { p1 = pot; p2 = 0; }
+      return { fee, pot, p1, p2 };
     }
 
-function updatePrizeInfo() {
-        let total = players.reduce((sum, p) => sum + p.totalPaid, 0);
-        
-        // 1. House Fee: 10% snapped to the nearest £5
-        let rawFee = total * 0.10;
-        const fee = Math.round(rawFee / 5) * 5; 
-        
-        const pot = Math.max(0, total - fee);
-        
-        // 2. 2nd Place: 20% of Pot, snapped to nearest £5
-        let p2 = Math.round((pot * 0.2) / 5) * 5;
-        
-        // 3. 1st Place: The exact remainder
-        let p1 = pot - p2;
-        
-        // Edge case fallback
-        if (p1 < p2) { p1 = pot; p2 = 0; }
-        
-        document.getElementById('currentPrizePool').innerText = pot;
-        document.getElementById('firstPrize').innerText = p1;
-        document.getElementById('secondPrize').innerText = p2;
-        
-        document.getElementById('playerCount').innerText = `Players: ${players.length} | Prize Pot: £${pot} | House Fee: 10% (£${fee})`;
+    function updatePrizeInfo() {
+      const totalPaid = players.reduce((sum, p) => sum + p.totalPaid, 0);
+      const { fee, pot, p1, p2 } = calcPrizes(totalPaid);
+
+      document.getElementById('currentPrizePool').innerText = pot;
+      document.getElementById('firstPrize').innerText       = p1;
+      document.getElementById('secondPrize').innerText      = p2;
+      // FIX: This is the only place that writes playerCount — no overwrite below.
+      document.getElementById('playerCount').innerText =
+        `Players: ${players.length} | Prize Pot: £${pot} | House Fee: 10% (£${fee})`;
     }
 
     function showMessage(msg) {
-        const el = document.getElementById('statusMessage');
-        el.innerText = msg;
-        el.classList.add('show');
-        setTimeout(() => el.classList.remove('show'), 3000);
+      const el = document.getElementById('statusMessage');
+      el.innerText = msg;
+      el.classList.add('show');
+      setTimeout(() => el.classList.remove('show'), 3000);
     }
 
-
-   // === TIMER LOGIC ===
+    // =============================================
+    // TIMER
+    // =============================================
     function updateRoundDisplay() {
-      const r = rounds[currentRound];
-      const nextR = rounds[currentRound + 1];
-      const isBreak = r.isBreak;
-      
+      const r    = rounds[currentRound];
+      const nextR= rounds[currentRound + 1];
+
       let html = `<div>${r.name}</div>`;
-      if (isBreak) {
-        html += `<div style="font-size:0.8em; color:#d84315;">BREAK</div>`;
-        document.getElementById('breakNotice').style.display = 'block';
-        document.getElementById('breakToggles').style.display = 'block'; // Show toggles
+      if (r.isBreak) {
+        html += `<div style="font-size:0.8em;color:#d84315;">BREAK</div>`;
+        document.getElementById('breakNotice').style.display  = 'block';
+        document.getElementById('breakToggles').style.display = 'block';
       } else {
-        html += `<div style="font-size:1.8rem; margin-top:5px;">${r.sb.toLocaleString()} / ${r.bb.toLocaleString()}</div>`;
-        if (nextR) html += `<div style="font-size:0.8rem; color:#777; margin-top:5px;">Next: ${nextR.sb}/${nextR.bb}</div>`;
-        document.getElementById('breakNotice').style.display = 'none';
-        document.getElementById('breakToggles').style.display = 'none'; // Hide toggles
-        
-        // Auto-uncheck toggles when moving to a new round
+        html += `<div style="font-size:1.8rem;margin-top:5px;">${r.sb.toLocaleString()} / ${r.bb.toLocaleString()}</div>`;
+        if (nextR) html += `<div style="font-size:0.8rem;color:#777;margin-top:5px;">Next: ${nextR.sb}/${nextR.bb}</div>`;
+        document.getElementById('breakNotice').style.display  = 'none';
+        document.getElementById('breakToggles').style.display = 'none';
         document.querySelectorAll('#breakToggles input[type="checkbox"]').forEach(cb => cb.checked = false);
       }
-      
       document.getElementById('roundInfo').innerHTML = html;
-      
-      // Calculate mins/secs if not running
+
       if (!timerRunning) {
-          timeLeft = r.duration * (r.isTest ? 5 : 60); 
+        timeLeft = r.duration * (r.isTest ? 5 : 60);
       }
       displayTime();
     }
 
     function displayTime() {
-        const m = Math.floor(timeLeft / 60);
-        const s = timeLeft % 60;
-        document.getElementById('timeRemaining').innerText = 
-            `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+      const m = Math.floor(timeLeft / 60);
+      const s = timeLeft % 60;
+      document.getElementById('timeRemaining').innerText =
+        `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
     }
 
     function startTimer() {
-        if (timerRunning) return;
-        if (timeLeft <= 0) return; // Prevent starting if time is empty
-
-        clearInterval(timer); // Bulletproof safety to prevent double-intervals
-
-        timerRunning = true;
-        document.getElementById('timerStartBtn').disabled = true;
-        document.getElementById('timerPauseBtn').disabled = false;
-        
-        timer = setInterval(() => {
-            if (timeLeft > 0) {
-                timeLeft--;
-                displayTime();
-            } else {
-                roundComplete();
-            }
-        }, 1000);
+      if (timerRunning) return;
+      if (timeLeft <= 0) return;
+      clearInterval(timer);
+      timerRunning = true;
+      document.getElementById('timerStartBtn').disabled = true;
+      document.getElementById('timerPauseBtn').disabled = false;
+      timer = setInterval(() => {
+        if (timeLeft > 0) { timeLeft--; displayTime(); }
+        else roundComplete();
+      }, 1000);
     }
 
     function pauseTimer() {
-        clearInterval(timer);
-        timerRunning = false;
-        document.getElementById('timerStartBtn').disabled = false;
-        document.getElementById('timerPauseBtn').disabled = true;
+      clearInterval(timer);
+      timerRunning = false;
+      document.getElementById('timerStartBtn').disabled = false;
+      document.getElementById('timerPauseBtn').disabled = true;
     }
 
     function resetTimer() {
-        pauseTimer();
-        const r = rounds[currentRound];
-        timeLeft = r.duration * (r.isTest ? 5 : 60); 
-        displayTime();
+      pauseTimer();
+      const r = rounds[currentRound];
+      timeLeft = r.duration * (r.isTest ? 5 : 60);
+      displayTime();
     }
 
     function skipRound() {
-        saveState(); 
-        
-        // 1. Fully pause to reset UI states and clear interval
-        pauseTimer(); 
-
-        // 2. Advance round
-        currentRound = Math.min(currentRound + 1, rounds.length - 1);
-        const r = rounds[currentRound];
-        timeLeft = r.duration * (r.isTest ? 5 : 60); 
-        
-        updateRoundDisplay();
-        
-        if(r.isBreak) triggerWebhook('break');
-        else triggerWebhook('round', r.sb, r.bb);
-        
-        // 3. Auto-start if tournament is active (unless it's over)
-        if (tournamentStarted && !tournamentEnded) {
-            startTimer();
-        }
+      saveState();
+      pauseTimer();
+      currentRound = Math.min(currentRound + 1, rounds.length - 1);
+      const r = rounds[currentRound];
+      timeLeft = r.duration * (r.isTest ? 5 : 60);
+      updateRoundDisplay();
+      if (r.isBreak) triggerWebhook('break');
+      else triggerWebhook('round', r.sb, r.bb);
+      if (tournamentStarted && !tournamentEnded) startTimer();
     }
 
     function roundComplete() {
-        document.getElementById('roundAlarm').play().catch(e=>console.log("Audio play failed"));
-        
-        if (currentRound < rounds.length - 1) {
-            currentRound++;
-            const r = rounds[currentRound];
-            timeLeft = r.duration * (r.isTest ? 5 : 60);
-            updateRoundDisplay();
-            
-            if(r.isBreak) triggerWebhook('break');
-            else triggerWebhook('round', r.sb, r.bb);
-            // The interval keeps firing from startTimer(), automatically counting down the new round!
-        } else {
-            alert("Tournament Structure Complete!");
-            pauseTimer();
-        }
+      document.getElementById('roundAlarm').play().catch(e => console.log("Audio play failed"));
+      if (currentRound < rounds.length - 1) {
+        currentRound++;
+        const r = rounds[currentRound];
+        timeLeft = r.duration * (r.isTest ? 5 : 60);
+        updateRoundDisplay();
+        if (r.isBreak) triggerWebhook('break');
+        else triggerWebhook('round', r.sb, r.bb);
+      } else {
+        alert("Tournament Structure Complete!");
+        pauseTimer();
+      }
     }
 
-
-
-    // === GOOGLE SHEETS INTEGRATION ===
+    // =============================================
+    // GOOGLE SHEETS
+    // =============================================
     function handleClientLoad() {
       tokenClient = google.accounts.oauth2.initTokenClient({
         client_id: CLIENT_ID,
@@ -929,385 +887,277 @@ function updatePrizeInfo() {
         callback: (tokenResponse) => {
           if (tokenResponse && tokenResponse.access_token) {
             googleApiReady = true;
-            if(window.pendingAction === 'export') exportData();
-            if(window.pendingAction === 'dashboard') loadDashboard();
+            if (window.pendingAction === 'export')    exportData();
+            if (window.pendingAction === 'dashboard') loadDashboard();
           }
         },
       });
       gapi.load('client', () => {
-          gapi.client.init({
-              discoveryDocs: ["https://sheets.googleapis.com/$discovery/rest?version=v4"],
-          });
+        gapi.client.init({ discoveryDocs: ["https://sheets.googleapis.com/$discovery/rest?version=v4"] });
       });
     }
 
-    function signInAndExport() {
-        window.pendingAction = 'export';
-        if(googleApiReady && gapi.client.sheets) exportData();
-        else tokenClient.requestAccessToken();
-    }
+    function signInAndExport()        { window.pendingAction = 'export';    if (googleApiReady && gapi.client.sheets) exportData();    else tokenClient.requestAccessToken(); }
+    function signInAndLoadDashboard() { window.pendingAction = 'dashboard'; if (googleApiReady && gapi.client.sheets) loadDashboard(); else tokenClient.requestAccessToken(); }
 
-    function signInAndLoadDashboard() {
-        window.pendingAction = 'dashboard';
-        if(googleApiReady && gapi.client.sheets) loadDashboard();
-        else tokenClient.requestAccessToken();
-    }
+    async function exportData() {
+      if (!tournamentEnded && !confirm("Tournament hasn't officially ended. Save anyway?")) return;
 
-  async function exportData() {
-        if(!tournamentEnded && !confirm("Tournament hasn't officially ended. Save anyway?")) return;
-        
-        const timestamp = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
-        const dateStr = timestamp.split(' ')[0];
-        const timeStr = timestamp.split(' ')[1];
-        const tournId = `${dateStr}_${timeStr.replace(/:/g,'-')}`;
-        const isMajor = document.getElementById('majorToggle').checked;
-        const tournamentName = document.getElementById('tournamentNameSelect').value;
+      const timestamp    = new Date().toISOString().replace(/T/,' ').replace(/\..+/,'');
+      const dateStr      = timestamp.split(' ')[0];
+      const timeStr      = timestamp.split(' ')[1];
+      const tournId      = `${dateStr}_${timeStr.replace(/:/g,'-')}`;
+      const isMajor      = document.getElementById('majorToggle').checked;
+      const tournamentName = document.getElementById('tournamentNameSelect').value;
 
-        let rows = [];
-        let activePlayers = players.filter(p => !p.eliminated);
-        let eliminatedPlayers = players.filter(p => p.eliminated).sort((a,b) => b.eliminationTime - a.eliminationTime);
-        const totalP = players.length;
-        
-        // 1. Process Rebuys
-        players.forEach(p => {
-            if(p.rebuyEliminations && p.rebuyEliminations.length > 0) {
-                p.rebuyEliminations.forEach(rebuy => {
-                    rows.push([
-                        dateStr, timeStr, tournId, p.name, 
-                        0, totalP, 0, 0, 0, 0, 0,
-                        rebuy.eliminatedBy, tournamentName, isMajor
-                    ]);
-                });
-            }
+      const rows             = [];
+      const activePlayers    = players.filter(p => !p.eliminated);
+      const eliminatedPlayers= players.filter(p => p.eliminated).sort((a,b) => b.eliminationTime - a.eliminationTime);
+      const totalP           = players.length;
+
+      // Rebuy rows
+      players.forEach(p => {
+        (p.rebuyEliminations || []).forEach(rb => {
+          rows.push([dateStr, timeStr, tournId, p.name, 0, totalP, 0, 0, 0, 0, 0, rb.eliminatedBy, tournamentName, isMajor]);
         });
+      });
 
-        // 2. Process Final Results
-        let finalRankings = [];
-        activePlayers.forEach(p => finalRankings.push({ player: p, rank: 1 }));
-        let currentRank = activePlayers.length + 1;
-        eliminatedPlayers.forEach(p => {
-            finalRankings.push({ player: p, rank: currentRank });
-            currentRank++;
-        });
+      // Final rankings
+      let finalRankings = [];
+      activePlayers.forEach(p    => finalRankings.push({ player: p, rank: 1 }));
+      let currentRk = activePlayers.length + 1;
+      eliminatedPlayers.forEach(p => { finalRankings.push({ player: p, rank: currentRk }); currentRk++; });
 
-        finalRankings.forEach(item => {
-            const p = item.player;
-            const rank = item.rank;
-            let prize = 0;
-            const pot = calculatePot();
-            
-            // Standard Split
-            if(rank === 1) prize = activePlayers.length === 1 ? pot * 0.8 : (pot / activePlayers.length); 
-            if(activePlayers.length === 1 && rank === 1) prize = pot * 0.8;
-            if(rank === 2) prize = pot * 0.2;
-            
-            // NEW ROUNDING LOGIC: Apply the "Round UP to nearest 5" rule for the database
-            if (rank === 1 || rank === 2) {
-                let p2 = Math.ceil((pot * 0.2) / 5) * 5;
-                let p1 = pot - p2;
-                if (p1 < p2) { p1 = pot; p2 = 0; }
-                prize = rank === 1 ? p1 : p2;
-            }
-            
-            const earnings = prize;
-            const roi = p.totalPaid > 0 ? ((earnings - p.totalPaid)/p.totalPaid)*100 : 0;
-            
-            rows.push([
-                dateStr, timeStr, tournId, p.name,
-                rank, totalP, p.totalPaid, earnings,
-                p.stacks - 1, p.hasAddon ? 1 : 0,
-                roi.toFixed(1), p.eliminated ? p.eliminatedBy : 'N/A',
-                tournamentName, isMajor
-            ]);
-        });
+      // FIX: Use the single calcPrizes() for consistent pot/prize calculation
+      const totalPaid = players.reduce((sum, p) => sum + p.totalPaid, 0);
+      const { pot, p1: firstPrize, p2: secondPrize } = calcPrizes(totalPaid);
 
-        try {
-            await gapi.client.sheets.spreadsheets.values.append({
-                spreadsheetId: SPREADSHEET_ID,
-                range: 'PlayerResults!A:N',
-                valueInputOption: 'USER_ENTERED',
-                resource: { values: rows },
-            });
-            alert("Data Exported to Google Sheets!");
-        } catch (err) {
-            console.error("Export error", err);
-            // 401 Catch - Automatically request a new token if expired
-            if (err.status === 401) {
-                alert("Google session expired. Please re-authenticate via the popup, then click Save again.");
-                tokenClient.requestAccessToken();
-            } else {
-                alert("Error exporting data. Check console.");
-            }
+      finalRankings.forEach(item => {
+        const p    = item.player;
+        const rank = item.rank;
+        // FIX: Clean prize logic — no dead duplicate code
+        let prize = 0;
+        if (activePlayers.length === 1) {
+          if (rank === 1) prize = firstPrize;
+        } else {
+          if (rank === 1) prize = firstPrize;
+          if (rank === 2) prize = secondPrize;
         }
+        const roi = p.totalPaid > 0 ? ((prize - p.totalPaid) / p.totalPaid * 100).toFixed(1) : 0;
+        rows.push([
+          dateStr, timeStr, tournId, p.name,
+          rank, totalP, p.totalPaid, prize,
+          p.stacks - 1, p.hasAddon ? 1 : 0,
+          roi, p.eliminated ? p.eliminatedBy : 'N/A',
+          tournamentName, isMajor
+        ]);
+      });
+
+      try {
+        await gapi.client.sheets.spreadsheets.values.append({
+          spreadsheetId: SPREADSHEET_ID,
+          range: 'PlayerResults!A:N',
+          valueInputOption: 'USER_ENTERED',
+          resource: { values: rows }
+        });
+        alert("Data Exported to Google Sheets!");
+      } catch (err) {
+        console.error("Export error", err);
+        if (err.status === 401) {
+          alert("Google session expired. Please re-authenticate via the popup, then click Save again.");
+          tokenClient.requestAccessToken();
+        } else {
+          alert("Error exporting data. Check console.");
+        }
+      }
     }
 
-    // === DASHBOARD LOGIC ===
+    // =============================================
+    // DASHBOARD
+    // =============================================
     async function loadDashboard() {
-        document.getElementById('dashboardSection').style.display = 'block';
-        window.scrollTo(0, document.body.scrollHeight);
-        try {
-            const res = await gapi.client.sheets.spreadsheets.values.get({
-                spreadsheetId: SPREADSHEET_ID,
-                range: 'PlayerResults!A2:N',
-            });
-            const allRows = res.result.values || [];
-            if(allRows.length === 0) {
-                document.getElementById('tab-p2026').innerHTML = "No data found.";
-                return;
-            }
-            const rows2026 = allRows.filter(r => r[0].startsWith('2026'));
-            const stats2026 = calculate2026Points(rows2026);
-            
-            // Need total games for Shark %
-            const uniqueTourns = new Set(rows2026.map(r => r[2])).size;
-            const detail2026 = calculateDetailedStats(rows2026, uniqueTourns);
-            
-            const titles = calculateTitles(calculateDetailedStats(rows2026, uniqueTourns, true));
-            const allTime = calculateAllTime(allRows);
+      document.getElementById('dashboardSection').style.display = 'block';
+      window.scrollTo(0, document.body.scrollHeight);
+      try {
+        const res = await gapi.client.sheets.spreadsheets.values.get({ spreadsheetId: SPREADSHEET_ID, range: 'PlayerResults!A2:N' });
+        const allRows = res.result.values || [];
+        if (allRows.length === 0) { document.getElementById('tab-p2026').innerHTML = "No data found."; return; }
+        const rows2026 = allRows.filter(r => r[0].startsWith('2026'));
+        const stats2026 = calculate2026Points(rows2026);
+        const uniqueTourns = new Set(rows2026.map(r => r[2])).size;
+        const detail2026 = calculateDetailedStats(rows2026, uniqueTourns);
+        const titles  = calculateTitles(calculateDetailedStats(rows2026, uniqueTourns, true));
+        const allTime = calculateAllTime(allRows);
 
-            document.getElementById('p2026Content').innerHTML = render2026Leaderboard(stats2026);
-            document.getElementById('titlesContent').innerHTML = renderTitles(titles);
-            
-            // Pass rendered HTML
-            window.detailedDataCache = detail2026; // Cache for sorting
-            document.getElementById('detailedContent').innerHTML = renderDetailedTable(detail2026);
-            
-            document.getElementById('allTimeContent').innerHTML = renderAllTime(allTime);
-        } catch(err) {
-            console.error(err);
-            alert("Error loading dashboard data.");
-        }
+        document.getElementById('p2026Content').innerHTML  = render2026Leaderboard(stats2026);
+        document.getElementById('titlesContent').innerHTML = renderTitles(titles);
+        window.detailedDataCache = detail2026;
+        document.getElementById('detailedContent').innerHTML = renderDetailedTable(detail2026);
+        document.getElementById('allTimeContent').innerHTML = renderAllTime(allTime);
+      } catch(err) {
+        console.error(err);
+        alert("Error loading dashboard data.");
+      }
     }
 
     function calculate2026Points(rows) {
-        const tournaments = {}; 
-        const stats = {};
-        rows.forEach(r => {
-            const [d, t, tid, name, rankStr, f, paid, earn, rebuy, addon, roi, killer, tname, isMaj] = r;
-            const isMajor = isMaj === 'TRUE';
-            const rank = parseInt(rankStr);
-            const multiplier = isMajor ? 2 : 1;
-
-            if(!tournaments[tid]) tournaments[tid] = { kills: {}, isMajor: isMajor, ranks: {} };
-            if (rank > 0) tournaments[tid].ranks[name] = rank;
-            if(killer && killer !== 'N/A') tournaments[tid].kills[killer] = (tournaments[tid].kills[killer] || 0) + 1;
-
-            if (rank > 0) {
-                if(!stats[name]) stats[name] = { points:0, wins:0, seconds:0, thirds:0, att:0, killerWins:0 };
-                stats[name].att++;
-                stats[name].points += (1 * multiplier); 
-                if(rank === 1) { stats[name].points += (10 * multiplier); stats[name].wins++; }
-                if(rank === 2) { stats[name].points += (7 * multiplier); stats[name].seconds++; }
-                if(rank === 3) { stats[name].points += (4 * multiplier); stats[name].thirds++; }
-            }
-        });
-
-        Object.values(tournaments).forEach(t => {
-            const mult = t.isMajor ? 2 : 1;
-            const eligibleKillers = [];
-            Object.keys(t.kills).forEach(k => {
-                const rk = t.ranks[k];
-                if(rk && rk >= 3) eligibleKillers.push({ name: k, count: t.kills[k] });
-            });
-            if(eligibleKillers.length > 0) {
-                eligibleKillers.sort((a,b) => b.count - a.count);
-                const max = eligibleKillers[0].count;
-                eligibleKillers.forEach(ek => {
-                    if(ek.count === max && stats[ek.name]) {
-                        stats[ek.name].points += (2 * mult);
-                        stats[ek.name].killerWins++;
-                    }
-                });
-            }
-        });
-        return Object.entries(stats).sort((a,b) => b[1].points - a[1].points);
+      const tournaments = {}, stats = {};
+      rows.forEach(r => {
+        const [d, t, tid, name, rankStr, f, paid, earn, rebuy, addon, roi, killer, tname, isMaj] = r;
+        const isMajor = isMaj === 'TRUE';
+        const rank = parseInt(rankStr);
+        const multiplier = isMajor ? 2 : 1;
+        if (!tournaments[tid]) tournaments[tid] = { kills: {}, isMajor, ranks: {} };
+        if (rank > 0) tournaments[tid].ranks[name] = rank;
+        if (killer && killer !== 'N/A') tournaments[tid].kills[killer] = (tournaments[tid].kills[killer] || 0) + 1;
+        if (rank > 0) {
+          if (!stats[name]) stats[name] = { points:0, wins:0, seconds:0, thirds:0, att:0, killerWins:0 };
+          stats[name].att++;
+          stats[name].points += (1 * multiplier);
+          if (rank===1) { stats[name].points += (10 * multiplier); stats[name].wins++; }
+          if (rank===2) { stats[name].points += (7  * multiplier); stats[name].seconds++; }
+          if (rank===3) { stats[name].points += (4  * multiplier); stats[name].thirds++; }
+        }
+      });
+      Object.values(tournaments).forEach(t => {
+        const mult = t.isMajor ? 2 : 1;
+        const eligible = [];
+        Object.keys(t.kills).forEach(k => { const rk = t.ranks[k]; if (rk && rk >= 3) eligible.push({ name: k, count: t.kills[k] }); });
+        if (eligible.length > 0) {
+          eligible.sort((a,b) => b.count - a.count);
+          const max = eligible[0].count;
+          eligible.forEach(ek => { if (ek.count === max && stats[ek.name]) { stats[ek.name].points += (2 * mult); stats[ek.name].killerWins++; } });
+        }
+      });
+      return Object.entries(stats).sort((a,b) => b[1].points - a[1].points);
     }
 
     function calculateDetailedStats(rows, totalTournaments, returnRaw = false) {
-        const s = {};
-        rows.forEach(r => {
-            const [d,t,id,name,rankStr,fieldStr,paid,earn,rebuy,addon,roi,killer] = r;
-            const rank = parseInt(rankStr);
-            const field = parseInt(fieldStr);
-            const cost = parseFloat(paid)||0;
-            const earnings = parseFloat(earn)||0; 
-            
-            if(!s[name]) s[name] = { played:0, wins:0, sec:0, third:0, rebuys:0, addons:0, kills:0, deaths:0, firstOuts:0, totalProfit:0 };
-            
-            if (rank > 0) {
-                s[name].played++;
-                s[name].rebuys += parseInt(rebuy)||0;
-                s[name].addons += parseInt(addon)||0;
-                s[name].totalProfit += (earnings - cost);
-                if(rank === 1) s[name].wins++;
-                if(rank === 2) s[name].sec++;
-                if(rank === 3) s[name].third++;
-                if(rank > 1) s[name].deaths++;
-                if(rank === field) s[name].firstOuts++; 
-            }
-            if(killer && killer !== 'N/A') {
-                if(!s[killer]) s[killer] = { played:0, wins:0, sec:0, third:0, rebuys:0, addons:0, kills:0, deaths:0, firstOuts:0, totalProfit:0 };
-                s[killer].kills++;
-            }
-        });
-        
-        if (returnRaw) return s;
-
-        // SHARK LOGIC: 50% Attendance Rule
-        const penaltyDivisor = Math.ceil(totalTournaments * 0.5);
-
-        return Object.entries(s).map(([name, d]) => {
-            // Proven Shark Win %
-            const effectiveGames = Math.max(d.played, penaltyDivisor);
-            d.sharkRateVal = (d.wins / effectiveGames) * 100;
-            d.sharkRate = d.sharkRateVal.toFixed(0) + '%';
-            
-            d.cashRateVal = d.played > 0 ? ((d.wins + d.sec)/d.played)*100 : 0;
-            d.cashRate = d.cashRateVal.toFixed(0) + '%';
-            
-            return { name: name, ...d };
-        }).sort((a,b) => b.sharkRateVal - a.sharkRateVal); // Default sort
+      const s = {};
+      rows.forEach(r => {
+        const [d,t,id,name,rankStr,fieldStr,paid,earn,rebuy,addon,roi,killer] = r;
+        const rank = parseInt(rankStr), field = parseInt(fieldStr);
+        const cost = parseFloat(paid)||0, earnings = parseFloat(earn)||0;
+        if (!s[name]) s[name] = { played:0, wins:0, sec:0, third:0, rebuys:0, addons:0, kills:0, deaths:0, firstOuts:0, totalProfit:0 };
+        if (rank > 0) {
+          s[name].played++; s[name].rebuys += parseInt(rebuy)||0; s[name].addons += parseInt(addon)||0;
+          s[name].totalProfit += (earnings - cost);
+          if (rank===1) s[name].wins++;
+          if (rank===2) s[name].sec++;
+          if (rank===3) s[name].third++;
+          if (rank > 1) s[name].deaths++;
+          if (rank === field) s[name].firstOuts++;
+        }
+        if (killer && killer !== 'N/A') {
+          if (!s[killer]) s[killer] = { played:0, wins:0, sec:0, third:0, rebuys:0, addons:0, kills:0, deaths:0, firstOuts:0, totalProfit:0 };
+          s[killer].kills++;
+        }
+      });
+      if (returnRaw) return s;
+      const penaltyDivisor = Math.ceil(totalTournaments * 0.5);
+      return Object.entries(s).map(([name, d]) => {
+        const effectiveGames = Math.max(d.played, penaltyDivisor);
+        d.sharkRateVal = (d.wins / effectiveGames) * 100;
+        d.sharkRate    = d.sharkRateVal.toFixed(0) + '%';
+        d.cashRateVal  = d.played > 0 ? ((d.wins + d.sec) / d.played) * 100 : 0;
+        d.cashRate     = d.cashRateVal.toFixed(0) + '%';
+        return { name, ...d };
+      }).sort((a,b) => b.sharkRateVal - a.sharkRateVal);
     }
 
-    // SORTING FUNCTION FOR DETAILED STATS
     window.sortDetailed = function(col) {
-        if(detailedSort.col === col) detailedSort.asc = !detailedSort.asc;
-        else { detailedSort.col = col; detailedSort.asc = false; }
-        
-        const data = window.detailedDataCache;
-        if(!data) return;
-        
-        data.sort((a,b) => {
-            let valA = a[col];
-            let valB = b[col];
-            // Handle numeric vs string
-            if(col === 'name') return detailedSort.asc ? valA.localeCompare(valB) : valB.localeCompare(valA);
-            if(col === 'shark') return detailedSort.asc ? a.sharkRateVal - b.sharkRateVal : b.sharkRateVal - a.sharkRateVal;
-            if(col === 'cash') return detailedSort.asc ? a.cashRateVal - b.cashRateVal : b.cashRateVal - a.cashRateVal;
-            
-            return detailedSort.asc ? valA - valB : valB - valA;
-        });
-        
-        document.getElementById('detailedContent').innerHTML = renderDetailedTable(data);
+      if (detailedSort.col === col) detailedSort.asc = !detailedSort.asc;
+      else { detailedSort.col = col; detailedSort.asc = false; }
+      const data = window.detailedDataCache;
+      if (!data) return;
+      data.sort((a,b) => {
+        if (col === 'name')  return detailedSort.asc ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name);
+        if (col === 'shark') return detailedSort.asc ? a.sharkRateVal - b.sharkRateVal : b.sharkRateVal - a.sharkRateVal;
+        if (col === 'cash')  return detailedSort.asc ? a.cashRateVal  - b.cashRateVal  : b.cashRateVal  - a.cashRateVal;
+        return detailedSort.asc ? a[col] - b[col] : b[col] - a[col];
+      });
+      document.getElementById('detailedContent').innerHTML = renderDetailedTable(data);
     }
 
     function renderDetailedTable(data) {
-        return `
-        <div style="font-size:0.8rem; color:#666; margin-bottom:5px;">Click headers to sort. Shark % requires 50% attendance.</div>
-        <table>
-            <thead>
-                <tr>
-                    <th class="sortable" onclick="sortDetailed('name')">Player</th>
-                    <th class="sortable" onclick="sortDetailed('played')">Games</th>
-                    <th class="sortable" onclick="sortDetailed('wins')">1st</th>
-                    <th class="sortable" onclick="sortDetailed('sec')">2nd</th>
-                    <th class="sortable" onclick="sortDetailed('third')">3rd</th>
-                    <th class="sortable" onclick="sortDetailed('kills')">Kills</th>
-                    <th class="sortable" onclick="sortDetailed('deaths')">Deaths</th>
-                    <th class="sortable" onclick="sortDetailed('rebuys')">Rebuys</th>
-                    <th class="sortable" onclick="sortDetailed('addons')">Addons</th>
-                    <th class="sortable" onclick="sortDetailed('shark')" style="background:#fff3e0;">Shark %</th>
-                    <th class="sortable" onclick="sortDetailed('cash')">Cash %</th>
-                </tr>
-            </thead>
-            <tbody>
-                ${data.map(p => `
-                <tr>
-                    <td><strong>${p.name}</strong></td>
-                    <td>${p.played}</td>
-                    <td>${p.wins}</td>
-                    <td>${p.sec}</td>
-                    <td>${p.third}</td>
-                    <td>${p.kills}</td>
-                    <td>${p.deaths}</td>
-                    <td>${p.rebuys}</td>
-                    <td>${p.addons}</td>
-                    <td style="background:#fff3e0; font-weight:bold;">${p.sharkRate}</td>
-                    <td>${p.cashRate}</td>
-                </tr>`).join('')}
-            </tbody>
-        </table>`;
+      return `
+      <div style="font-size:0.8rem;color:#666;margin-bottom:5px;">Click headers to sort. Shark % requires 50% attendance.</div>
+      <table><thead><tr>
+        <th class="sortable" onclick="sortDetailed('name')">Player</th>
+        <th class="sortable" onclick="sortDetailed('played')">Games</th>
+        <th class="sortable" onclick="sortDetailed('wins')">1st</th>
+        <th class="sortable" onclick="sortDetailed('sec')">2nd</th>
+        <th class="sortable" onclick="sortDetailed('third')">3rd</th>
+        <th class="sortable" onclick="sortDetailed('kills')">Kills</th>
+        <th class="sortable" onclick="sortDetailed('deaths')">Deaths</th>
+        <th class="sortable" onclick="sortDetailed('rebuys')">Rebuys</th>
+        <th class="sortable" onclick="sortDetailed('addons')">Addons</th>
+        <th class="sortable" onclick="sortDetailed('shark')" style="background:#fff3e0;">Shark %</th>
+        <th class="sortable" onclick="sortDetailed('cash')">Cash %</th>
+      </tr></thead><tbody>
+        ${data.map(p => `<tr>
+          <td><strong>${p.name}</strong></td>
+          <td>${p.played}</td><td>${p.wins}</td><td>${p.sec}</td><td>${p.third}</td>
+          <td>${p.kills}</td><td>${p.deaths}</td><td>${p.rebuys}</td><td>${p.addons}</td>
+          <td style="background:#fff3e0;font-weight:bold;">${p.sharkRate}</td>
+          <td>${p.cashRate}</td>
+        </tr>`).join('')}
+      </tbody></table>`;
     }
 
     function calculateAllTime(rows) {
-        const s = {};
-        rows.forEach(r => {
-            const name = r[3];
-            const rank = parseInt(r[4]);
-            if(!s[name]) s[name] = { played:0, wins:0, sec:0, third:0, kills:0 };
-            if (rank > 0) {
-                s[name].played++;
-                if(rank===1) s[name].wins++;
-                if(rank===2) s[name].sec++;
-                if(rank===3) s[name].third++;
-            }
-            if(r[11] && r[11]!=='N/A') {
-                if(!s[r[11]]) s[r[11]] = { played:0, wins:0, sec:0, third:0, kills:0 };
-                s[r[11]].kills++;
-            }
-        });
-        return Object.entries(s).sort((a,b) => b[1].wins - a[1].wins);
-    }
-    
-    function calculateTitles(statsObj) {
-        let t = {
-            champion: {n:[], v:0}, runnerup: {n:[], v:0}, musk: {n:[], v:0}, fixture: {n:[], v:0},
-            killer: {n:[], v:0}, early: {n:[], v:0}, phoenix: {n:[], v:0}, bubble: {n:[], v:0}
-        };
-        const updateTitle = (key, name, val) => {
-            if (val > t[key].v) { t[key] = { n: [name], v: val }; } 
-            else if (val === t[key].v && val > 0) { t[key].n.push(name); }
-        };
-        Object.entries(statsObj).forEach(([n, d]) => {
-            updateTitle('champion', n, d.wins);
-            updateTitle('runnerup', n, d.sec);
-            updateTitle('musk', n, d.totalProfit);
-            updateTitle('fixture', n, d.played);
-            updateTitle('killer', n, d.kills);
-            updateTitle('early', n, d.firstOuts);
-            updateTitle('phoenix', n, d.rebuys);
-            updateTitle('bubble', n, d.third);
-        });
-        return t;
-    }
-    
-    function formatNames(names) {
-        if (names.length === 0) return '-';
-        if (names.length > 3) return 'Many';
-        return names.join(', ');
+      const s = {};
+      rows.forEach(r => {
+        const name = r[3], rank = parseInt(r[4]);
+        if (!s[name]) s[name] = { played:0, wins:0, sec:0, third:0, kills:0 };
+        if (rank > 0) { s[name].played++; if(rank===1)s[name].wins++; if(rank===2)s[name].sec++; if(rank===3)s[name].third++; }
+        if (r[11] && r[11] !== 'N/A') {
+          if (!s[r[11]]) s[r[11]] = { played:0, wins:0, sec:0, third:0, kills:0 };
+          s[r[11]].kills++;
+        }
+      });
+      return Object.entries(s).sort((a,b) => b[1].wins - a[1].wins);
     }
 
+    function calculateTitles(statsObj) {
+      let t = { champion:{n:[],v:0}, runnerup:{n:[],v:0}, musk:{n:[],v:0}, fixture:{n:[],v:0}, killer:{n:[],v:0}, early:{n:[],v:0}, phoenix:{n:[],v:0}, bubble:{n:[],v:0} };
+      const upd = (key, name, val) => { if(val>t[key].v){t[key]={n:[name],v:val};}else if(val===t[key].v&&val>0){t[key].n.push(name);} };
+      Object.entries(statsObj).forEach(([n,d]) => { upd('champion',n,d.wins); upd('runnerup',n,d.sec); upd('musk',n,d.totalProfit); upd('fixture',n,d.played); upd('killer',n,d.kills); upd('early',n,d.firstOuts); upd('phoenix',n,d.rebuys); upd('bubble',n,d.third); });
+      return t;
+    }
+
+    function formatNames(names) { return names.length===0?'-':names.length>3?'Many':names.join(', '); }
+
     function renderTitles(t) {
-        return `
-        <div class="titles-grid" style="margin-top:20px;">
-            <div class="title-card"><span class="title-card-emoji">👑</span><div class="title-card-name">The Champion</div><div class="title-card-holder">${formatNames(t.champion.n)}</div><div class="title-card-stat">${t.champion.v} Wins</div></div>
-            <div class="title-card"><span class="title-card-emoji">🥈</span><div class="title-card-name">The Runner-up</div><div class="title-card-holder">${formatNames(t.runnerup.n)}</div><div class="title-card-stat">${t.runnerup.v} 2nds</div></div>
-            <div class="title-card"><span class="title-card-emoji">💰</span><div class="title-card-name">Elon Musk</div><div class="title-card-holder">${formatNames(t.musk.n)}</div><div class="title-card-stat">£${t.musk.v.toFixed(0)}</div></div>
-            <div class="title-card"><span class="title-card-emoji">🏠</span><div class="title-card-name">Permanent Fixture</div><div class="title-card-holder">${formatNames(t.fixture.n)}</div><div class="title-card-stat">${t.fixture.v} Games</div></div>
-            <div class="title-card"><span class="title-card-emoji">💀</span><div class="title-card-name">The Killer</div><div class="title-card-holder">${formatNames(t.killer.n)}</div><div class="title-card-stat">${t.killer.v} Kills</div></div>
-            <div class="title-card"><span class="title-card-emoji">🦅</span><div class="title-card-name">Early Bird</div><div class="title-card-holder">${formatNames(t.early.n)}</div><div class="title-card-stat">${t.early.v} 1st Outs</div></div>
-            <div class="title-card"><span class="title-card-emoji">🔥</span><div class="title-card-name">The Phoenix</div><div class="title-card-holder">${formatNames(t.phoenix.n)}</div><div class="title-card-stat">${t.phoenix.v} Rebuys</div></div>
-            <div class="title-card"><span class="title-card-emoji">🫧</span><div class="title-card-name">Bubble Boy</div><div class="title-card-holder">${formatNames(t.bubble.n)}</div><div class="title-card-stat">${t.bubble.v} 3rds</div></div>
-        </div>
-        `;
+      return `<div class="titles-grid" style="margin-top:20px;">
+        <div class="title-card"><span class="title-card-emoji">👑</span><div class="title-card-name">The Champion</div><div class="title-card-holder">${formatNames(t.champion.n)}</div><div class="title-card-stat">${t.champion.v} Wins</div></div>
+        <div class="title-card"><span class="title-card-emoji">🥈</span><div class="title-card-name">The Runner-up</div><div class="title-card-holder">${formatNames(t.runnerup.n)}</div><div class="title-card-stat">${t.runnerup.v} 2nds</div></div>
+        <div class="title-card"><span class="title-card-emoji">💰</span><div class="title-card-name">Elon Musk</div><div class="title-card-holder">${formatNames(t.musk.n)}</div><div class="title-card-stat">£${t.musk.v.toFixed(0)}</div></div>
+        <div class="title-card"><span class="title-card-emoji">🏠</span><div class="title-card-name">Permanent Fixture</div><div class="title-card-holder">${formatNames(t.fixture.n)}</div><div class="title-card-stat">${t.fixture.v} Games</div></div>
+        <div class="title-card"><span class="title-card-emoji">💀</span><div class="title-card-name">The Killer</div><div class="title-card-holder">${formatNames(t.killer.n)}</div><div class="title-card-stat">${t.killer.v} Kills</div></div>
+        <div class="title-card"><span class="title-card-emoji">🦅</span><div class="title-card-name">Early Bird</div><div class="title-card-holder">${formatNames(t.early.n)}</div><div class="title-card-stat">${t.early.v} 1st Outs</div></div>
+        <div class="title-card"><span class="title-card-emoji">🔥</span><div class="title-card-name">The Phoenix</div><div class="title-card-holder">${formatNames(t.phoenix.n)}</div><div class="title-card-stat">${t.phoenix.v} Rebuys</div></div>
+        <div class="title-card"><span class="title-card-emoji">🫧</span><div class="title-card-name">Bubble Boy</div><div class="title-card-holder">${formatNames(t.bubble.n)}</div><div class="title-card-stat">${t.bubble.v} 3rds</div></div>
+      </div>`;
     }
 
     function render2026Leaderboard(data) {
-        return `<h3>2026 Points Leaderboard</h3>
-        <table><thead><tr><th>Rank</th><th>Player</th><th>Points</th><th>1st</th><th>2nd</th><th>3rd</th><th>Att</th><th>Killer Bonus</th></tr></thead><tbody>${data.map((p, i) => `<tr><td>#${i+1}</td><td><strong>${p[0]}</strong></td><td style="color:#d84315; font-weight:bold;">${p[1].points}</td><td>${p[1].wins}</td><td>${p[1].seconds}</td><td>${p[1].thirds}</td><td>${p[1].att}</td><td>${p[1].killerWins}</td></tr>`).join('')}</tbody></table>`;
+      return `<h3>2026 Points Leaderboard</h3>
+      <table><thead><tr><th>Rank</th><th>Player</th><th>Points</th><th>1st</th><th>2nd</th><th>3rd</th><th>Att</th><th>Killer Bonus</th></tr></thead>
+      <tbody>${data.map((p,i) => `<tr><td>#${i+1}</td><td><strong>${p[0]}</strong></td><td style="color:#d84315;font-weight:bold;">${p[1].points}</td><td>${p[1].wins}</td><td>${p[1].seconds}</td><td>${p[1].thirds}</td><td>${p[1].att}</td><td>${p[1].killerWins}</td></tr>`).join('')}</tbody></table>`;
     }
 
     function renderAllTime(data) {
-        return `<table><thead><tr><th>Rank</th><th>Player</th><th>🥇 Wins</th><th>🥈 2nd</th><th>3rd</th><th>Games</th><th>Kills</th></tr></thead><tbody>
-        ${data.map((p,i) => `<tr><td>${i+1}</td><td>${p[0]}</td><td>${p[1].wins}</td><td>${p[1].sec}</td><td>${p[1].third}</td><td>${p[1].played}</td><td>${p[1].kills}</td></tr>`).join('')}</tbody></table>`;
+      return `<table><thead><tr><th>Rank</th><th>Player</th><th>🥇 Wins</th><th>🥈 2nd</th><th>3rd</th><th>Games</th><th>Kills</th></tr></thead>
+      <tbody>${data.map((p,i) => `<tr><td>${i+1}</td><td>${p[0]}</td><td>${p[1].wins}</td><td>${p[1].sec}</td><td>${p[1].third}</td><td>${p[1].played}</td><td>${p[1].kills}</td></tr>`).join('')}</tbody></table>`;
     }
-    
-    function switchTab(tabName) {
-        document.querySelectorAll('.dashboard-tab').forEach(t => t.classList.remove('active'));
-        document.querySelectorAll('.dashboard-tab-content').forEach(c => c.classList.remove('active'));
-        
-        event.target.classList.add('active');
-        document.getElementById(`tab-${tabName}`).classList.add('active');
+
+    // FIX: switchTab now receives event explicitly — no implicit global
+    function switchTab(event, tabName) {
+      document.querySelectorAll('.dashboard-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.dashboard-tab-content').forEach(c => c.classList.remove('active'));
+      event.target.classList.add('active');
+      document.getElementById(`tab-${tabName}`).classList.add('active');
     }
 
   </script>
