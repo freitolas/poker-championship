@@ -769,14 +769,16 @@ function calculatePot() {
 function updatePrizeInfo() {
         let total = players.reduce((sum, p) => sum + p.totalPaid, 0);
         
-        // House Fee is ALWAYS 10% (rounded up)
-        const fee = Math.ceil(total * 0.10);
+        // 1. House Fee: 10% snapped to the nearest £5
+        let rawFee = total * 0.10;
+        const fee = Math.round(rawFee / 5) * 5; 
+        
         const pot = Math.max(0, total - fee);
         
-        // 2nd Place: 20% of Pot, ALWAYS rounded UP to nearest 5
-        let p2 = Math.ceil((pot * 0.2) / 5) * 5;
+        // 2. 2nd Place: 20% of Pot, snapped to nearest £5
+        let p2 = Math.round((pot * 0.2) / 5) * 5;
         
-        // 1st Place: The exact remainder
+        // 3. 1st Place: The exact remainder
         let p1 = pot - p2;
         
         // Edge case fallback
