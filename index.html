@@ -134,6 +134,50 @@
     #timerPrevBtn:hover:not(:disabled) { background: #4c1d95 !important; }
     body.god-mode-active #timerPrevBtn { display: inline-block; }
 
+    /* ── KILL FEED ── */
+    #killFeed {
+      width: 100%; margin: 12px 0 0;
+      background: #1a1207; border: 1px solid #7a4800;
+      border-radius: 8px; padding: 8px 10px;
+      max-height: 160px; overflow-y: auto;
+      display: none; /* hidden until first event */
+    }
+    #killFeed .kf-title {
+      font-size: 0.65rem; font-weight: 900; letter-spacing: 2px;
+      color: #ffa726; text-transform: uppercase; margin-bottom: 6px;
+    }
+    .kf-entry {
+      font-size: 0.78rem; color: #ffe0b2; padding: 3px 0;
+      border-bottom: 1px solid #3a2800;
+      display: flex; justify-content: space-between; align-items: baseline;
+    }
+    .kf-entry:last-child { border-bottom: none; }
+    .kf-entry .kf-time { color: #fb8c00; font-size: 0.7rem; font-weight: 700; flex-shrink: 0; margin-left: 8px; }
+    .kf-entry .kf-icon { margin-right: 5px; }
+    .kf-entry.kf-elim .kf-icon::before  { content: '💀'; }
+    .kf-entry.kf-rebuy .kf-icon::before { content: '🔥'; }
+    .kf-entry.kf-win .kf-icon::before   { content: '🏆'; }
+    .kf-entry.kf-start .kf-icon::before { content: '🃏'; }
+
+    /* ── CRASH RECOVERY BANNER ── */
+    #recoveryBanner {
+      display: none; background: #fff3cd; border: 2px solid #ff9800;
+      border-radius: 8px; padding: 12px 16px; margin-bottom: 14px;
+      color: #7a4800; font-weight: 700;
+      display: none; align-items: center; justify-content: space-between; gap: 10px;
+    }
+    #recoveryBanner button { padding: 6px 12px; font-size: 0.85rem; }
+
+    /* ── BIGGEST POT (shown in timer panel) ── */
+    .record-pot {
+      width: 100%; background: linear-gradient(135deg, #fff8e1, #fffde7);
+      border: 2px solid #ffd54f; border-radius: 10px;
+      padding: 10px 14px; margin-top: 14px; text-align: center;
+    }
+    .record-pot .rp-label { font-size: 0.7rem; font-weight: 900; letter-spacing: 1.5px; color: #e65100; text-transform: uppercase; }
+    .record-pot .rp-value { font-size: 1.6rem; font-weight: 900; color: #d84315; }
+    .record-pot .rp-meta  { font-size: 0.72rem; color: #bf360c; margin-top: 2px; }
+
     /* Smart Home Modal */
     .sh-modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); background: white; border: 3px solid #2E003E; width: 90%; max-width: 500px; padding: 20px; z-index: 2000; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
     .sh-modal h3 { color: #2E003E; margin-top: 0; }
@@ -154,6 +198,15 @@
     </div>
 
     <h1>Curupira's Head Poker 2026</h1>
+
+    <!-- CRASH RECOVERY BANNER -->
+    <div id="recoveryBanner">
+      <span>⚠️ Unsaved game found. Restore it?</span>
+      <div style="display:flex;gap:8px;">
+        <button onclick="restoreAutoSave()" style="background:#2e7d32;color:white;">Restore</button>
+        <button onclick="dismissRecovery()" style="background:#c62828;color:white;">Discard</button>
+      </div>
+    </div>
 
     <div class="game-info" id="gameInfoDisplay">
       Buy-in: £5 per stack | 1st: 80% | 2nd: 20% | House Fee: 10%
@@ -264,6 +317,19 @@
       <div>2nd Place: £<span id="secondPrize">0</span></div>
     </div>
 
+    <!-- BIGGEST POT RECORD -->
+    <div class="record-pot" id="recordPotPanel" style="display:none;">
+      <div class="rp-label">🏺 Record Pot</div>
+      <div class="rp-value">£<span id="recordPotAmount">0</span></div>
+      <div class="rp-meta" id="recordPotMeta"></div>
+    </div>
+
+    <!-- KILL FEED -->
+    <div id="killFeed">
+      <div class="kf-title">📋 Live Feed</div>
+      <div id="killFeedEntries"></div>
+    </div>
+
     <audio id="roundAlarm" preload="auto">
       <source src="alarm.mp3" type="audio/mpeg">
     </audio>
@@ -339,7 +405,10 @@
     let historyStack    = [];
     let webhooks        = {};
     let detailedSort    = { col: 'shark', asc: false };
-    let godModeEnabled  = false;   // ← God Mode OFF by default
+    let godModeEnabled  = false;
+    let killFeedLog     = [];       // ← Live feed entries
+    let autoSaveTimer   = null;     // ← Auto-save interval handle
+    let tournamentStartTime = null; // ← For session elapsed display
 
     // === INITIALIZATION ===
     window.onload = function() {
@@ -348,6 +417,7 @@
       updateGameSettings();
       handleClientLoad();
       loadSmartHome();
+      checkForAutoSave();   // ← Crash recovery check on load
     };
 
     // ══════════════════════════════════════════
@@ -369,8 +439,159 @@
     }
 
     // ══════════════════════════════════════════
-    // GOD MODE: PREV ROUND
+    // KILL FEED
     // ══════════════════════════════════════════
+    function killFeedAdd(type, text) {
+      const now  = new Date();
+      const disp = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+      const elapsed = tournamentStartTime
+        ? Math.round((now.getTime() - tournamentStartTime) / 60000)
+        : 0;
+      killFeedLog.unshift({ type, text, time: disp, iso: now.toISOString(), elapsed });
+      if (killFeedLog.length > 50) killFeedLog.pop(); // keep up to 50 events
+      renderKillFeed();
+    }
+
+    function renderKillFeed() {
+      const feed = document.getElementById('killFeed');
+      const entries = document.getElementById('killFeedEntries');
+      if (!killFeedLog.length) { feed.style.display = 'none'; return; }
+      feed.style.display = 'block';
+      entries.innerHTML = killFeedLog.map(e =>
+        `<div class="kf-entry kf-${e.type}">
+           <span><span class="kf-icon"></span>${e.text}</span>
+           <span class="kf-time">${e.time}</span>
+         </div>`
+      ).join('');
+    }
+
+    // ══════════════════════════════════════════
+    // AUTO-SAVE & CRASH RECOVERY
+    // ══════════════════════════════════════════
+    const AUTO_SAVE_KEY = 'pokerAutoSave';
+
+    function autoSave() {
+      if (!tournamentStarted && !tournamentEnded) return; // nothing worth saving
+      const snapshot = {
+        players:           JSON.parse(JSON.stringify(players)),
+        currentRound,
+        timeLeft,
+        tournamentStarted,
+        tournamentEnded,
+        killFeedLog:       JSON.parse(JSON.stringify(killFeedLog)),
+        tournamentName:    document.getElementById('tournamentNameSelect').value,
+        isMajor:           document.getElementById('majorToggle').checked,
+        savedAt:           new Date().toISOString()
+      };
+      try { localStorage.setItem(AUTO_SAVE_KEY, JSON.stringify(snapshot)); } catch(e) { console.warn('Auto-save failed', e); }
+    }
+
+    function startAutoSave() {
+      clearInterval(autoSaveTimer);
+      autoSaveTimer = setInterval(autoSave, 30000); // every 30s
+    }
+
+    function stopAutoSave() {
+      clearInterval(autoSaveTimer);
+      autoSaveTimer = null;
+    }
+
+    function clearAutoSave() {
+      localStorage.removeItem(AUTO_SAVE_KEY);
+    }
+
+    function checkForAutoSave() {
+      const raw = localStorage.getItem(AUTO_SAVE_KEY);
+      if (!raw) return;
+      try {
+        const snap = JSON.parse(raw);
+        // Only show if the save had an active tournament and is less than 24h old
+        const age = Date.now() - new Date(snap.savedAt).getTime();
+        if (age < 86400000 && (snap.tournamentStarted || snap.tournamentEnded)) {
+          const banner = document.getElementById('recoveryBanner');
+          banner.style.display = 'flex';
+          banner.querySelector('span').textContent =
+            `⚠️ Unsaved game found (${snap.tournamentName}, saved ${new Date(snap.savedAt).toLocaleTimeString()}). Restore it?`;
+        }
+      } catch(e) { clearAutoSave(); }
+    }
+
+    function restoreAutoSave() {
+      const raw = localStorage.getItem(AUTO_SAVE_KEY);
+      if (!raw) return;
+      try {
+        const snap = JSON.parse(raw);
+        players           = snap.players;
+        currentRound      = snap.currentRound;
+        timeLeft          = snap.timeLeft;
+        tournamentStarted = snap.tournamentStarted;
+        tournamentEnded   = snap.tournamentEnded;
+        killFeedLog       = snap.killFeedLog || [];
+
+        // Restore UI selects
+        document.getElementById('tournamentNameSelect').value = snap.tournamentName || 'Regular Game';
+        document.getElementById('majorToggle').checked        = snap.isMajor || false;
+
+        document.getElementById('startBtn').disabled    = tournamentStarted;
+        document.getElementById('endBtn').disabled      = !tournamentStarted || tournamentEnded;
+        document.getElementById('majorToggle').disabled = tournamentStarted;
+
+        updateGameSettings();
+        updateRoundDisplay();
+        renderTable();
+        renderKillFeed();
+        dismissRecovery();
+        if (tournamentStarted) startAutoSave();
+        showMessage("✅ Game restored successfully!");
+      } catch(e) { alert('Could not restore save. It may be corrupted.'); clearAutoSave(); }
+    }
+
+    function dismissRecovery() {
+      document.getElementById('recoveryBanner').style.display = 'none';
+      clearAutoSave();
+    }
+
+    // ══════════════════════════════════════════
+    // BEFORE UNLOAD PROTECTION
+    // ══════════════════════════════════════════
+    window.addEventListener('beforeunload', function(e) {
+      if (tournamentStarted && !tournamentEnded) {
+        e.preventDefault();
+        e.returnValue = ''; // triggers the browser's native "Leave site?" dialog
+      }
+    });
+
+    // ══════════════════════════════════════════
+    // BIGGEST POT (loaded from Sheets dashboard)
+    // ══════════════════════════════════════════
+    function updateRecordPot(allRows) {
+      // Group rows by tournament ID, sum all totalPaid per tourney
+      const totals = {};
+      const meta   = {};
+      allRows.forEach(r => {
+        const tid  = r[2];
+        const paid = parseFloat(r[6]) || 0;
+        const date = r[0];
+        const name = r[12] || '';
+        if (!totals[tid]) { totals[tid] = 0; meta[tid] = { date, name }; }
+        totals[tid] += paid;
+      });
+
+      let record = 0, recordMeta = { date: '', name: '' };
+      Object.entries(totals).forEach(([tid, total]) => {
+        if (total > record) { record = total; recordMeta = meta[tid]; }
+      });
+
+      if (record > 0) {
+        // Apply same fee formula so we show the prize pot, not gross buy-ins
+        const fee  = Math.round((record * 0.10) / 5) * 5;
+        const pot  = record - fee;
+        document.getElementById('recordPotAmount').textContent = pot;
+        document.getElementById('recordPotMeta').textContent   =
+          `${recordMeta.name || 'Regular Game'} · ${recordMeta.date}`;
+        document.getElementById('recordPotPanel').style.display = 'block';
+      }
+    }
     function prevRound() {
       if (currentRound === 0) { showMessage("Already at the first round."); return; }
       saveState();
@@ -611,6 +832,7 @@
       if (p.eliminated) p.rebuyEliminations.push({ eliminatedBy: p.eliminatedBy||"Unknown", timestamp: p.eliminationTime||Date.now() });
       p.eliminated = false; p.eliminationTime = null; p.stacks += 1;
       p.totalPaid += document.getElementById('majorToggle').checked ? 10 : 5;
+      killFeedAdd('rebuy', `${name} rebought`);
       renderTable(); showMessage(`${name} rebought!`);
     }
 
@@ -658,6 +880,8 @@
       document.body.removeChild(document.getElementById('elim-dialog'));
       p.eliminated = true; p.eliminationTime = Date.now(); p.eliminatedBy = killer;
       renderTable();
+      const killerLabel = killer === 'N/A' ? '' : ` by ${killer}`;
+      killFeedAdd('elim', `${name} eliminated${killerLabel}`);
       const active = players.filter(pl => !pl.eliminated).length;
       if (active === 1) checkForWinner();
       else if (active > 1) triggerWebhook('elim', name, killer);
@@ -725,6 +949,8 @@
         renderTable();
         const killerBonus = calcKillerBonus();
         triggerWebhook('winner', active[0].name, killerBonus);
+        killFeedAdd('win', `🏆 ${active[0].name} wins! Killer bonus: ${killerBonus}`);
+        stopAutoSave(); clearAutoSave();
         showMessage(`🏆 ${active[0].name} Wins! Killer bonus: ${killerBonus}`);
         alert(`🏆 ${active[0].name} Wins!\n\nKiller Bonus: ${killerBonus}\n\nTournament has automatically ended.\nDon't forget to SAVE.`);
       }
@@ -736,11 +962,16 @@
     function startTournament() {
       saveState();
       tournamentStarted = true;
+      tournamentStartTime = Date.now();
       document.getElementById('startBtn').disabled    = true;
       document.getElementById('endBtn').disabled      = false;
       document.getElementById('majorToggle').disabled = true;
       players.sort((a,b) => a.name.localeCompare(b.name));
-      renderTable(); showMessage("Tournament Started!"); startTimer();
+      renderTable();
+      killFeedAdd('start', `Tournament started — ${players.length} players`);
+      showMessage("Tournament Started!");
+      startTimer();
+      startAutoSave();
     }
 
     function endTournament() {
@@ -753,7 +984,10 @@
       document.getElementById('exportBtn').disabled        = false;
       document.getElementById('loadDashboardBtn').disabled = false;
       document.getElementById('majorToggle').disabled      = false;
-      renderTable(); triggerWebhook('winner'); showMessage("Tournament Ended Manually!");
+      renderTable(); triggerWebhook('winner');
+      killFeedAdd('win', 'Tournament ended manually');
+      stopAutoSave(); clearAutoSave();
+      showMessage("Tournament Ended Manually!");
     }
 
     // FIX: calculatePot now uses Math.round to nearest £5 — same as updatePrizeInfo —
@@ -814,24 +1048,53 @@
         `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
     }
 
+    // ── WALL-CLOCK TIMER ──────────────────────────────────────────────────────
+    // FIX: Chrome throttles setInterval on inactive tabs, causing the timer to
+    // freeze or slow down when you switch away. The fix: instead of counting ticks
+    // we record an absolute end time (timerEndTime) and on each tick we calculate
+    // timeLeft = endTime - now. No matter how infrequently Chrome fires the
+    // interval, the displayed time is always derived from the real wall clock.
+    // ─────────────────────────────────────────────────────────────────────────
+    let timerEndTime = null; // absolute ms timestamp when current round ends
+
     function startTimer() {
       if (timerRunning || timeLeft <= 0) return;
-      clearInterval(timer); timerRunning = true;
+      clearInterval(timer);
+      timerRunning   = true;
+      timerEndTime   = Date.now() + timeLeft * 1000; // anchor to wall clock
       document.getElementById('timerStartBtn').disabled = true;
       document.getElementById('timerPauseBtn').disabled = false;
-      timer = setInterval(() => { timeLeft > 0 ? (timeLeft--, displayTime()) : roundComplete(); }, 1000);
+      timer = setInterval(() => {
+        const remaining = Math.round((timerEndTime - Date.now()) / 1000);
+        if (remaining > 0) {
+          timeLeft = remaining;
+          displayTime();
+        } else {
+          timeLeft = 0;
+          displayTime();
+          roundComplete();
+        }
+      }, 500); // poll every 500ms — snappier & still correct if tab was throttled
     }
 
     function pauseTimer() {
-      clearInterval(timer); timerRunning = false;
+      // Snapshot real remaining time from wall clock before stopping
+      if (timerRunning && timerEndTime) {
+        timeLeft = Math.max(0, Math.round((timerEndTime - Date.now()) / 1000));
+      }
+      clearInterval(timer);
+      timerRunning = false;
+      timerEndTime = null;
       document.getElementById('timerStartBtn').disabled = false;
       document.getElementById('timerPauseBtn').disabled = true;
+      displayTime();
     }
 
     function resetTimer() {
       pauseTimer();
       const r = rounds[currentRound];
       timeLeft = r.duration * (r.isTest ? 5 : 60);
+      timerEndTime = null;
       displayTime();
     }
 
@@ -839,13 +1102,19 @@
       saveState(); pauseTimer();
       currentRound = Math.min(currentRound + 1, rounds.length - 1);
       const r = rounds[currentRound];
-      timeLeft = r.duration * (r.isTest ? 5 : 60);
+      timeLeft     = r.duration * (r.isTest ? 5 : 60);
+      timerEndTime = null;
       updateRoundDisplay();
       r.isBreak ? triggerWebhook('break') : triggerWebhook('round', r.sb, r.bb);
       if (tournamentStarted && !tournamentEnded) startTimer();
     }
 
     function roundComplete() {
+      clearInterval(timer);
+      timerRunning = false;
+      timerEndTime = null;
+      document.getElementById('timerStartBtn').disabled = false;
+      document.getElementById('timerPauseBtn').disabled = true;
       document.getElementById('roundAlarm').play().catch(() => {});
       if (currentRound < rounds.length - 1) {
         currentRound++;
@@ -853,8 +1122,11 @@
         timeLeft = r.duration * (r.isTest ? 5 : 60);
         updateRoundDisplay();
         r.isBreak ? triggerWebhook('break') : triggerWebhook('round', r.sb, r.bb);
+        // Auto-restart for next round
+        if (tournamentStarted && !tournamentEnded) startTimer();
       } else {
-        alert("Tournament Structure Complete!"); pauseTimer();
+        timeLeft = 0; displayTime();
+        alert("Tournament Structure Complete!");
       }
     }
 
@@ -925,10 +1197,35 @@
       });
 
       try {
+        // ── 1. Player results (existing) ──────────────────────────────────────
         await gapi.client.sheets.spreadsheets.values.append({
           spreadsheetId: SPREADSHEET_ID, range: 'PlayerResults!A:N',
           valueInputOption: 'USER_ENTERED', resource: { values: rows },
         });
+
+        // ── 2. Narrative event log ─────────────────────────────────────────────
+        // Each row: tournId | tournamentName | isMajor | eventType | player |
+        //           detail | wallClockTime | isoTimestamp | elapsedMins
+        // Make.com watches this sheet, groups by tournId, feeds to Gemini.
+        // Events are stored oldest-first (reverse the log which is newest-first).
+        const narrativeRows = [...killFeedLog].reverse().map(e => [
+          tournId,
+          tournamentName,
+          isMajor,
+          e.type.toUpperCase(),     // TOURNAMENT_START | ELIMINATION | REBUY | WIN
+          e.text,                   // human-readable description with player names
+          e.time,                   // HH:MM display
+          e.iso  || '',             // full ISO timestamp for precise elapsed calcs
+          e.elapsed != null ? e.elapsed : '' // minutes since tournament start
+        ]);
+
+        if (narrativeRows.length > 0) {
+          await gapi.client.sheets.spreadsheets.values.append({
+            spreadsheetId: SPREADSHEET_ID, range: 'NarrativeEvents!A:H',
+            valueInputOption: 'USER_ENTERED', resource: { values: narrativeRows },
+          });
+        }
+
         alert("Data Exported to Google Sheets!");
       } catch (err) {
         console.error(err);
@@ -959,6 +1256,7 @@
         window.detailedDataCache = detail;
         document.getElementById('detailedContent').innerHTML = renderDetailedTable(detail);
         document.getElementById('allTimeContent').innerHTML  = renderAllTime(allTime);
+        updateRecordPot(allRows); // ← Biggest pot record
       } catch (err) { console.error(err); alert("Error loading dashboard data."); }
     }
 
