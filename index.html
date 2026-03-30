@@ -158,6 +158,9 @@
     .kf-entry.kf-rebuy .kf-icon::before { content: '🔥'; }
     .kf-entry.kf-win .kf-icon::before   { content: '🏆'; }
     .kf-entry.kf-start .kf-icon::before { content: '🃏'; }
+    .kf-entry.kf-addon .kf-icon::before { content: '➕'; }
+    .kf-entry.kf-fire .kf-icon::before  { content: '🔥'; }
+    .kf-entry.kf-break .kf-icon::before { content: '☕'; }
 
     /* ── CRASH RECOVERY BANNER ── */
     #recoveryBanner {
@@ -298,12 +301,14 @@
       <button id="timerPrevBtn" onclick="prevRound()">◀ PREV</button>
     </div>
 
-    <div id="breakToggles" style="display:none; background:#ffcc80; padding:15px; margin:15px 0; border-radius:10px; border:2px dashed #e65100; text-align:center;">
-      <div style="font-weight:bold; color:#e65100; margin-bottom:10px;">3 ROUNDS OF CURUPIRA'S HEAD FIRE</div>
-      <div style="display:flex; justify-content:center; gap:15px; flex-wrap:wrap;">
-        <label style="color:#d84315; font-weight:bold; cursor:pointer;"><input type="checkbox" style="transform:scale(1.2); margin-right:5px;"> Round 1</label>
-        <label style="color:#d84315; font-weight:bold; cursor:pointer;"><input type="checkbox" style="transform:scale(1.2); margin-right:5px;"> Round 2</label>
-        <label style="color:#d84315; font-weight:bold; cursor:pointer;"><input type="checkbox" style="transform:scale(1.2); margin-right:5px;"> Round 3</label>
+    <!-- ROUNDS OF FIRE — sequential gate before break starts -->
+    <div id="fireRoundsPanel" style="display:none; background:linear-gradient(135deg,#3e0000,#7a1500); border:2px solid #ff5722; border-radius:12px; padding:16px; margin:15px 0; text-align:center;">
+      <div style="font-size:1rem; font-weight:900; color:#ff8a65; letter-spacing:2px; text-transform:uppercase; margin-bottom:4px;">🔥 Rounds of Curupira's Head Fire 🔥</div>
+      <div style="font-size:0.75rem; color:#ffab91; margin-bottom:14px;">Low stacks — double up or rebuy into the final leg. Complete all 3 to unlock the break.</div>
+      <div style="display:flex; flex-direction:column; gap:8px;">
+        <button id="fireBtn1" onclick="completeFireRound(1)" style="background:#b71c1c; color:white; border-color:#d32f2f; font-size:1rem; padding:12px;">🔥 Round of Fire 1</button>
+        <button id="fireBtn2" onclick="completeFireRound(2)" disabled style="background:#4a0000; color:#888; border-color:#5a0000; font-size:1rem; padding:12px;">🔥 Round of Fire 2</button>
+        <button id="fireBtn3" onclick="completeFireRound(3)" disabled style="background:#4a0000; color:#888; border-color:#5a0000; font-size:1rem; padding:12px;">🔥 Round of Fire 3</button>
       </div>
     </div>
 
@@ -409,6 +414,9 @@
     let killFeedLog     = [];       // ← Live feed entries
     let autoSaveTimer   = null;     // ← Auto-save interval handle
     let tournamentStartTime = null; // ← For session elapsed display
+    let inFireRounds    = false;    // ← True while Rounds of Fire are in progress
+    let fireRoundsDone  = 0;        // ← 0–3: how many fire rounds completed
+    let breakStartTime  = null;     // ← Wall clock when break began (for narrative)
 
     // === INITIALIZATION ===
     window.onload = function() {
@@ -596,6 +604,12 @@
       if (currentRound === 0) { showMessage("Already at the first round."); return; }
       saveState();
       pauseTimer();
+      // If we're mid-fire-rounds, cancel them
+      if (inFireRounds) {
+        inFireRounds   = false;
+        fireRoundsDone = 0;
+        document.getElementById('fireRoundsPanel').style.display = 'none';
+      }
       currentRound = Math.max(currentRound - 1, 0);
       const r = rounds[currentRound];
       timeLeft = r.duration * (r.isTest ? 5 : 60);
@@ -841,8 +855,13 @@
       const p    = players.find(x => x.name === name);
       const cost = document.getElementById('majorToggle').checked ? 10 : 5;
       p.hasAddon = !p.hasAddon;
-      if (p.hasAddon) { p.totalPaid += cost; p.stacks += 1; }
-      else            { p.totalPaid = Math.max(0, p.totalPaid - cost); p.stacks = Math.max(0, p.stacks - 1); }
+      if (p.hasAddon) {
+        p.totalPaid += cost; p.stacks += 1;
+        killFeedAdd('addon', `${name} took the add-on`);
+      } else {
+        p.totalPaid = Math.max(0, p.totalPaid - cost); p.stacks = Math.max(0, p.stacks - 1);
+        killFeedAdd('addon', `${name} removed add-on`);
+      }
       renderTable();
     }
 
@@ -1027,15 +1046,13 @@
       const nextR = rounds[currentRound + 1];
       let html = `<div>${r.name}</div>`;
       if (r.isBreak) {
-        html += `<div style="font-size:0.8em;color:#d84315;">BREAK</div>`;
-        document.getElementById('breakNotice').style.display  = 'block';
-        document.getElementById('breakToggles').style.display = 'block';
+        html += `<div style="font-size:0.8em;color:#d84315;">BREAK — Add-ons available</div>`;
+        document.getElementById('breakNotice').style.display = 'block';
       } else {
         html += `<div style="font-size:1.8rem;margin-top:5px;">${r.sb.toLocaleString()} / ${r.bb.toLocaleString()}</div>`;
-        if (nextR) html += `<div style="font-size:0.8rem;color:#777;margin-top:5px;">Next: ${nextR.sb}/${nextR.bb}</div>`;
-        document.getElementById('breakNotice').style.display  = 'none';
-        document.getElementById('breakToggles').style.display = 'none';
-        document.querySelectorAll('#breakToggles input[type="checkbox"]').forEach(cb => cb.checked = false);
+        if (nextR && !nextR.isBreak) html += `<div style="font-size:0.8rem;color:#777;margin-top:5px;">Next: ${nextR.sb}/${nextR.bb}</div>`;
+        if (nextR && nextR.isBreak)  html += `<div style="font-size:0.8rem;color:#e65100;margin-top:5px;font-weight:bold;">Next: 🔥 Rounds of Fire → Break</div>`;
+        document.getElementById('breakNotice').style.display = 'none';
       }
       document.getElementById('roundInfo').innerHTML = html;
       if (!timerRunning) timeLeft = r.duration * (r.isTest ? 5 : 60);
@@ -1058,10 +1075,16 @@
     let timerEndTime = null; // absolute ms timestamp when current round ends
 
     function startTimer() {
+      // FIX: Auto-start the tournament if the user hits START without clicking
+      // "Start Tournament" first — prevents the app losing track of game state.
+      if (!tournamentStarted && !tournamentEnded && players.length > 0) {
+        startTournament(); // startTournament() calls startTimer() itself at the end
+        return;
+      }
       if (timerRunning || timeLeft <= 0) return;
       clearInterval(timer);
       timerRunning   = true;
-      timerEndTime   = Date.now() + timeLeft * 1000; // anchor to wall clock
+      timerEndTime   = Date.now() + timeLeft * 1000;
       document.getElementById('timerStartBtn').disabled = true;
       document.getElementById('timerPauseBtn').disabled = false;
       timer = setInterval(() => {
@@ -1074,11 +1097,10 @@
           displayTime();
           roundComplete();
         }
-      }, 500); // poll every 500ms — snappier & still correct if tab was throttled
+      }, 500);
     }
 
     function pauseTimer() {
-      // Snapshot real remaining time from wall clock before stopping
       if (timerRunning && timerEndTime) {
         timeLeft = Math.max(0, Math.round((timerEndTime - Date.now()) / 1000));
       }
@@ -1099,14 +1121,35 @@
     }
 
     function skipRound() {
+      // If we're waiting for fire rounds, skip is blocked — must click the buttons
+      if (inFireRounds) { showMessage("Complete the Rounds of Fire first!"); return; }
+
       saveState(); pauseTimer();
-      currentRound = Math.min(currentRound + 1, rounds.length - 1);
+
+      // Check if the NEXT round is a break — if so, trigger fire rounds instead
+      const nextIdx = Math.min(currentRound + 1, rounds.length - 1);
+      if (rounds[nextIdx].isBreak && nextIdx !== currentRound) {
+        triggerFireRounds();
+        return;
+      }
+
+      currentRound = nextIdx;
       const r = rounds[currentRound];
       timeLeft     = r.duration * (r.isTest ? 5 : 60);
       timerEndTime = null;
       updateRoundDisplay();
-      r.isBreak ? triggerWebhook('break') : triggerWebhook('round', r.sb, r.bb);
-      if (tournamentStarted && !tournamentEnded) startTimer();
+
+      if (r.isBreak) {
+        // Shouldn't normally reach here (intercepted above), but safety fallback
+        breakStartTime = Date.now();
+        killFeedAdd('break', 'Break started — Add-ons available');
+        triggerWebhook('break');
+      } else {
+        triggerWebhook('round', r.sb, r.bb);
+      }
+
+      // FIX: always restart — was gated on tournamentStarted which caused skip not to auto-play
+      if (!tournamentEnded) startTimer();
     }
 
     function roundComplete() {
@@ -1116,18 +1159,106 @@
       document.getElementById('timerStartBtn').disabled = false;
       document.getElementById('timerPauseBtn').disabled = true;
       document.getElementById('roundAlarm').play().catch(() => {});
+
       if (currentRound < rounds.length - 1) {
+        const nextIdx = currentRound + 1;
+
+        // If next round is the break — gate behind fire rounds
+        if (rounds[nextIdx].isBreak) {
+          triggerFireRounds();
+          return;
+        }
+
+        // Normal round advance
         currentRound++;
         const r = rounds[currentRound];
         timeLeft = r.duration * (r.isTest ? 5 : 60);
         updateRoundDisplay();
-        r.isBreak ? triggerWebhook('break') : triggerWebhook('round', r.sb, r.bb);
-        // Auto-restart for next round
-        if (tournamentStarted && !tournamentEnded) startTimer();
+
+        // Log when break ends and new round begins
+        if (r.isBreak) {
+          breakStartTime = Date.now();
+          killFeedAdd('break', 'Break started — Add-ons available');
+          triggerWebhook('break');
+        } else {
+          // If we're leaving the break round, log its duration
+          if (rounds[currentRound - 1] && rounds[currentRound - 1].isBreak && breakStartTime) {
+            const mins = Math.round((Date.now() - breakStartTime) / 60000);
+            killFeedAdd('break', `Break ended after ${mins} minutes`);
+            breakStartTime = null;
+          }
+          triggerWebhook('round', r.sb, r.bb);
+        }
+
+        if (!tournamentEnded) startTimer();
       } else {
         timeLeft = 0; displayTime();
         alert("Tournament Structure Complete!");
       }
+    }
+
+    // ══════════════════════════════════════════
+    // ROUNDS OF FIRE
+    // ══════════════════════════════════════════
+    function triggerFireRounds() {
+      inFireRounds   = true;
+      fireRoundsDone = 0;
+
+      // Reset all buttons to initial state
+      [1, 2, 3].forEach(n => {
+        const btn = document.getElementById(`fireBtn${n}`);
+        btn.disabled  = n > 1;
+        btn.textContent = `🔥 Round of Fire ${n}`;
+        btn.style.background   = n === 1 ? '#b71c1c' : '#4a0000';
+        btn.style.color        = n === 1 ? 'white'   : '#888';
+        btn.style.borderColor  = n === 1 ? '#d32f2f' : '#5a0000';
+      });
+
+      document.getElementById('fireRoundsPanel').style.display = 'block';
+      killFeedAdd('fire', '🔥 Rounds of Fire — rebuy window open! Low stacks: double up or go home');
+      showMessage("🔥 Complete 3 Rounds of Fire to unlock the break!");
+    }
+
+    function completeFireRound(n) {
+      if (n !== fireRoundsDone + 1) return; // must go in order
+      fireRoundsDone = n;
+
+      const btn = document.getElementById(`fireBtn${n}`);
+      btn.disabled = true;
+      btn.textContent      = `✅ Round of Fire ${n} — Done`;
+      btn.style.background = '#1b5e20';
+      btn.style.color      = '#a5d6a7';
+      btn.style.borderColor= '#2e7d32';
+
+      killFeedAdd('fire', `🔥 Round of Fire ${n} complete`);
+
+      if (n < 3) {
+        // Unlock next button
+        const next = document.getElementById(`fireBtn${n + 1}`);
+        next.disabled        = false;
+        next.style.background  = '#b71c1c';
+        next.style.color       = 'white';
+        next.style.borderColor = '#d32f2f';
+        showMessage(`🔥 Round of Fire ${n} done — start Round ${n + 1}!`);
+      } else {
+        // All 3 done — advance to break
+        inFireRounds = false;
+        document.getElementById('fireRoundsPanel').style.display = 'none';
+        advanceToBreak();
+      }
+    }
+
+    function advanceToBreak() {
+      currentRound = Math.min(currentRound + 1, rounds.length - 1);
+      const r = rounds[currentRound];
+      timeLeft     = r.duration * (r.isTest ? 5 : 60);
+      timerEndTime = null;
+      breakStartTime = Date.now();
+      updateRoundDisplay();
+      killFeedAdd('break', `Break started — Add-ons available. ${players.filter(p=>!p.eliminated).length} players remaining`);
+      triggerWebhook('break');
+      showMessage("🍺 Break time! Add-ons available.");
+      if (!tournamentEnded) startTimer();
     }
 
     // ══════════════════════════════════════════
@@ -1212,7 +1343,7 @@
           tournId,
           tournamentName,
           isMajor,
-          e.type.toUpperCase(),     // TOURNAMENT_START | ELIMINATION | REBUY | WIN
+          e.type.toUpperCase(),     // TOURNAMENT_START | ELIMINATION | REBUY | ADDON | FIRE | BREAK | WIN
           e.text,                   // human-readable description with player names
           e.time,                   // HH:MM display
           e.iso  || '',             // full ISO timestamp for precise elapsed calcs
