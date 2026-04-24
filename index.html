@@ -720,6 +720,7 @@
         timeLeft:          timeLeft,
         tournamentStarted: tournamentStarted,
         tournamentEnded:   tournamentEnded,
+        killFeedLog:       JSON.parse(JSON.stringify(killFeedLog)),
       });
       document.getElementById('undoBtn').disabled = false;
       if (historyStack.length > 50) historyStack.shift();
@@ -734,6 +735,7 @@
       players           = prev.players;
       tournamentStarted = prev.tournamentStarted;
       tournamentEnded   = prev.tournamentEnded;
+      killFeedLog       = prev.killFeedLog || [];
 
       // Smart clock: only revert time/round if the round actually changed
       if (prev.currentRound !== actualRound) {
@@ -744,6 +746,7 @@
 
       updateRoundDisplay();
       renderTable();
+      renderKillFeed();
       updatePrizeInfo();
       document.getElementById('startBtn').disabled = tournamentStarted;
       document.getElementById('endBtn').disabled   = !tournamentStarted || tournamentEnded;
@@ -1215,6 +1218,9 @@
       });
 
       document.getElementById('fireRoundsPanel').style.display = 'block';
+      // Announce the upcoming break BEFORE the fire rounds start (the
+      // smart-home/IFTTT announcement introduces what's coming).
+      triggerWebhook('break');
       killFeedAdd('fire', '🔥 Rounds of Fire — rebuy window open! Low stacks: double up or go home');
       showMessage("🔥 Complete 3 Rounds of Fire to unlock the break!");
     }
@@ -1256,7 +1262,6 @@
       breakStartTime = Date.now();
       updateRoundDisplay();
       killFeedAdd('break', `Break started — Add-ons available. ${players.filter(p=>!p.eliminated).length} players remaining`);
-      triggerWebhook('break');
       showMessage("🍺 Break time! Add-ons available.");
       if (!tournamentEnded) startTimer();
     }
