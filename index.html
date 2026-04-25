@@ -494,6 +494,8 @@
       <div class="action-buttons">
         <button onclick="signInAndExport()" id="exportBtn">Save Tournament Data</button>
         <button onclick="signInAndLoadDashboard()" id="loadDashboardBtn">Load Championship Dashboard</button>
+        <button onclick="document.getElementById('importBackupFile').click()" id="importBackupBtn" title="Restore game state from a downloaded backup JSON">Import Backup 📂</button>
+        <input type="file" id="importBackupFile" accept="application/json,.json" style="display:none" onchange="importBackupFromFile(event)">
       </div>
     </div>
 
@@ -813,6 +815,43 @@
     }
 
     // ══════════════════════════════════════════
+    // IMPORT BACKUP — restore from a downloaded JSON file
+    // Shape must match the autosave snapshot.
+    // ══════════════════════════════════════════
+    function importBackupFromFile(event) {
+      const file = event.target.files && event.target.files[0];
+      event.target.value = ''; // allow re-picking the same file later
+      if (!file) return;
+      if (tournamentStarted && !tournamentEnded &&
+          !confirm("A tournament is currently running. Importing will replace it. Continue?")) {
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = e => {
+        let snap;
+        try { snap = JSON.parse(e.target.result); }
+        catch (err) { alert("That doesn't look like a valid backup JSON."); return; }
+        if (!snap || !Array.isArray(snap.players)) {
+          alert("Backup is missing the expected fields (players array).");
+          return;
+        }
+        try {
+          // Stash into localStorage in the autosave shape, then reuse the
+          // existing restore path so we hit the same code (and any future
+          // changes are inherited automatically).
+          localStorage.setItem(AUTO_SAVE_KEY, JSON.stringify(snap));
+          restoreAutoSave();
+          showMessage(`✅ Backup imported (${snap.players.length} players, ${(snap.killFeedLog||[]).length} events).`);
+        } catch (err) {
+          console.error('Import failed:', err);
+          alert("Could not apply the backup. See console.");
+        }
+      };
+      reader.onerror = () => alert("Could not read that file.");
+      reader.readAsText(file);
+    }
+
+    // ══════════════════════════════════════════
     // BEFORE UNLOAD PROTECTION
     // ══════════════════════════════════════════
     window.addEventListener('beforeunload', function(e) {
@@ -1096,7 +1135,17 @@
       renderTable();
     }
 
+    // Block accidental game-state changes once the tournament has ended.
+    // Use case: a stray keypress (e.g. F12 mapping) reactivating a focused
+    // action button after the winner has been declared.
+    function blockedAfterEnd(action) {
+      if (!tournamentEnded) return false;
+      showMessage(`Tournament has ended — ${action} is locked. Use God Mode to override.`);
+      return true;
+    }
+
     function rebuy(name) {
+      if (blockedAfterEnd('rebuy')) return;
       saveState();
       const p = players.find(x => x.name === name);
       if (p.eliminated) p.rebuyEliminations.push({ eliminatedBy: p.eliminatedBy||"Unknown", timestamp: p.eliminationTime||Date.now() });
@@ -1107,6 +1156,7 @@
     }
 
     function toggleAddon(name) {
+      if (blockedAfterEnd('add-on')) return;
       saveState();
       const p    = players.find(x => x.name === name);
       const cost = document.getElementById('majorToggle').checked ? 10 : 5;
@@ -1129,6 +1179,7 @@
     }
 
     function initEliminate(name) {
+      if (blockedAfterEnd('elimination')) return;
       if (document.getElementById('elim-dialog')) return;
       const options = players.filter(pl => pl.name !== name && !pl.eliminated)
                              .map(k => `<option value="${k.name}">${k.name}</option>`).join('');
@@ -1668,9 +1719,20 @@
 
         alert("Data Exported to Google Sheets!");
       } catch (err) {
-        console.error(err);
-        if (err.status === 401) { alert("Google session expired. Re-authenticate then try again."); tokenClient.requestAccessToken(); }
-        else alert("Error exporting data. Check console.");
+        console.error('Export failed:', err);
+        // Pull the most informative message Google gave us
+        const msg =
+          err?.result?.error?.message ||
+          err?.body ||
+          err?.message ||
+          'Unknown error';
+        const status = err?.status ?? err?.result?.error?.code ?? '?';
+        if (status === 401) {
+          alert("Google session expired. Re-authenticate then try again.");
+          tokenClient.requestAccessToken();
+        } else {
+          alert(`Export failed (HTTP ${status}).\n\n${msg}\n\nFull details in the console.`);
+        }
       }
     }
 
