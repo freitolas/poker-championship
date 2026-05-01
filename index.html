@@ -651,6 +651,11 @@
       'Lachy','Luciano','Malzo','Matt','Nick','Rafa','Rhys','Roberto','Egli','Gus','Jordan'
     ].sort();
 
+    // The host always plays — they're trivially the most-fixtured, so exclude
+    // them from the "Permanent Fixture" title (which is meant to celebrate
+    // *guests* who turn up week after week).
+    const HOST_NAME = 'Rafa';
+
     // === GLOBAL STATE ===
     let players         = [];
     let customPlayers   = [];
@@ -732,9 +737,8 @@
     // ══════════════════════════════════════════
     const AUTO_SAVE_KEY = 'pokerAutoSave';
 
-    function autoSave() {
-      if (!tournamentStarted && !tournamentEnded) return; // nothing worth saving
-      const snapshot = {
+    function buildSnapshot() {
+      return {
         players:           JSON.parse(JSON.stringify(players)),
         currentRound,
         timeLeft,
@@ -745,7 +749,31 @@
         isMajor:           document.getElementById('majorToggle').checked,
         savedAt:           new Date().toISOString()
       };
-      try { localStorage.setItem(AUTO_SAVE_KEY, JSON.stringify(snapshot)); } catch(e) { console.warn('Auto-save failed', e); }
+    }
+
+    function autoSave() {
+      if (!tournamentStarted && !tournamentEnded) return; // nothing worth saving
+      try { localStorage.setItem(AUTO_SAVE_KEY, JSON.stringify(buildSnapshot())); } catch(e) { console.warn('Auto-save failed', e); }
+    }
+
+    // Trigger an immediate file download of the current state. Called on
+    // tournament end (auto + manual) so the operator always walks away with
+    // a JSON on disk regardless of whether the Sheets export succeeds.
+    function downloadBackup(label) {
+      try {
+        const json = JSON.stringify(buildSnapshot());
+        const ts   = new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-');
+        const safeLabel = (label || 'auto').replace(/[^A-Za-z0-9_-]/g, '');
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(new Blob([json], { type: 'application/json' }));
+        a.download = `poker-backup-${safeLabel}-${ts}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+      } catch (e) {
+        console.warn('Backup download failed:', e);
+      }
     }
 
     function startAutoSave() {
@@ -1289,6 +1317,7 @@
         const killerBonus = calcKillerBonus();
         triggerWebhook('winner', active[0].name, killerBonus);
         killFeedAdd('win', `🏆 ${active[0].name} wins! Killer bonus: ${killerBonus}`);
+        downloadBackup(active[0].name);
         stopAutoSave(); clearAutoSave();
         showMessage(`🏆 ${active[0].name} Wins! Killer bonus: ${killerBonus}`);
         showWinnerOverlay(active[0].name, killerBonus);
@@ -1358,6 +1387,7 @@
       document.getElementById('majorToggle').disabled      = false;
       renderTable(); triggerWebhook('winner');
       killFeedAdd('win', 'Tournament ended manually');
+      downloadBackup('manual-end');
       stopAutoSave(); clearAutoSave();
       showMessage("Tournament Ended Manually!");
     }
@@ -1929,7 +1959,8 @@
       const t = { champion:{n:[],v:0}, runnerup:{n:[],v:0}, musk:{n:[],v:0}, fixture:{n:[],v:0}, killer:{n:[],v:0}, early:{n:[],v:0}, phoenix:{n:[],v:0}, bubble:{n:[],v:0} };
       const up = (key,name,val) => { if(val>t[key].v){t[key]={n:[name],v:val};} else if(val===t[key].v&&val>0){t[key].n.push(name);} };
       Object.entries(obj).forEach(([n,d]) => {
-        up('champion',n,d.wins); up('runnerup',n,d.sec); up('musk',n,d.totalProfit); up('fixture',n,d.played);
+        up('champion',n,d.wins); up('runnerup',n,d.sec); up('musk',n,d.totalProfit);
+        if (n !== HOST_NAME) up('fixture',n,d.played);
         up('killer',n,d.kills); up('early',n,d.firstOuts); up('phoenix',n,d.rebuys); up('bubble',n,d.third);
       });
       return t;
