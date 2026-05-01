@@ -1641,6 +1641,29 @@
     function signInAndExport()         { window.pendingAction = 'export';    if (googleApiReady && gapi.client.sheets) exportData();    else tokenClient.requestAccessToken(); }
     function signInAndLoadDashboard()  { window.pendingAction = 'dashboard'; if (googleApiReady && gapi.client.sheets) loadDashboard(); else tokenClient.requestAccessToken(); }
 
+    // Create the named tab on the spreadsheet if it doesn't exist yet, and
+    // (when newly created) seed row 1 with the supplied headers. Returns
+    // true if a new sheet was created. Used so a fresh spreadsheet — or one
+    // missing the NarrativeEvents tab — won't 400 the export.
+    async function ensureSheetExists(title, headers) {
+      const ss = await gapi.client.sheets.spreadsheets.get({ spreadsheetId: SPREADSHEET_ID });
+      if ((ss.result.sheets || []).some(s => s.properties.title === title)) return false;
+      await gapi.client.sheets.spreadsheets.batchUpdate({
+        spreadsheetId: SPREADSHEET_ID,
+        resource: { requests: [{ addSheet: { properties: { title } } }] }
+      });
+      if (headers && headers.length) {
+        await gapi.client.sheets.spreadsheets.values.update({
+          spreadsheetId: SPREADSHEET_ID,
+          range: `${title}!A1`,
+          valueInputOption: 'RAW',
+          resource: { values: [headers] }
+        });
+      }
+      console.log(`Created missing sheet: ${title}`);
+      return true;
+    }
+
     async function exportData() {
       if (!tournamentEnded && !confirm("Tournament hasn't officially ended. Save anyway?")) return;
 
@@ -1650,7 +1673,6 @@
       const tournId  = `${dateStr}_${timeStr.replace(/:/g,'-')}`;
       const isMajor  = document.getElementById('majorToggle').checked;
       const tournamentName = document.getElementById('tournamentNameSelect').value;
-
       let rows = [];
       const activePlayers   = players.filter(p => !p.eliminated);
       const elimPlayers     = players.filter(p =>  p.eliminated).sort((a,b) => b.eliminationTime - a.eliminationTime);
@@ -1688,15 +1710,45 @@
       });
 
       try {
-        // ── 1. Player results (existing) ──────────────────────────────────────
+        // ── 0. Make sure the destination tabs exist (auto-create on first run
+        //       or after a tab was renamed/deleted). PlayerResults gets the
+        //       header schema the dashboard reads from row 2 onwards.
+        await ensureSheetExists('PlayerResults', [
+          'date','time','tournId','name','rank','totalPlayers',
+          'totalPaid','prize','rebuys','addon','roi','killer',
+          'tournamentName','isMajor'
+        ]);
+        await ensureSheetExists('NarrativeEvents', [
+          'tournId','tournamentName','isMajor','eventType',
+          'text','time','isoTimestamp','elapsedMins'
+        ]);
+
+        // ── 0b. Duplicate guard: surface any tournId(s) already exported
+        //        today so the operator can decide before double-writing.
+        const existing = await gapi.client.sheets.spreadsheets.values.get({
+          spreadsheetId: SPREADSHEET_ID, range: 'PlayerResults!A:C'
+        });
+        const todaysTournIds = new Set();
+        (existing.result.values || []).forEach(r => {
+          if (r[0] === dateStr && r[2]) todaysTournIds.add(r[2]);
+        });
+        if (todaysTournIds.size > 0) {
+          const proceed = confirm(
+            `Found ${todaysTournIds.size} export(s) already in PlayerResults for ${dateStr}:\n\n` +
+            [...todaysTournIds].join('\n') +
+            `\n\nProceeding will add a NEW export with tournId:\n${tournId}\n\n` +
+            `Continue?  (Cancel and clean up the duplicates first if this is a retry.)`
+          );
+          if (!proceed) { showMessage('Export cancelled.'); return; }
+        }
+
+        // ── 1. Player results ──────────────────────────────────────────────
         await gapi.client.sheets.spreadsheets.values.append({
           spreadsheetId: SPREADSHEET_ID, range: 'PlayerResults!A:N',
           valueInputOption: 'USER_ENTERED', resource: { values: rows },
         });
 
-        // ── 2. Narrative event log ─────────────────────────────────────────────
-        // Each row: tournId | tournamentName | isMajor | eventType | player |
-        //           detail | wallClockTime | isoTimestamp | elapsedMins
+        // ── 2. Narrative event log ─────────────────────────────────────────
         // Make.com watches this sheet, groups by tournId, feeds to Gemini.
         // Events are stored oldest-first (reverse the log which is newest-first).
         const narrativeRows = [...killFeedLog].reverse().map(e => [
@@ -1704,9 +1756,9 @@
           tournamentName,
           isMajor,
           e.type.toUpperCase(),     // TOURNAMENT_START | ELIMINATION | REBUY | ADDON | FIRE | BREAK | WIN
-          e.text,                   // human-readable description with player names
+          e.text,                   // human-readable description
           e.time,                   // HH:MM display
-          e.iso  || '',             // full ISO timestamp for precise elapsed calcs
+          e.iso  || '',             // full ISO timestamp
           e.elapsed != null ? e.elapsed : '' // minutes since tournament start
         ]);
 
