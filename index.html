@@ -711,7 +711,6 @@
         ? Math.round((now.getTime() - tournamentStartTime) / 60000)
         : 0;
       killFeedLog.unshift({ type, text, time: disp, iso: now.toISOString(), elapsed });
-      if (killFeedLog.length > 50) killFeedLog.pop(); // keep up to 50 events
       renderKillFeed();
     }
 
