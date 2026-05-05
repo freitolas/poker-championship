@@ -1286,10 +1286,16 @@
         });
       });
 
-      // Eligible killers: finished 3rd or worse (i.e. eliminated, not in top 2 active spots)
-      // At the point this is called, active players are 1st/2nd. Everyone eliminated is 3rd+.
-      const activePlayers = players.filter(p => !p.eliminated);
-      const ineligible    = new Set(activePlayers.map(p => p.name));
+      // Eligible killers: finished 3rd or worse — i.e. didn't cash.
+      // 1st place: the only currently-active player (the winner).
+      // 2nd place: the most-recently-eliminated player, whose elimination
+      // triggered the win condition. Both must be excluded since both cash.
+      const winner   = players.find(p => !p.eliminated);
+      const elimSorted = players
+        .filter(p => p.eliminated && p.eliminationTime)
+        .sort((a, b) => b.eliminationTime - a.eliminationTime);
+      const runnerUp = elimSorted[0]?.name;
+      const ineligible = new Set([winner?.name, runnerUp].filter(Boolean));
 
       const eligible = Object.entries(killCount)
         .filter(([name]) => !ineligible.has(name))
