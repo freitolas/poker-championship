@@ -114,6 +114,7 @@
     .rebuy-btn, .btn-green { background: var(--success) !important; color: white !important; border-color: var(--success-dark) !important; }
     .elim-btn, .btn-red    { background: var(--danger)  !important; color: white !important; border-color: var(--danger-dark)  !important; }
     .btn-blue              { background: #0277bd       !important; color: white !important; border-color: var(--info-dark)    !important; }
+    .rebuy-closed          { color: #999; font-size: 0.8rem; font-style: italic; letter-spacing: 0.5px; }
 
     /* Stack +/- controls */
     .stack-ctrl { display: flex; align-items: center; justify-content: center; gap: 5px; }
@@ -254,7 +255,7 @@
     .kf-entry .kf-icon { margin-right: 6px; }
     /* Event-type left borders + icons */
     .kf-entry.kf-elim  { border-left-color: var(--danger-dark); }
-    .kf-entry.kf-elim  .kf-icon::before { content: '💀'; }
+    .kf-entry.kf-elim  .kf-icon::before { content: '🖕'; }
     .kf-entry.kf-rebuy { border-left-color: var(--success); }
     .kf-entry.kf-rebuy .kf-icon::before { content: '💵'; }
     .kf-entry.kf-addon { border-left-color: var(--info); }
@@ -286,6 +287,45 @@
     .record-pot .rp-label { font-size: 0.7rem; font-weight: 900; letter-spacing: 1.5px; color: #e65100; text-transform: uppercase; }
     .record-pot .rp-value { font-size: 1.6rem; font-weight: 900; color: #d84315; }
     .record-pot .rp-meta  { font-size: 0.72rem; color: #bf360c; margin-top: 2px; }
+
+    /* ── PRIZE POOL BREAKDOWN (timer panel) ── */
+    .prize-info {
+      width: 100%;
+      background: linear-gradient(135deg, var(--cream-1), #fffde7);
+      border: 2px solid var(--gold);
+      border-radius: var(--r-md);
+      padding: 12px 16px;
+      margin-top: 16px;
+      font-size: 0.95rem;
+    }
+    .prize-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      padding: 4px 0;
+      font-variant-numeric: tabular-nums;
+      color: var(--ink);
+    }
+    .prize-row.prize-fee {
+      color: var(--ink-soft);
+      border-bottom: 1px dashed var(--gold);
+      padding-bottom: 6px;
+      font-style: italic;
+    }
+    .prize-row.prize-pool {
+      padding: 8px 0;
+      margin: 4px 0;
+      border-top: 0;
+      border-bottom: 2px solid var(--gold);
+      color: var(--gold-dark);
+      font-family: var(--f-display);
+      font-size: 1.1rem;
+      letter-spacing: 0.5px;
+    }
+    .prize-row.prize-place {
+      color: var(--ink-strong);
+      font-weight: 700;
+    }
 
     /* Smart Home Modal */
     .sh-modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); background: white; border: 3px solid var(--purple-dark); width: 90%; max-width: 500px; padding: 20px; z-index: 2000; border-radius: var(--r-md); box-shadow: var(--sh-lg); }
@@ -562,9 +602,26 @@
     </div>
 
     <div class="prize-info">
-      <div><strong>Current Prize Pool: £<span id="currentPrizePool">0</span></strong></div>
-      <div>1st Place: £<span id="firstPrize">0</span></div>
-      <div>2nd Place: £<span id="secondPrize">0</span></div>
+      <div class="prize-row">
+        <span>Total Paid In</span>
+        <span>£<span id="totalPaid">0</span></span>
+      </div>
+      <div class="prize-row prize-fee">
+        <span>House Fee (10%)</span>
+        <span>− £<span id="houseFee">0</span></span>
+      </div>
+      <div class="prize-row prize-pool">
+        <strong>Prize Pool</strong>
+        <strong>£<span id="currentPrizePool">0</span></strong>
+      </div>
+      <div class="prize-row prize-place">
+        <span>🥇 1st (80%)</span>
+        <span>£<span id="firstPrize">0</span></span>
+      </div>
+      <div class="prize-row prize-place">
+        <span>🥈 2nd (20%)</span>
+        <span>£<span id="secondPrize">0</span></span>
+      </div>
     </div>
 
     <!-- BIGGEST POT RECORD -->
@@ -1125,9 +1182,14 @@
 
         const addonHtml  = `<input type="checkbox" ${p.hasAddon?'checked':''} onchange="toggleAddon('${p.name}')">`;
         const paidHtml   = `<span class="editable-cost" onclick="manualEditPaid('${p.name}')">£${p.totalPaid}</span>`;
-        const actionHtml = !p.eliminated
-          ? `<button class="elim-btn"  onclick="initEliminate('${p.name}')">Eliminate</button>`
-          : `<button class="rebuy-btn" onclick="rebuy('${p.name}')">Rebuy</button>`;
+        let actionHtml;
+        if (!p.eliminated) {
+          actionHtml = `<button class="elim-btn" onclick="initEliminate('${p.name}')">Eliminate</button>`;
+        } else if (rebuyWindowClosed()) {
+          actionHtml = `<span class="rebuy-closed" title="Rebuy window closed at break — God Mode to override">— closed —</span>`;
+        } else {
+          actionHtml = `<button class="rebuy-btn" onclick="rebuy('${p.name}')">Rebuy</button>`;
+        }
 
         // GOD MODE COLUMN: Kill & Revive — hidden via CSS when god mode is off
         const godHtml = `
@@ -1171,8 +1233,21 @@
       return true;
     }
 
+    // The rebuy window closes the moment the break round begins (typical
+    // poker tournament rule). After that, only God Mode can adjust stacks.
+    function rebuyWindowClosed() {
+      for (let i = 0; i <= currentRound; i++) {
+        if (rounds[i] && rounds[i].isBreak) return true;
+      }
+      return false;
+    }
+
     function rebuy(name) {
       if (blockedAfterEnd('rebuy')) return;
+      if (rebuyWindowClosed()) {
+        showMessage('Rebuy window closed at break — use God Mode to override.');
+        return;
+      }
       saveState();
       const p = players.find(x => x.name === name);
       if (p.eliminated) p.rebuyEliminations.push({ eliminatedBy: p.eliminatedBy||"Unknown", timestamp: p.eliminationTime||Date.now() });
@@ -1303,9 +1378,12 @@
 
       if (eligible.length === 0) return 'No killer bonus';
 
-      const max     = eligible[0][1];
-      const winners = eligible.filter(([, count]) => count === max).map(([name]) => name);
-      return winners.join(' & ');
+      // Rule: bonus is only awarded if ONE eligible player has strictly more
+      // kills than every other eligible player. Ties = no bonus this game.
+      const max  = eligible[0][1];
+      const tied = eligible.filter(([, count]) => count === max);
+      if (tied.length > 1) return 'No clear winner (tie)';
+      return tied[0][0];
     }
 
     function checkForWinner() {
@@ -1413,6 +1491,8 @@
       let p2 = Math.round((pot * 0.2) / 5) * 5;
       let p1 = pot - p2;
       if (p1 < p2) { p1 = pot; p2 = 0; }
+      document.getElementById('totalPaid').innerText        = total;
+      document.getElementById('houseFee').innerText         = fee;
       document.getElementById('currentPrizePool').innerText = pot;
       document.getElementById('firstPrize').innerText       = p1;
       document.getElementById('secondPrize').innerText      = p2;
@@ -1873,8 +1953,14 @@
           .map(k => ({ name:k, count: t.kills[k] }));
         if (elig.length) {
           elig.sort((a,b) => b.count - a.count);
-          const max = elig[0].count;
-          elig.filter(e => e.count===max).forEach(e => { if (stats[e.name]) { stats[e.name].points += 2*mult; stats[e.name].killerWins++; } });
+          const max  = elig[0].count;
+          const tied = elig.filter(e => e.count === max);
+          // Rule: clear winner only — a single eligible player must have strictly
+          // more kills than any other. Ties award nothing for this tournament.
+          if (tied.length === 1) {
+            const w = tied[0];
+            if (stats[w.name]) { stats[w.name].points += 2*mult; stats[w.name].killerWins++; }
+          }
         }
       });
       return Object.entries(stats).sort((a,b) => b[1].points - a[1].points);
