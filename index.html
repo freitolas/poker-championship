@@ -734,6 +734,14 @@
     let inFireRounds    = false;    // ← True while Rounds of Fire are in progress
     let fireRoundsDone  = 0;        // ← 0–3: how many fire rounds completed
     let breakStartTime  = null;     // ← Wall clock when break began (for narrative)
+    let gameIsMajor     = false;    // ← Single source of truth for Major mode.
+                                    //   Set from the toggle pre-game; the toggle
+                                    //   is disabled once the game starts so this
+                                    //   stays locked. Used for ALL buy-in costs.
+
+    // Buy-in / rebuy / add-on unit cost. Reads game state, never the live DOM,
+    // so costs can't drift mid-game if the checkbox state is ever off.
+    function unitCost() { return gameIsMajor ? 10 : 5; }
 
     // === INITIALIZATION ===
     window.onload = function() {
@@ -803,7 +811,7 @@
         tournamentEnded,
         killFeedLog:       JSON.parse(JSON.stringify(killFeedLog)),
         tournamentName:    document.getElementById('tournamentNameSelect').value,
-        isMajor:           document.getElementById('majorToggle').checked,
+        isMajor:           gameIsMajor,
         savedAt:           new Date().toISOString()
       };
     }
@@ -1004,10 +1012,12 @@
     }
 
     function updateGameSettings() {
-      const isMajor = document.getElementById('majorToggle').checked;
-      const buyIn   = isMajor ? 10 : 5;
+      // The toggle is only changeable pre-game (disabled after start), so this
+      // captures the final Major state before the game locks it in.
+      gameIsMajor   = document.getElementById('majorToggle').checked;
+      const buyIn   = unitCost();
       document.getElementById('gameInfoDisplay').innerHTML =
-        `MODE: ${isMajor ? '🏆 MAJOR (2x Points)' : 'Standard'} | Buy-in: £${buyIn} | 1st: 80% | 2nd: 20% | House Fee: 10%`;
+        `MODE: ${gameIsMajor ? '🏆 MAJOR (2x Points)' : 'Standard'} | Buy-in: £${buyIn} | 1st: 80% | 2nd: 20% | House Fee: 10%`;
       updatePrizeInfo();
     }
 
@@ -1147,7 +1157,7 @@
       }
       players.push({
         name, stacks: 1,
-        totalPaid: document.getElementById('majorToggle').checked ? 10 : 5,
+        totalPaid: unitCost(),
         eliminated: false, hasAddon: false,
         eliminationTime: null, rebuyEliminations: []
       });
@@ -1186,7 +1196,7 @@
         if (!p.eliminated) {
           actionHtml = `<button class="elim-btn" onclick="initEliminate('${p.name}')">Eliminate</button>`;
         } else if (rebuyWindowClosed()) {
-          actionHtml = `<span class="rebuy-closed" title="Rebuy window closed at break — God Mode to override">— closed —</span>`;
+          actionHtml = `<span class="rebuy-closed" title="Rebuy window closed — play resumed after the break. God Mode to override">— closed —</span>`;
         } else {
           actionHtml = `<button class="rebuy-btn" onclick="rebuy('${p.name}')">Rebuy</button>`;
         }
@@ -1219,7 +1229,7 @@
       const p = players.find(x => x.name === name);
       if (!p) return;
       p.stacks = Math.max(0, p.stacks + change);
-      const cost = document.getElementById('majorToggle').checked ? 10 : 5;
+      const cost = unitCost();
       p.totalPaid = change > 0 ? p.totalPaid + cost : Math.max(0, p.totalPaid - cost);
       renderTable();
     }
@@ -1233,10 +1243,12 @@
       return true;
     }
 
-    // The rebuy window closes the moment the break round begins (typical
-    // poker tournament rule). After that, only God Mode can adjust stacks.
+    // Rebuys (and add-ons) are allowed right through the break — the break
+    // IS the rebuy/add-on window. The window only closes once play has
+    // RESUMED after the break, i.e. the current round is strictly past the
+    // break round. After that, only God Mode can adjust stacks.
     function rebuyWindowClosed() {
-      for (let i = 0; i <= currentRound; i++) {
+      for (let i = 0; i < currentRound; i++) {
         if (rounds[i] && rounds[i].isBreak) return true;
       }
       return false;
@@ -1245,14 +1257,14 @@
     function rebuy(name) {
       if (blockedAfterEnd('rebuy')) return;
       if (rebuyWindowClosed()) {
-        showMessage('Rebuy window closed at break — use God Mode to override.');
+        showMessage('Rebuy window closed (play resumed after the break) — use God Mode to override.');
         return;
       }
       saveState();
       const p = players.find(x => x.name === name);
       if (p.eliminated) p.rebuyEliminations.push({ eliminatedBy: p.eliminatedBy||"Unknown", timestamp: p.eliminationTime||Date.now() });
       p.eliminated = false; p.eliminationTime = null; p.stacks += 1;
-      p.totalPaid += document.getElementById('majorToggle').checked ? 10 : 5;
+      p.totalPaid += unitCost();
       killFeedAdd('rebuy', `${name} rebought`);
       renderTable(); showMessage(`${name} rebought!`);
     }
@@ -1261,7 +1273,7 @@
       if (blockedAfterEnd('add-on')) return;
       saveState();
       const p    = players.find(x => x.name === name);
-      const cost = document.getElementById('majorToggle').checked ? 10 : 5;
+      const cost = unitCost();
       p.hasAddon = !p.hasAddon;
       if (p.hasAddon) {
         p.totalPaid += cost; p.stacks += 1;
@@ -1786,7 +1798,7 @@
       const dateStr  = ts.split(' ')[0];
       const timeStr  = ts.split(' ')[1];
       const tournId  = `${dateStr}_${timeStr.replace(/:/g,'-')}`;
-      const isMajor  = document.getElementById('majorToggle').checked;
+      const isMajor  = gameIsMajor;
       const tournamentName = document.getElementById('tournamentNameSelect').value;
       let rows = [];
       const activePlayers   = players.filter(p => !p.eliminated);
