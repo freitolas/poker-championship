@@ -166,7 +166,9 @@
     .status-message.show { opacity: 1; }
 
     /* ── TOP-RIGHT CORNER BUTTONS ── */
-    .top-corner-btns { position: absolute; top: 20px; right: 20px; display: flex; gap: 8px; align-items: center; }
+    /* z-index keeps these above the transparent .hero-header, which is later in
+       the DOM and would otherwise paint over (and swallow clicks on) this corner. */
+    .top-corner-btns { position: absolute; top: 20px; right: 20px; display: flex; gap: 8px; align-items: center; z-index: 100; }
 
     .smart-btn {
       background: #2E003E; color: #f7e348;
@@ -1559,6 +1561,57 @@
     // ─────────────────────────────────────────────────────────────────────────
     let timerEndTime = null; // absolute ms timestamp when current round ends
 
+    // ── BACKGROUND KEEP-ALIVE ──────────────────────────────────────────────────
+    // Chrome aggressively throttles (and can freeze) timers in hidden tabs —
+    // worst of all when another tab is playing fullscreen video. A tab that is
+    // *playing audio*, however, is exempt from that throttling. So while the
+    // round timer runs we loop an inaudible silent clip: the tab stays "audible",
+    // its setInterval keeps firing, and the alarm rings on time even in the
+    // background. The clip is a generated silent WAV (no extra asset needed).
+    // ─────────────────────────────────────────────────────────────────────────
+    let keepAliveAudio = null;
+
+    function makeSilentWavUri() {
+      const sampleRate = 8000, seconds = 1, n = sampleRate * seconds;
+      const buf = new ArrayBuffer(44 + n), view = new DataView(buf);
+      const w = (off, s) => { for (let i = 0; i < s.length; i++) view.setUint8(off + i, s.charCodeAt(i)); };
+      w(0, 'RIFF'); view.setUint32(4, 36 + n, true); w(8, 'WAVE');
+      w(12, 'fmt '); view.setUint32(16, 16, true); view.setUint16(20, 1, true);
+      view.setUint16(22, 1, true); view.setUint32(24, sampleRate, true);
+      view.setUint32(28, sampleRate, true); view.setUint16(32, 1, true);
+      view.setUint16(34, 8, true); w(36, 'data'); view.setUint32(40, n, true);
+      for (let i = 0; i < n; i++) view.setUint8(44 + i, 128); // 128 = silence for 8-bit PCM
+      let bin = '';
+      const bytes = new Uint8Array(buf);
+      for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+      return 'data:audio/wav;base64,' + btoa(bin);
+    }
+
+    function startKeepAlive() {
+      if (keepAliveAudio) return;
+      keepAliveAudio = new Audio(makeSilentWavUri());
+      keepAliveAudio.loop = true;
+      keepAliveAudio.volume = 1; // must be unmuted to register the tab as audible
+      keepAliveAudio.play().catch(() => {}); // ignored if no prior user gesture
+    }
+
+    function stopKeepAlive() {
+      if (!keepAliveAudio) return;
+      keepAliveAudio.pause();
+      keepAliveAudio = null;
+    }
+
+    // Safety net: when the tab becomes visible again, recompute from the wall
+    // clock and fire the round end immediately if it already elapsed while away.
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden || !timerRunning || !timerEndTime) return;
+      if (Date.now() >= timerEndTime) {
+        timeLeft = 0;
+        displayTime();
+        roundComplete();
+      }
+    });
+
     function startTimer() {
       // FIX: Auto-start the tournament if the user hits START without clicking
       // "Start Tournament" first — prevents the app losing track of game state.
@@ -1570,6 +1623,7 @@
       clearInterval(timer);
       timerRunning   = true;
       timerEndTime   = Date.now() + timeLeft * 1000;
+      startKeepAlive();
       document.getElementById('timerStartBtn').disabled = true;
       document.getElementById('timerPauseBtn').disabled = false;
       timer = setInterval(() => {
@@ -1592,6 +1646,7 @@
       clearInterval(timer);
       timerRunning = false;
       timerEndTime = null;
+      stopKeepAlive();
       document.getElementById('timerStartBtn').disabled = false;
       document.getElementById('timerPauseBtn').disabled = true;
       displayTime();
@@ -1678,6 +1733,7 @@
         if (!tournamentEnded) startTimer();
       } else {
         timeLeft = 0; displayTime();
+        stopKeepAlive();
         alert("Tournament Structure Complete!");
       }
     }
