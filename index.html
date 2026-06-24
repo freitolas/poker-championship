@@ -478,6 +478,7 @@
     <!-- TOP-RIGHT CORNER: God Mode + Smart Home -->
     <div class="top-corner-btns">
       <button class="god-mode-btn" id="godModeToggleBtn" onclick="toggleGodMode()">⚡ God Mode</button>
+      <button class="smart-btn" id="notifyToggleBtn" onclick="toggleNotifications()" title="Get a system notification when each round ends — surfaces over fullscreen video">🔕 Notify</button>
       <button class="smart-btn" onclick="openSmartHome()">Smart Home 🏠</button>
     </div>
 
@@ -752,6 +753,7 @@
       updateGameSettings();
       handleClientLoad();
       loadSmartHome();
+      loadNotifyPref();
       checkForAutoSave();   // ← Crash recovery check on load
     };
 
@@ -771,6 +773,58 @@
         btn.textContent = '⚡ God Mode';
       }
       renderTable();  // re-render to show/hide stack +/- controls
+    }
+
+    // ══════════════════════════════════════════
+    // SYSTEM NOTIFICATIONS (round end)
+    // A toggle for OS-level notifications when a round ends. Unlike the in-page
+    // alarm, these surface over a fullscreen video in another tab/app — handy
+    // when you're watching the football and need a nudge to come back.
+    // ══════════════════════════════════════════
+    let notificationsEnabled = false;
+
+    function reflectNotifyBtn() {
+      const btn = document.getElementById('notifyToggleBtn');
+      if (!btn) return;
+      btn.textContent = notificationsEnabled ? '🔔 Notify ON' : '🔕 Notify';
+    }
+
+    async function toggleNotifications() {
+      if (!('Notification' in window)) {
+        showMessage('This browser does not support system notifications.');
+        return;
+      }
+      if (notificationsEnabled) {
+        notificationsEnabled = false;
+        localStorage.setItem('pokerNotify', '0');
+        reflectNotifyBtn();
+        showMessage('Round notifications off');
+        return;
+      }
+      let perm = Notification.permission;
+      if (perm === 'default') perm = await Notification.requestPermission();
+      if (perm !== 'granted') {
+        showMessage('Notifications blocked — enable them for this site in your browser settings.');
+        return;
+      }
+      notificationsEnabled = true;
+      localStorage.setItem('pokerNotify', '1');
+      reflectNotifyBtn();
+      showMessage('Round notifications on — you\'ll get a system alert at each round end');
+    }
+
+    function loadNotifyPref() {
+      notificationsEnabled = localStorage.getItem('pokerNotify') === '1'
+        && 'Notification' in window && Notification.permission === 'granted';
+      reflectNotifyBtn();
+    }
+
+    function notifyRoundEnd(title, body) {
+      if (!notificationsEnabled || Notification.permission !== 'granted') return;
+      try {
+        const n = new Notification(title, { body, icon: 'logo.png', tag: 'poker-round', renotify: true });
+        n.onclick = () => { window.focus(); n.close(); };
+      } catch (e) { /* notification construction can throw on some platforms — ignore */ }
     }
 
     // ══════════════════════════════════════════
@@ -1705,9 +1759,11 @@
 
         // If next round is the break — gate behind fire rounds
         if (rounds[nextIdx].isBreak) {
+          notifyRoundEnd('⏰ Round over — Rounds of Fire!', 'Time for the Rounds of Fire, then the break.');
           triggerFireRounds();
           return;
         }
+        notifyRoundEnd('⏰ Round over', `Blinds are now ${rounds[nextIdx].sb}/${rounds[nextIdx].bb}.`);
 
         // Normal round advance
         currentRound++;
@@ -1734,6 +1790,7 @@
       } else {
         timeLeft = 0; displayTime();
         stopKeepAlive();
+        notifyRoundEnd('🏁 Tournament structure complete', 'The final round has ended.');
         alert("Tournament Structure Complete!");
       }
     }
