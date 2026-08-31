@@ -275,6 +275,30 @@
     }
     #headsUpCard ul { margin: 0; padding-left: 20px; line-height: 1.6; }
 
+    /* God Mode bounty override bar — needs BOTH god mode and bounty night */
+    #godBountyPanel { display: none; }
+    body.god-mode-active.bounty-night #godBountyPanel {
+      display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+      background: #1e1b4b; border: 1px solid #7c3aed;
+      border-radius: 6px; padding: 8px 12px; margin-bottom: 10px;
+    }
+    #godBountyPanel .gbp-label {
+      color: #e9d5ff; font-weight: 700; font-size: 0.78rem; letter-spacing: 1px;
+    }
+
+    /* God Mode bounty editor dialog */
+    .gb-field {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 10px; margin: 8px 0; text-align: left;
+    }
+    .gb-field label { font-weight: 700; color: var(--ink-strong); font-size: 0.9rem; }
+    .gb-field input {
+      width: 110px; padding: 8px; font-size: 15px;
+      border: 2px solid var(--gold); border-radius: var(--r-sm);
+      font-family: var(--f-body); text-align: right;
+    }
+    .gb-note { font-size: 0.75rem; color: var(--ink-soft); margin: 6px 0 0; }
+
     /* Live Bounty Boss tracker */
     #bountyTracker {
       display: none;
@@ -659,6 +683,15 @@
 
     <!-- BOUNTY NIGHT BANNER -->
     <div id="bountyBanner">🎯 CURUPIRA'S HEAD BOUNTY CHAMPIONSHIP — £15 buy-in (£10 pool / £5 head) · every knockout pays £5 🎯</div>
+
+    <!-- GOD MODE BOUNTY OVERRIDES (visible only with God Mode ON, bounty night) -->
+    <div id="godBountyPanel">
+      <span class="gbp-label">⚡ God Mode — Bounty overrides:</span>
+      <button class="god-btn" onclick="godFireFinalTable()">Re-fire Final Table Alert</button>
+      <button class="god-btn" onclick="godToggleFinalTable()">Show/Hide Final Table</button>
+      <button class="god-btn" onclick="godToggleHeadsUp()">Show/Hide Heads-Up</button>
+      <button class="god-btn" onclick="godResetPanelOverrides()">Back to Auto</button>
+    </div>
 
     <!-- LIVE BOUNTY BOSS TRACKER -->
     <div id="bountyTracker">
@@ -1405,7 +1438,8 @@
         bountyPaidIn: gameIsBounty ? BOUNTY_HEAD : 0, // £ they put into the bounty pool
         bountyEarned: 0,                              // £ collected from knockouts
         killCount:    0,                              // raw knockouts (split pots count in full)
-        bountyKillers: null
+        bountyKillers: null,
+        bountyClaimed: 0
       });
       if (!tournamentStarted) players.sort((a,b) => a.name.localeCompare(b.name));
       input.value = ''; sel.value = '';
@@ -1450,7 +1484,8 @@
         // GOD MODE COLUMN: Kill & Revive — hidden via CSS when god mode is off
         const godHtml = `
           <button class="god-btn god-kill"   onclick="godKill('${p.name}')">Kill</button>
-          <button class="god-btn god-revive" onclick="godRevive('${p.name}')">Revive</button>`;
+          <button class="god-btn god-revive" onclick="godRevive('${p.name}')">Revive</button>
+          ${gameIsBounty ? `<button class="god-btn" onclick="godBountyEdit('${p.name}')">🎯 Fix Bounty</button>` : ''}`;
 
         // BOUNTY CELL: head price, cash collected and knockouts (bounty nights)
         const bountyHtml = `
@@ -1531,7 +1566,9 @@
       if (gameIsBounty) {
         p.bountyPaidIn = (p.bountyPaidIn || 0) + BOUNTY_HEAD;
         p.bountyValue  = BOUNTY_HEAD;
+        // A rebuy buys a NEW head, so the previous killer keeps what they earned.
         p.bountyKillers = null;
+        p.bountyClaimed = 0;
       }
       killFeedAdd('rebuy', `${name} rebought`);
       renderTable(); showMessage(`${name} rebought!`);
@@ -1647,7 +1684,8 @@
           k.killCount    = (k.killCount || 0) + 1;
         });
         p.bountyKillers = killers.slice();
-        p.bountyValue   = 0; // head has been claimed
+        p.bountyClaimed = head; // remembered so God Mode revive can reverse it
+        p.bountyValue   = 0;    // head has been claimed
         bountyNote = splitPot
           ? ` — £${fmtMoney(head)} head split ${killers.length} ways (£${fmtMoney(share)} each)`
           : ` — £${fmtMoney(head)} bounty to ${killers[0]}`;
@@ -1686,7 +1724,27 @@
       saveState();
       const p = players.find(x => x.name === name);
       p.eliminated = false; p.eliminationTime = null;
-      if (gameIsBounty && !p.bountyValue) p.bountyValue = BOUNTY_HEAD;
+      // On bounty nights a revive is a true undo: claw the head back off
+      // whoever was credited with it, so a mis-assigned killer can be fixed by
+      // reviving and re-eliminating with the right name(s).
+      if (gameIsBounty) {
+        const killers = p.bountyKillers || [];
+        const claimed = p.bountyClaimed || 0;
+        if (killers.length > 0 && claimed > 0) {
+          const share = claimed / killers.length;
+          killers.forEach(kn => {
+            const k = players.find(x => x.name === kn);
+            if (!k) return;
+            k.bountyEarned = Math.max(0, (k.bountyEarned || 0) - share);
+            k.killCount    = Math.max(0, (k.killCount || 0) - 1);
+          });
+          killFeedAdd('elim', `⚡ Revive: £${fmtMoney(claimed)} bounty clawed back from ${killers.join(' & ')}`);
+        }
+        p.bountyValue   = claimed || p.bountyValue || BOUNTY_HEAD;
+        p.bountyKillers = null;
+        p.bountyClaimed = 0;
+        p.eliminatedBy  = null;
+      }
       renderTable();
       updateBountyPanels();
     }
@@ -1711,6 +1769,11 @@
       updateBountyPanels();
     }
 
+    // God Mode can pin either panel open or shut if the automatic trigger
+    // misfires on the night. null = automatic, true/false = forced.
+    let godOverrideFinalTable = null;
+    let godOverrideHeadsUp    = null;
+
     // Show/hide the bounty-night panels based on the live field size.
     function updateBountyPanels() {
       const ft = document.getElementById('finalTableAlert');
@@ -1718,9 +1781,104 @@
       if (!ft || !hu) return;
       const active = players.filter(p => !p.eliminated).length;
       const live   = gameIsBounty && tournamentStarted && !tournamentEnded;
-      ft.style.display = (live && active === 9) ? 'block' : 'none';
-      hu.style.display = (live && active === 2) ? 'block' : 'none';
+      const autoFt = live && active === 9;
+      const autoHu = live && active === 2;
+      const showFt = godOverrideFinalTable === null ? autoFt : godOverrideFinalTable;
+      const showHu = godOverrideHeadsUp    === null ? autoHu : godOverrideHeadsUp;
+      ft.style.display = showFt ? 'block' : 'none';
+      hu.style.display = showHu ? 'block' : 'none';
       renderBountyTracker();
+    }
+
+    // ── GOD MODE: BOUNTY OVERRIDES ────────────────────────────────────────────
+    // Everything the bounty engine does automatically can be corrected by hand,
+    // so a mis-click on the night never leaves the game stuck or the money wrong.
+    // ─────────────────────────────────────────────────────────────────────────
+    function godFireFinalTable() {
+      finalTableAlerted = false;            // allow the alert to fire again
+      godOverrideFinalTable = true;
+      killFeedAdd('fire', '🚨 FINAL TABLE — collapse all tables and reseat. (God Mode)');
+      showMessage('🚨 Final Table alert re-fired.');
+      notifyRoundEnd('🚨 Final Table', 'Collapse all tables and reseat.');
+      document.getElementById('roundAlarm').play().catch(() => {});
+      updateBountyPanels();
+    }
+
+    function godToggleFinalTable() {
+      const shown = document.getElementById('finalTableAlert').style.display === 'block';
+      godOverrideFinalTable = !shown;
+      updateBountyPanels();
+    }
+
+    function godToggleHeadsUp() {
+      const shown = document.getElementById('headsUpCard').style.display === 'block';
+      godOverrideHeadsUp = !shown;
+      updateBountyPanels();
+    }
+
+    function godResetPanelOverrides() {
+      godOverrideFinalTable = null;
+      godOverrideHeadsUp    = null;
+      showMessage('Bounty panels back to automatic.');
+      updateBountyPanels();
+    }
+
+    // Per-player bounty editor: head price, pool contribution, cash won, KOs.
+    function godBountyEdit(name) {
+      if (document.getElementById('elim-dialog')) return;
+      const p = players.find(x => x.name === name);
+      if (!p) return;
+      const backdrop = document.createElement('div');
+      backdrop.id = 'elim-backdrop';
+      backdrop.className = 'elim-backdrop';
+      backdrop.onclick = closeEliminateDialog;
+      const d = document.createElement('div');
+      d.id = 'elim-dialog';
+      d.className = 'elim-dialog';
+      d.innerHTML = `
+        <h3>⚡ Fix Bounty — ${p.name}</h3>
+        <div class="gb-field">
+          <label for="gbHead">Head worth £</label>
+          <input id="gbHead" type="number" step="0.5" min="0" value="${p.bountyValue || 0}">
+        </div>
+        <div class="gb-field">
+          <label for="gbPaid">Paid into bounty pool £</label>
+          <input id="gbPaid" type="number" step="0.5" min="0" value="${p.bountyPaidIn || 0}">
+        </div>
+        <div class="gb-field">
+          <label for="gbCash">Bounty cash won £</label>
+          <input id="gbCash" type="number" step="0.5" min="0" value="${p.bountyEarned || 0}">
+        </div>
+        <div class="gb-field">
+          <label for="gbKills">Knockouts</label>
+          <input id="gbKills" type="number" step="1" min="0" value="${p.killCount || 0}">
+        </div>
+        <p class="gb-note">Knockouts drive Bounty Boss; cash is the tie-breaker.
+           "Paid into pool" feeds the bounty pool and the main prize split.</p>
+        <div class="elim-actions">
+          <button class="btn-green" onclick="applyGodBounty('${p.name}')">Save</button>
+          <button onclick="closeEliminateDialog()">Cancel</button>
+        </div>`;
+      document.body.appendChild(backdrop);
+      document.body.appendChild(d);
+    }
+
+    function applyGodBounty(name) {
+      saveState();
+      const p = players.find(x => x.name === name);
+      if (!p) return closeEliminateDialog();
+      const num = (id, fallback) => {
+        const v = parseFloat(document.getElementById(id).value);
+        return isNaN(v) || v < 0 ? fallback : v;
+      };
+      p.bountyValue  = num('gbHead',  p.bountyValue  || 0);
+      p.bountyPaidIn = num('gbPaid',  p.bountyPaidIn || 0);
+      p.bountyEarned = num('gbCash',  p.bountyEarned || 0);
+      p.killCount    = Math.round(num('gbKills', p.killCount || 0));
+      closeEliminateDialog();
+      killFeedAdd('elim', `⚡ God Mode adjusted ${name}'s bounty — ${p.killCount} KO, £${fmtMoney(p.bountyEarned)} won`);
+      renderTable();
+      showMessage(`${name}'s bounty figures updated.`);
     }
 
     // Bounty Boss: raw knockouts → bounty cash collected → best final placing.
