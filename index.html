@@ -275,6 +275,48 @@
     }
     #headsUpCard ul { margin: 0; padding-left: 20px; line-height: 1.6; }
 
+    /* Live Bounty Boss tracker */
+    #bountyTracker {
+      display: none;
+      background: linear-gradient(180deg, #1a1206 0%, #241703 100%);
+      border: 2px solid var(--gold); border-radius: var(--r-md);
+      padding: 12px 14px; margin-bottom: 12px;
+      box-shadow: inset 0 0 20px rgba(255,152,0,0.10);
+    }
+    body.bounty-night #bountyTracker { display: block; }
+    #bountyTracker .bt-title {
+      font-family: var(--f-display); font-size: 0.78rem; letter-spacing: 3px;
+      color: var(--gold-soft); text-align: center; margin-bottom: 10px;
+    }
+    #bountyTracker .bt-slots { display: flex; gap: 10px; }
+    #bountyTracker .bt-slot {
+      flex: 1; text-align: center; padding: 10px 8px;
+      border-radius: var(--r-sm); background: rgba(255,255,255,0.04);
+      border: 1px solid #3a2a10;
+    }
+    #bountyTracker .bt-boss {
+      border-color: var(--gold); background: rgba(255,193,7,0.10);
+      box-shadow: 0 0 12px rgba(255,193,7,0.20);
+    }
+    #bountyTracker .bt-label {
+      font-size: 0.7rem; letter-spacing: 2px; text-transform: uppercase;
+      color: #b99a5c; margin-bottom: 4px;
+    }
+    #bountyTracker .bt-name {
+      font-size: 1.25rem; font-weight: 800; color: #fff7e1; line-height: 1.2;
+      word-break: break-word;
+    }
+    #bountyTracker .bt-boss .bt-name { color: var(--gold-bright, #ffc107); }
+    #bountyTracker .bt-stat {
+      font-size: 0.82rem; color: var(--gold-soft); margin-top: 3px;
+      font-variant-numeric: tabular-nums;
+    }
+    #bountyTracker .bt-out { color: #b0663f; font-size: 0.72rem; }
+    #bountyTracker .bt-foot {
+      text-align: center; font-size: 0.68rem;
+      color: #8a7550; margin-top: 8px;
+    }
+
     /* Multi-killer picker in the elimination dialog */
     .killer-multi {
       text-align: left; max-height: 220px; overflow-y: auto;
@@ -617,6 +659,24 @@
 
     <!-- BOUNTY NIGHT BANNER -->
     <div id="bountyBanner">🎯 CURUPIRA'S HEAD BOUNTY CHAMPIONSHIP — £15 buy-in (£10 pool / £5 head) · every knockout pays £5 🎯</div>
+
+    <!-- LIVE BOUNTY BOSS TRACKER -->
+    <div id="bountyTracker">
+      <div class="bt-title">🎯 Bounty Boss — Live</div>
+      <div class="bt-slots">
+        <div class="bt-slot bt-boss">
+          <div class="bt-label">👑 Boss</div>
+          <div class="bt-name" id="btBossName">—</div>
+          <div class="bt-stat" id="btBossStat">no knockouts yet</div>
+        </div>
+        <div class="bt-slot bt-runner">
+          <div class="bt-label">🥈 Runner-up</div>
+          <div class="bt-name" id="btRunnerName">—</div>
+          <div class="bt-stat" id="btRunnerStat">—</div>
+        </div>
+      </div>
+      <div class="bt-foot">Ranked on knockouts, then bounty cash. Final placing breaks any tie at the end.</div>
+    </div>
 
     <table id="playerTable">
       <thead>
@@ -1412,6 +1472,8 @@
 
       // FIX: removed stale "House Fee: £5" hardcode that was overwriting updatePrizeInfo()
       updatePrizeInfo();
+      // Keep the live Boss tracker in step with every table mutation.
+      updateBountyPanels();
     }
 
     // ══════════════════════════════════════════
@@ -1658,6 +1720,7 @@
       const live   = gameIsBounty && tournamentStarted && !tournamentEnded;
       ft.style.display = (live && active === 9) ? 'block' : 'none';
       hu.style.display = (live && active === 2) ? 'block' : 'none';
+      renderBountyTracker();
     }
 
     // Bounty Boss: raw knockouts → bounty cash collected → best final placing.
@@ -1675,6 +1738,51 @@
       if (contenders.length === 0) return null;
       const w = contenders[0];
       return { name: w.name, kills: w.killCount || 0, cash: w.bountyEarned || 0 };
+    }
+
+    // ── LIVE BOUNTY BOSS TRACKER ──────────────────────────────────────────────
+    // Mid-game there is no final placing yet, so the live standings rank on
+    // knockouts then bounty cash only. Anyone still level is shown as a genuine
+    // joint leader rather than picking an arbitrary winner — the third
+    // tie-breaker (final placing) resolves it when the night ends.
+    // ─────────────────────────────────────────────────────────────────────────
+    function bountyTiers() {
+      const contenders = players
+        .filter(p => (p.killCount || 0) > 0)
+        .sort((a, b) =>
+          (b.killCount || 0) - (a.killCount || 0) ||
+          (b.bountyEarned || 0) - (a.bountyEarned || 0)
+        );
+      const tiers = [];
+      contenders.forEach(p => {
+        const top = tiers[tiers.length - 1];
+        if (top && top.kills === (p.killCount || 0) && top.cash === (p.bountyEarned || 0)) {
+          top.players.push(p);
+        } else {
+          tiers.push({ kills: p.killCount || 0, cash: p.bountyEarned || 0, players: [p] });
+        }
+      });
+      return tiers;
+    }
+
+    function renderBountyTracker() {
+      const box = document.getElementById('bountyTracker');
+      if (!box) return;
+      const fmtTier = t => {
+        const names = t.players
+          .map(p => p.name + (p.eliminated ? ' <span class="bt-out">(out)</span>' : ''))
+          .join(' & ');
+        const ko = `${t.kills} KO${t.kills === 1 ? '' : 's'}`;
+        return { names, stat: `${ko} · £${fmtMoney(t.cash)}` };
+      };
+      const tiers = gameIsBounty ? bountyTiers() : [];
+      const boss   = tiers[0] ? fmtTier(tiers[0]) : null;
+      const runner = tiers[1] ? fmtTier(tiers[1]) : null;
+
+      document.getElementById('btBossName').innerHTML = boss ? boss.names : '—';
+      document.getElementById('btBossStat').textContent = boss ? boss.stat : 'no knockouts yet';
+      document.getElementById('btRunnerName').innerHTML = runner ? runner.names : '—';
+      document.getElementById('btRunnerStat').textContent = runner ? runner.stat : '—';
     }
 
     // Finishing positions: the lone survivor is 1st, then most-recently
