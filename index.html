@@ -577,11 +577,14 @@
           <input type="checkbox" id="majorToggle" onchange="updateGameSettings()">
         </div>
         <select id="tournamentNameSelect" style="flex:1;" onchange="handleTournamentSelect()">
+          <!-- data-major is the single source of truth for Major status. It used
+               to be inferred from keywords in the value, which silently missed
+               "The Equinox All-In" and charged it as a standard game. -->
           <option value="Regular Game">Regular Game</option>
-          <option value="The Dry Jan Finishers Cup">The Dry Jan Finishers Cup (Major)</option>
-          <option value="The Equinox All-In">The Equinox All-In (Major)</option>
-          <option value="Back to School Bounty Championship">Back to School Bounty Championship (Major)</option>
-          <option value="The Grand Finale">The Grand Finale (Major)</option>
+          <option value="The Dry Jan Finishers Cup" data-major="true">The Dry Jan Finishers Cup (Major)</option>
+          <option value="The Equinox All-In" data-major="true">The Equinox All-In (Major)</option>
+          <option value="Back to School Bounty Championship" data-major="true">Back to School Bounty Championship (Major)</option>
+          <option value="The Grand Finale" data-major="true">The Grand Finale (Major)</option>
         </select>
       </div>
 
@@ -1170,9 +1173,13 @@
     // TOURNAMENT SELECT / SETTINGS
     // ══════════════════════════════════════════
     function handleTournamentSelect() {
-      const sel = document.getElementById('tournamentNameSelect').value;
+      const el  = document.getElementById('tournamentNameSelect');
       const mt  = document.getElementById('majorToggle');
-      mt.checked = sel.includes("Major") || sel.includes("Cup") || sel.includes("Finale") || sel.includes("Bounty");
+      // FIX: Major status now comes from the option's data-major flag. The old
+      // keyword sniff (Major/Cup/Finale/Bounty) never matched the VALUE
+      // "The Equinox All-In", so that Major was silently charged £5 not £10.
+      const opt = el.options[el.selectedIndex];
+      mt.checked = !!(opt && opt.dataset.major === 'true');
       updateGameSettings();
     }
 
