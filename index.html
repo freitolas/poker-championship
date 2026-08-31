@@ -223,6 +223,73 @@
     body.god-mode-active #timerPrevBtn { display: inline-block; }
 
     /* ══════════════════════════════════════════
+       BOUNTY NIGHT — everything here is inert unless
+       body.bounty-night is set (Bounty tournament selected).
+       ══════════════════════════════════════════ */
+    .bounty-col { display: none; }
+    body.bounty-night .bounty-col { display: table-cell; }
+
+    .bounty-head  { color: #b71c1c; font-weight: 800; }
+    .bounty-cash  { color: #1b5e20; font-weight: 800; }
+    .bounty-kills { color: var(--ink-soft); font-size: 0.8rem; }
+
+    /* Bounty pool row in the prize panel */
+    .prize-row.bounty-row { display: none; }
+    body.bounty-night .prize-row.bounty-row { display: flex; }
+    .prize-row.bounty-row span { color: #b71c1c; font-weight: 700; }
+
+    /* Bounty night banner */
+    #bountyBanner {
+      display: none;
+      background: linear-gradient(90deg, #4a0000, #b71c1c, #4a0000);
+      color: #ffd54f; text-align: center;
+      padding: 7px 14px; border-radius: 6px;
+      font-size: 0.82rem; font-weight: 700; letter-spacing: 1px;
+      margin-bottom: 10px; border: 1px solid #d32f2f;
+    }
+    body.bounty-night #bountyBanner { display: block; }
+
+    /* Final table + heads-up alerts (bounty night only) */
+    #finalTableAlert, #headsUpCard {
+      display: none;
+      margin: 15px 0; padding: 15px 18px;
+      border-radius: var(--r-md); font-weight: 700;
+    }
+    #finalTableAlert {
+      background: linear-gradient(135deg, #1a237e, #311b92);
+      color: #e8eaf6; border: 2px solid #5c6bc0; text-align: center;
+      font-family: var(--f-display); letter-spacing: 1px;
+      animation: finalTablePulse 1.4s ease-in-out infinite;
+    }
+    @keyframes finalTablePulse {
+      0%,100% { box-shadow: 0 0 10px rgba(92,107,192,0.4); }
+      50%     { box-shadow: 0 0 22px rgba(92,107,192,0.85); }
+    }
+    #headsUpCard {
+      background: #fff7e1; color: #4e342e;
+      border: 2px solid var(--gold); font-weight: 600;
+    }
+    #headsUpCard h4 {
+      font-family: var(--f-display); letter-spacing: 1px;
+      color: var(--gold-dark); margin: 0 0 8px;
+    }
+    #headsUpCard ul { margin: 0; padding-left: 20px; line-height: 1.6; }
+
+    /* Multi-killer picker in the elimination dialog */
+    .killer-multi {
+      text-align: left; max-height: 220px; overflow-y: auto;
+      border: 2px solid var(--gold); border-radius: var(--r-sm);
+      padding: 8px; margin: 10px 0; background: var(--paper);
+    }
+    .killer-multi label {
+      display: flex; align-items: center; gap: 8px;
+      padding: 5px 6px; border-radius: 4px; cursor: pointer; font-weight: 600;
+    }
+    .killer-multi label:hover { background: var(--cream-2); }
+    .killer-multi input { width: 16px; height: 16px; cursor: pointer; }
+    .split-hint { font-size: 0.8rem; color: var(--ink-soft); margin: 4px 0 0; }
+
+    /* ══════════════════════════════════════════
        LIVE FEED — logo palette (black + gold)
        Colored left border per event type.
        ══════════════════════════════════════════ */
@@ -545,6 +612,9 @@
     <!-- GOD MODE ACTIVE BANNER -->
     <div id="godModeBanner">⚡ GOD MODE ACTIVE — Stack +/-, Kill/Revive, and ◀ Prev Round are enabled ⚡</div>
 
+    <!-- BOUNTY NIGHT BANNER -->
+    <div id="bountyBanner">🎯 CURUPIRA'S HEAD BOUNTY CHAMPIONSHIP — £15 buy-in (£10 pool / £5 head) · every knockout pays £5 🎯</div>
+
     <table id="playerTable">
       <thead>
         <tr>
@@ -553,6 +623,7 @@
           <th>Addon?</th>
           <th>Paid</th>
           <th>Status</th>
+          <th class="bounty-col">🎯 Bounty</th>
           <th>Actions</th>
           <th class="god-col">⚡ God Mode</th>
         </tr>
@@ -604,13 +675,28 @@
       BREAK TIME! - Add-ons available
     </div>
 
+    <!-- FINAL TABLE + HEADS-UP (bounty night) -->
+    <div id="finalTableAlert">🚨 FINAL TABLE — 9 PLAYERS LEFT 🚨<br><span style="font-size:0.8rem;letter-spacing:0;">Collapse all tables and reseat everyone at one table.</span></div>
+    <div id="headsUpCard">
+      <h4>🤝 Heads-Up Rules</h4>
+      <ul>
+        <li><strong>Button/Dealer</strong> posts the <strong>Small Blind</strong> — acts <strong>first</strong> pre-flop, <strong>last</strong> post-flop.</li>
+        <li><strong>Non-Dealer</strong> posts the <strong>Big Blind</strong> — acts <strong>last</strong> pre-flop, <strong>first</strong> post-flop.</li>
+        <li><strong>No antes</strong> are used.</li>
+      </ul>
+    </div>
+
     <div class="prize-info">
       <div class="prize-row">
         <span>Total Paid In</span>
         <span>£<span id="totalPaid">0</span></span>
       </div>
+      <div class="prize-row bounty-row">
+        <span>🎯 Bounty Pool (£5/head)</span>
+        <span>− £<span id="bountyPool">0</span></span>
+      </div>
       <div class="prize-row prize-fee">
-        <span>House Fee (10%)</span>
+        <span>House Fee (10%<span id="feeBasisNote"></span>)</span>
         <span>− £<span id="houseFee">0</span></span>
       </div>
       <div class="prize-row prize-pool">
@@ -744,7 +830,29 @@
 
     // Buy-in / rebuy / add-on unit cost. Reads game state, never the live DOM,
     // so costs can't drift mid-game if the checkbox state is ever off.
-    function unitCost() { return gameIsMajor ? 10 : 5; }
+    // ── BOUNTY NIGHT ──────────────────────────────────────────────────────────
+    // "Curupira's Head" Bounty Championship. Every rule below is gated on
+    // gameIsBounty, which is true ONLY when a tournament with "Bounty" in its
+    // name is selected. All other nights behave exactly as they always have.
+    const BOUNTY_BUYIN = 15; // £15 total per buy-in / rebuy
+    const BOUNTY_MAIN  = 10; // …of which £10 goes to the main prize pool
+    const BOUNTY_HEAD  =  5; // …and £5 becomes that player's head price
+    let   gameIsBounty = false;
+
+    function unitCost() {
+      if (gameIsBounty) return BOUNTY_BUYIN;
+      return gameIsMajor ? 10 : 5;
+    }
+
+    // Add-ons buy chips but never mint a new head, so on bounty nights they
+    // cost the main-pool portion only and contribute nothing to the bounty pool.
+    function addonCost() { return gameIsBounty ? BOUNTY_MAIN : unitCost(); }
+
+    // Total £ sitting in the bounty pool (sum of every head bought this game).
+    function bountyPoolTotal() {
+      if (!gameIsBounty) return 0;
+      return players.reduce((s, p) => s + (p.bountyPaidIn || 0), 0);
+    }
 
     // === INITIALIZATION ===
     window.onload = function() {
@@ -946,6 +1054,7 @@
         document.getElementById('startBtn').disabled    = tournamentStarted;
         document.getElementById('endBtn').disabled      = !tournamentStarted || tournamentEnded;
         document.getElementById('majorToggle').disabled = tournamentStarted;
+        document.getElementById('tournamentNameSelect').disabled = tournamentStarted;
 
         updateGameSettings();
         updateRoundDisplay();
@@ -1070,11 +1179,19 @@
     function updateGameSettings() {
       // The toggle is only changeable pre-game (disabled after start), so this
       // captures the final Major state before the game locks it in.
-      gameIsMajor   = document.getElementById('majorToggle').checked;
-      const buyIn   = unitCost();
-      document.getElementById('gameInfoDisplay').innerHTML =
-        `MODE: ${gameIsMajor ? '🏆 MAJOR (2x Points)' : 'Standard'} | Buy-in: £${buyIn} | 1st: 80% | 2nd: 20% | House Fee: 10%`;
+      gameIsMajor  = document.getElementById('majorToggle').checked;
+      // Bounty night keys off the tournament NAME, not the Major toggle, so the
+      // bounty engine can never switch on for an ordinary Major.
+      gameIsBounty = document.getElementById('tournamentNameSelect').value.includes('Bounty');
+      document.body.classList.toggle('bounty-night', gameIsBounty);
+
+      const buyIn = unitCost();
+      document.getElementById('feeBasisNote').textContent = gameIsBounty ? ' of main pool' : '';
+      document.getElementById('gameInfoDisplay').innerHTML = gameIsBounty
+        ? `MODE: 🎯 BOUNTY MAJOR (2x Points) | Buy-in: £${buyIn} (£${BOUNTY_MAIN} pool + £${BOUNTY_HEAD} head) | 1st: 80% | 2nd: 20% | House Fee: 10% of main pool`
+        : `MODE: ${gameIsMajor ? '🏆 MAJOR (2x Points)' : 'Standard'} | Buy-in: £${buyIn} | 1st: 80% | 2nd: 20% | House Fee: 10%`;
       updatePrizeInfo();
+      updateBountyPanels();
     }
 
     function populatePlayerDropdown() {
@@ -1215,7 +1332,13 @@
         name, stacks: 1,
         totalPaid: unitCost(),
         eliminated: false, hasAddon: false,
-        eliminationTime: null, rebuyEliminations: []
+        eliminationTime: null, rebuyEliminations: [],
+        // Bounty fields — only meaningful on bounty nights, harmless otherwise.
+        bountyValue:  gameIsBounty ? BOUNTY_HEAD : 0, // £ currently on their head
+        bountyPaidIn: gameIsBounty ? BOUNTY_HEAD : 0, // £ they put into the bounty pool
+        bountyEarned: 0,                              // £ collected from knockouts
+        killCount:    0,                              // raw knockouts (split pots count in full)
+        bountyKillers: null
       });
       if (!tournamentStarted) players.sort((a,b) => a.name.localeCompare(b.name));
       input.value = ''; sel.value = '';
@@ -1262,12 +1385,19 @@
           <button class="god-btn god-kill"   onclick="godKill('${p.name}')">Kill</button>
           <button class="god-btn god-revive" onclick="godRevive('${p.name}')">Revive</button>`;
 
+        // BOUNTY CELL: head price, cash collected and knockouts (bounty nights)
+        const bountyHtml = `
+          <span class="bounty-head">Head £${fmtMoney(p.bountyValue || 0)}</span><br>
+          <span class="bounty-cash">Won £${fmtMoney(p.bountyEarned || 0)}</span>
+          <span class="bounty-kills">(${p.killCount || 0} KO)</span>`;
+
         tr.innerHTML = `
           <td>${p.name}</td>
           <td>${stackHtml}</td>
           <td>${addonHtml}</td>
           <td>${paidHtml}</td>
           <td>${p.eliminated ? 'OUT' : 'Active'}</td>
+          <td class="bounty-col">${bountyHtml}</td>
           <td>${actionHtml}</td>
           <td class="god-col">${godHtml}</td>`;
         tbody.appendChild(tr);
@@ -1287,6 +1417,12 @@
       p.stacks = Math.max(0, p.stacks + change);
       const cost = unitCost();
       p.totalPaid = change > 0 ? p.totalPaid + cost : Math.max(0, p.totalPaid - cost);
+      // Keep the main/bounty split coherent: a God Mode stack is a full buy-in,
+      // so it carries its £5 head with it.
+      if (gameIsBounty) {
+        p.bountyPaidIn = Math.max(0, (p.bountyPaidIn || 0) + (change > 0 ? BOUNTY_HEAD : -BOUNTY_HEAD));
+        if (change > 0 && !p.eliminated) p.bountyValue = BOUNTY_HEAD;
+      }
       renderTable();
     }
 
@@ -1321,15 +1457,23 @@
       if (p.eliminated) p.rebuyEliminations.push({ eliminatedBy: p.eliminatedBy||"Unknown", timestamp: p.eliminationTime||Date.now() });
       p.eliminated = false; p.eliminationTime = null; p.stacks += 1;
       p.totalPaid += unitCost();
+      // A rebuy buys a brand-new head: £5 back into the bounty pool and the
+      // player is worth £5 again to whoever knocks them out next.
+      if (gameIsBounty) {
+        p.bountyPaidIn = (p.bountyPaidIn || 0) + BOUNTY_HEAD;
+        p.bountyValue  = BOUNTY_HEAD;
+        p.bountyKillers = null;
+      }
       killFeedAdd('rebuy', `${name} rebought`);
       renderTable(); showMessage(`${name} rebought!`);
+      updateBountyPanels();
     }
 
     function toggleAddon(name) {
       if (blockedAfterEnd('add-on')) return;
       saveState();
       const p    = players.find(x => x.name === name);
-      const cost = unitCost();
+      const cost = addonCost();
       p.hasAddon = !p.hasAddon;
       if (p.hasAddon) {
         p.totalPaid += cost; p.stacks += 1;
@@ -1351,8 +1495,28 @@
     function initEliminate(name) {
       if (blockedAfterEnd('elimination')) return;
       if (document.getElementById('elim-dialog')) return;
-      const options = players.filter(pl => pl.name !== name && !pl.eliminated)
-                             .map(k => `<option value="${k.name}">${k.name}</option>`).join('');
+      const candidates = players.filter(pl => pl.name !== name && !pl.eliminated);
+      const victim     = players.find(pl => pl.name === name);
+      const head       = victim ? (victim.bountyValue || 0) : 0;
+
+      // Bounty night gets a multi-select so a split pot can be shared between
+      // every winning hand; every other night keeps the original single picker.
+      const picker = gameIsBounty
+        ? `<p>Who eliminated them? <strong>Tick every winning hand</strong> — a
+             split pot divides the £${head} head equally.</p>
+           <div class="killer-multi" id="killerMulti">
+             ${candidates.map(k => `
+               <label><input type="checkbox" class="killer-cb" value="${k.name}"> ${k.name}</label>`).join('')
+               || '<em>No other active players.</em>'}
+           </div>
+           <p class="split-hint">Tick nobody for a self-inflicted / unknown exit (no bounty paid).</p>`
+        : `<p>Who eliminated them?</p>
+           <select id="killerSelect">
+             <option value="N/A">N/A (Self/Unknown)</option>
+             <option value="Split Pot">Split Pot (No killer)</option>
+             ${candidates.map(k => `<option value="${k.name}">${k.name}</option>`).join('')}
+           </select>`;
+
       const backdrop = document.createElement('div');
       backdrop.id = 'elim-backdrop';
       backdrop.className = 'elim-backdrop';
@@ -1362,11 +1526,7 @@
       d.className = 'elim-dialog';
       d.innerHTML = `
         <h3>Eliminate ${name}</h3>
-        <p>Who eliminated them?</p>
-        <select id="killerSelect">
-          <option value="N/A">N/A (Self/Unknown)</option>
-          <option value="Split Pot">Split Pot (No killer)</option>${options}
-        </select>
+        ${picker}
         <div class="elim-actions">
           <button class="btn-red"  onclick="confirmElimination('${name}')">Confirm</button>
           <button onclick="closeEliminateDialog()">Cancel</button>
@@ -1384,32 +1544,142 @@
 
     function confirmElimination(name) {
       saveState();
-      const p      = players.find(x => x.name === name);
-      const killer = document.getElementById('killerSelect').value;
+      const p = players.find(x => x.name === name);
+
+      // Collect the killer(s): a list on bounty nights, a single pick otherwise.
+      let killers;
+      if (gameIsBounty) {
+        killers = [...document.querySelectorAll('.killer-cb:checked')].map(cb => cb.value);
+      } else {
+        const sel = document.getElementById('killerSelect').value;
+        killers = (sel === 'N/A' || sel === 'Split Pot') ? [] : [sel];
+      }
+      const splitPot = killers.length > 1;
+      // eliminatedBy keeps its original vocabulary so the Killer Bonus, the
+      // export and the 2026 dashboard all keep reading it exactly as before.
+      const killer = killers.length === 0 ? (gameIsBounty ? 'N/A'
+                       : document.getElementById('killerSelect').value)
+                   : (splitPot ? 'Split Pot' : killers[0]);
+
       closeEliminateDialog();
       p.eliminated = true; p.eliminationTime = Date.now(); p.eliminatedBy = killer;
+
+      // Pay out the head. A split pot counts as a full knockout for each winner
+      // but only pays a share of the cash — which is what makes bounty cash a
+      // meaningful tie-breaker for Bounty Boss.
+      let bountyNote = '';
+      if (gameIsBounty && killers.length > 0) {
+        const head  = p.bountyValue || 0;
+        const share = head / killers.length;
+        killers.forEach(kn => {
+          const k = players.find(x => x.name === kn);
+          if (!k) return;
+          k.bountyEarned = (k.bountyEarned || 0) + share;
+          k.killCount    = (k.killCount || 0) + 1;
+        });
+        p.bountyKillers = killers.slice();
+        p.bountyValue   = 0; // head has been claimed
+        bountyNote = splitPot
+          ? ` — £${fmtMoney(head)} head split ${killers.length} ways (£${fmtMoney(share)} each)`
+          : ` — £${fmtMoney(head)} bounty to ${killers[0]}`;
+      }
+
       renderTable();
-      const noKiller = (killer === 'N/A' || killer === 'Split Pot');
-      const killerLabel = noKiller ? (killer === 'Split Pot' ? ' (split pot)' : '') : ` by ${killer}`;
-      killFeedAdd('elim', `${name} eliminated${killerLabel}`);
+      const noKiller    = (killer === 'N/A' || killer === 'Split Pot');
+      const killerLabel = killers.length > 1 ? ` by ${killers.join(' & ')} (split pot)`
+                        : (noKiller ? (killer === 'Split Pot' ? ' (split pot)' : '') : ` by ${killer}`);
+      killFeedAdd('elim', `${name} eliminated${killerLabel}${bountyNote}`);
+
       const active = players.filter(pl => !pl.eliminated).length;
+      checkTableMilestones(active);
       if (active === 1) checkForWinner();
       else if (active > 1) triggerWebhook('elim', name, noKiller ? '' : killer);
+    }
+
+    // £ formatter that keeps whole pounds clean but shows split-pot halves.
+    function fmtMoney(n) {
+      return Number.isInteger(n) ? String(n) : n.toFixed(2);
     }
 
     function godKill(name) {
       saveState();
       const p = players.find(x => x.name === name);
       p.eliminated = true; p.eliminationTime = Date.now(); p.eliminatedBy = "God Mode";
+      // God Mode kills never pay a bounty — the head simply goes unclaimed,
+      // matching how they're already excluded from the Killer Bonus.
       renderTable();
-      if (players.filter(pl => !pl.eliminated).length === 1) checkForWinner();
+      const active = players.filter(pl => !pl.eliminated).length;
+      checkTableMilestones(active);
+      if (active === 1) checkForWinner();
     }
 
     function godRevive(name) {
       saveState();
       const p = players.find(x => x.name === name);
       p.eliminated = false; p.eliminationTime = null;
+      if (gameIsBounty && !p.bountyValue) p.bountyValue = BOUNTY_HEAD;
       renderTable();
+      updateBountyPanels();
+    }
+
+    // ══════════════════════════════════════════
+    // BOUNTY NIGHT — TABLE MILESTONES & BOUNTY BOSS
+    // ══════════════════════════════════════════
+    let finalTableAlerted = false;
+
+    // Fires the Final Table Consolidation Alert the moment the field hits 9,
+    // and shows the heads-up rules card at 2. Bounty nights only.
+    function checkTableMilestones(activeCount) {
+      if (!gameIsBounty) return;
+      if (activeCount === 9 && !finalTableAlerted) {
+        finalTableAlerted = true;
+        killFeedAdd('fire', '🚨 FINAL TABLE — 9 players left. Collapse all tables and reseat.');
+        showMessage('🚨 FINAL TABLE — collapse all tables and reseat the 9 remaining players!');
+        notifyRoundEnd('🚨 Final Table', '9 players left — collapse all tables and reseat.');
+        triggerWebhook('break');
+        document.getElementById('roundAlarm').play().catch(() => {});
+      }
+      updateBountyPanels();
+    }
+
+    // Show/hide the bounty-night panels based on the live field size.
+    function updateBountyPanels() {
+      const ft = document.getElementById('finalTableAlert');
+      const hu = document.getElementById('headsUpCard');
+      if (!ft || !hu) return;
+      const active = players.filter(p => !p.eliminated).length;
+      const live   = gameIsBounty && tournamentStarted && !tournamentEnded;
+      ft.style.display = (live && active === 9) ? 'block' : 'none';
+      hu.style.display = (live && active === 2) ? 'block' : 'none';
+    }
+
+    // Bounty Boss: raw knockouts → bounty cash collected → best final placing.
+    // Unlike the Killer Bonus, EVERY participant stays eligible.
+    // `rankOf` maps a player name to their finishing position (1 = winner).
+    function calcBountyBoss(rankOf) {
+      if (!gameIsBounty) return null;
+      const contenders = players
+        .filter(p => (p.killCount || 0) > 0)
+        .sort((a, b) =>
+          (b.killCount || 0) - (a.killCount || 0) ||
+          (b.bountyEarned || 0) - (a.bountyEarned || 0) ||
+          (rankOf[a.name] || 999) - (rankOf[b.name] || 999)
+        );
+      if (contenders.length === 0) return null;
+      const w = contenders[0];
+      return { name: w.name, kills: w.killCount || 0, cash: w.bountyEarned || 0 };
+    }
+
+    // Finishing positions: the lone survivor is 1st, then most-recently
+    // eliminated backwards. Mirrors how the export already ranks the field.
+    function buildRankMap() {
+      const rankOf = {};
+      const survivors = players.filter(p => !p.eliminated);
+      survivors.forEach((p, i) => { rankOf[p.name] = i + 1; });
+      players.filter(p => p.eliminated && p.eliminationTime)
+             .sort((a, b) => b.eliminationTime - a.eliminationTime)
+             .forEach((p, i) => { rankOf[p.name] = survivors.length + i + 1; });
+      return rankOf;
     }
 
     // Calculates the killer bonus winner from current game data.
@@ -1465,26 +1735,43 @@
         document.getElementById('exportBtn').disabled      = false;
         document.getElementById('loadDashboardBtn').disabled = false;
         document.getElementById('majorToggle').disabled    = false;
+        document.getElementById('tournamentNameSelect').disabled = false;
+        // The champion is never knocked out, so nobody ever claims their head —
+        // they keep their own £5.
+        if (gameIsBounty && active[0].bountyValue > 0) {
+          active[0].bountyEarned = (active[0].bountyEarned || 0) + active[0].bountyValue;
+          killFeedAdd('win', `${active[0].name} keeps their own £${fmtMoney(active[0].bountyValue)} head`);
+          active[0].bountyValue = 0;
+        }
         renderTable();
         const killerBonus = calcKillerBonus();
+        const boss        = calcBountyBoss(buildRankMap());
         triggerWebhook('winner', active[0].name, killerBonus);
         killFeedAdd('win', `🏆 ${active[0].name} wins! Killer bonus: ${killerBonus}`);
+        if (boss) {
+          killFeedAdd('win', `🎯 Bounty Boss: ${boss.name} — ${boss.kills} knockout${boss.kills === 1 ? '' : 's'}, £${fmtMoney(boss.cash)} collected`);
+        }
         downloadBackup(active[0].name);
         stopAutoSave(); clearAutoSave();
         showMessage(`🏆 ${active[0].name} Wins! Killer bonus: ${killerBonus}`);
-        showWinnerOverlay(active[0].name, killerBonus);
+        showWinnerOverlay(active[0].name, killerBonus, boss);
+        updateBountyPanels();
       }
     }
 
     // ══════════════════════════════════════════
     // WINNER CELEBRATION OVERLAY (Phase 2)
     // ══════════════════════════════════════════
-    function showWinnerOverlay(name, killerBonus) {
+    function showWinnerOverlay(name, killerBonus, boss) {
       const overlay  = document.getElementById('winnerOverlay');
       const confetti = document.getElementById('winnerConfetti');
       document.getElementById('winnerName').textContent  = name;
-      document.getElementById('winnerBonus').textContent =
-        killerBonus ? `Killer Bonus: ${killerBonus}` : '';
+      const bonusLine = killerBonus ? `Killer Bonus: ${killerBonus}` : '';
+      const bossLine  = boss
+        ? `🎯 Bounty Boss: ${boss.name} — ${boss.kills} KO${boss.kills === 1 ? '' : 's'}, £${fmtMoney(boss.cash)}`
+        : '';
+      document.getElementById('winnerBonus').innerHTML =
+        [bonusLine, bossLine].filter(Boolean).join('<br>');
       // Spawn confetti (palette colors)
       confetti.innerHTML = '';
       const colors = ['#ffa726','#ffc107','#ff5722','#d32f2f','#4caf50','#fff7e1','#dc2b71'];
@@ -1519,12 +1806,19 @@
       document.getElementById('startBtn').disabled    = true;
       document.getElementById('endBtn').disabled      = false;
       document.getElementById('majorToggle').disabled = true;
+      // The tournament name locks in with the field, so the bounty engine can't
+      // be switched on or off mid-game.
+      document.getElementById('tournamentNameSelect').disabled = true;
+      finalTableAlerted = false;
       players.sort((a,b) => a.name.localeCompare(b.name));
       renderTable();
-      killFeedAdd('start', `Tournament started — ${players.length} players`);
+      killFeedAdd('start', gameIsBounty
+        ? `🎯 Bounty Championship started — ${players.length} players, £${bountyPoolTotal()} in the bounty pool`
+        : `Tournament started — ${players.length} players`);
       showMessage("Tournament Started!");
       startTimer();
       startAutoSave();
+      updateBountyPanels();
     }
 
     function endTournament() {
@@ -1537,6 +1831,7 @@
       document.getElementById('exportBtn').disabled        = false;
       document.getElementById('loadDashboardBtn').disabled = false;
       document.getElementById('majorToggle').disabled      = false;
+      document.getElementById('tournamentNameSelect').disabled = false;
       renderTable(); triggerWebhook('winner');
       killFeedAdd('win', 'Tournament ended manually');
       downloadBackup('manual-end');
@@ -1546,20 +1841,30 @@
 
     // FIX: calculatePot now uses Math.round to nearest £5 — same as updatePrizeInfo —
     // so the pot value exported to Sheets always matches what's displayed on screen.
-    function calculatePot() {
+    // On bounty nights the £5 heads are ring-fenced: they are a player-to-player
+    // transfer, so the house fee is taken from the main pool only and the bounty
+    // pool pays out in full at £5 a head.
+    function mainPoolTotal() {
       const total = players.reduce((s,p) => s + p.totalPaid, 0);
-      const fee   = Math.round((total * 0.10) / 5) * 5;
-      return Math.max(0, total - fee);
+      return Math.max(0, total - bountyPoolTotal());
+    }
+
+    function calculatePot() {
+      const main = mainPoolTotal();
+      const fee  = Math.round((main * 0.10) / 5) * 5;
+      return Math.max(0, main - fee);
     }
 
     function updatePrizeInfo() {
       const total = players.reduce((s,p) => s + p.totalPaid, 0);
-      const fee   = Math.round((total * 0.10) / 5) * 5;
-      const pot   = Math.max(0, total - fee);
+      const main  = mainPoolTotal();
+      const fee   = Math.round((main * 0.10) / 5) * 5;
+      const pot   = Math.max(0, main - fee);
       let p2 = Math.round((pot * 0.2) / 5) * 5;
       let p1 = pot - p2;
       if (p1 < p2) { p1 = pot; p2 = 0; }
       document.getElementById('totalPaid').innerText        = total;
+      document.getElementById('bountyPool').innerText       = bountyPoolTotal();
       document.getElementById('houseFee').innerText         = fee;
       document.getElementById('currentPrizePool').innerText = pot;
       document.getElementById('firstPrize').innerText       = p1;
@@ -1918,10 +2223,18 @@
       const elimPlayers     = players.filter(p =>  p.eliminated).sort((a,b) => b.eliminationTime - a.eliminationTime);
       const totalP          = players.length;
 
+      // Bounty columns are appended AFTER the original 14 so every existing
+      // index (r[0]..r[13]) the dashboard reads stays exactly where it was.
+      const bountyBoss = calcBountyBoss(buildRankMap());
+      const bcols = p => gameIsBounty
+        ? [p.bountyPaidIn || 0, p.bountyEarned || 0, p.killCount || 0,
+           (bountyBoss && bountyBoss.name === p.name) ? 1 : 0]
+        : ['', '', '', ''];
+
       // Process rebuys
       players.forEach(p => {
         (p.rebuyEliminations || []).forEach(rb => {
-          rows.push([dateStr,timeStr,tournId,p.name,0,totalP,0,0,0,0,0,rb.eliminatedBy,tournamentName,isMajor]);
+          rows.push([dateStr,timeStr,tournId,p.name,0,totalP,0,0,0,0,0,rb.eliminatedBy,tournamentName,isMajor,'','','','']);
         });
       });
 
@@ -1933,19 +2246,24 @@
       const p1base = pot - p2base < p2base ? pot : pot - p2base;
       const p2final = pot - p2base < p2base ? 0 : p2base;
 
+      // On bounty nights a player's real return is prize money PLUS the heads
+      // they collected, so ROI counts both.
+      const roiOf = (p, prize) => {
+        const ret = prize + (gameIsBounty ? (p.bountyEarned || 0) : 0);
+        return p.totalPaid > 0 ? ((ret - p.totalPaid) / p.totalPaid * 100).toFixed(1) : 0;
+      };
+
       let rank = 1;
       activePlayers.forEach(p => {
         const prize = rank === 1 ? p1base : (rank === 2 ? p2final : 0);
-        const roi   = p.totalPaid > 0 ? ((prize - p.totalPaid) / p.totalPaid * 100).toFixed(1) : 0;
-        rows.push([dateStr,timeStr,tournId,p.name,rank,totalP,p.totalPaid,prize,p.stacks-1,p.hasAddon?1:0,roi,'N/A',tournamentName,isMajor]);
+        rows.push([dateStr,timeStr,tournId,p.name,rank,totalP,p.totalPaid,prize,p.stacks-1,p.hasAddon?1:0,roiOf(p,prize),'N/A',tournamentName,isMajor,...bcols(p)]);
         rank++;
       });
 
       let elimRank = activePlayers.length + 1;
       elimPlayers.forEach(p => {
         const prize = elimRank === 2 ? p2final : 0;
-        const roi   = p.totalPaid > 0 ? ((prize - p.totalPaid) / p.totalPaid * 100).toFixed(1) : 0;
-        rows.push([dateStr,timeStr,tournId,p.name,elimRank,totalP,p.totalPaid,prize,p.stacks-1,p.hasAddon?1:0,roi,p.eliminatedBy||'N/A',tournamentName,isMajor]);
+        rows.push([dateStr,timeStr,tournId,p.name,elimRank,totalP,p.totalPaid,prize,p.stacks-1,p.hasAddon?1:0,roiOf(p,prize),p.eliminatedBy||'N/A',tournamentName,isMajor,...bcols(p)]);
         elimRank++;
       });
 
@@ -1956,7 +2274,8 @@
         await ensureSheetExists('PlayerResults', [
           'date','time','tournId','name','rank','totalPlayers',
           'totalPaid','prize','rebuys','addon','roi','killer',
-          'tournamentName','isMajor'
+          'tournamentName','isMajor',
+          'bountyPaidIn','bountyEarned','killCount','bountyBoss'
         ]);
         await ensureSheetExists('NarrativeEvents', [
           'tournId','tournamentName','isMajor','eventType',
@@ -1984,7 +2303,7 @@
 
         // ── 1. Player results ──────────────────────────────────────────────
         await gapi.client.sheets.spreadsheets.values.append({
-          spreadsheetId: SPREADSHEET_ID, range: 'PlayerResults!A:N',
+          spreadsheetId: SPREADSHEET_ID, range: 'PlayerResults!A:R',
           valueInputOption: 'USER_ENTERED', resource: { values: rows },
         });
 
