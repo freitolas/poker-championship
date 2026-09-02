@@ -329,6 +329,53 @@
       text-align: center; font-size: 0.68rem;
       color: #8a7550; margin-top: 8px;
     }
+    #bountyTracker .bt-actions { text-align: center; margin-top: 8px; }
+    #settlementToggle {
+      background: transparent; color: var(--gold-soft);
+      border: 1px solid #5a4620; border-radius: 5px;
+      padding: 5px 12px; font-size: 0.72rem; font-weight: 700;
+      letter-spacing: 1px; cursor: pointer; font-family: var(--f-body);
+    }
+    #settlementToggle:hover { background: rgba(255,193,7,0.10); color: #fff7e1; }
+
+    /* Settlement tally */
+    #bountySettlement { display: none; margin-top: 10px; overflow-x: auto; }
+    /* The app's global table/thead/zebra backgrounds are light — override them
+       explicitly here or they bleed into this dark panel and kill the contrast. */
+    #settlementTable {
+      width: 100%; border-collapse: collapse; font-size: 0.85rem;
+      font-variant-numeric: tabular-nums;
+      background: transparent; box-shadow: none; margin-bottom: 0;
+    }
+    #settlementTable thead {
+      background: transparent; color: inherit;
+      font-family: var(--f-body); letter-spacing: 0;
+    }
+    #settlementTable tbody tr,
+    #settlementTable tbody tr:nth-child(odd) { background: transparent; }
+    #settlementTable th {
+      text-align: right; padding: 6px 8px;
+      font-size: 0.68rem; letter-spacing: 1px; text-transform: uppercase;
+      color: #b99a5c; border-bottom: 1px solid #4a3a18; white-space: nowrap;
+    }
+    #settlementTable th:first-child,
+    #settlementTable td:first-child { text-align: left; }
+    #settlementTable td {
+      text-align: right; padding: 6px 8px; color: #f0e2c4;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    #settlementTable tfoot td {
+      border-top: 1px solid #4a3a18; border-bottom: none;
+      color: var(--gold-soft); font-weight: 700; padding-top: 8px;
+    }
+    #settlementTable .st-up   { color: #7bc47f; font-weight: 800; }
+    #settlementTable .st-down { color: #e2725b; font-weight: 800; }
+    #settlementTable .st-flat { color: #8a7550; }
+    #settlementTable .st-out  { color: #b0663f; font-size: 0.72rem; }
+    #settlementTable .st-unclaimed td { color: #e2b25b; }
+    .st-note {
+      font-size: 0.68rem; color: #8a7550; text-align: center; margin: 8px 0 0;
+    }
 
     /* Multi-killer picker in the elimination dialog */
     .killer-multi {
@@ -697,6 +744,21 @@
         </div>
       </div>
       <div class="bt-foot">Ranked on knockouts, then bounty cash. Final placing breaks any tie at the end.</div>
+      <div class="bt-actions">
+        <button id="settlementToggle" onclick="toggleSettlement()">Show settlement ▾</button>
+      </div>
+      <div id="bountySettlement">
+        <table id="settlementTable">
+          <thead>
+            <tr>
+              <th>Player</th><th>KOs</th><th>Collected</th><th>Heads bought</th><th>Net</th>
+            </tr>
+          </thead>
+          <tbody id="settlementBody"></tbody>
+          <tfoot id="settlementFoot"></tfoot>
+        </table>
+        <p class="st-note">Bounties are paid in cash as they happen — this is just the running tally to check against.</p>
+      </div>
     </div>
 
     <table id="playerTable">
@@ -1891,6 +1953,81 @@
       return tiers;
     }
 
+    // ── SETTLEMENT TALLY ──────────────────────────────────────────────────────
+    // Bounties are paid in cash at the table as they happen, so this is a
+    // reconciliation view rather than a bill: what each player collected, what
+    // they put in as heads, and the net. Any difference between the pool and
+    // the amount paid out is shown as UNCLAIMED (a God Mode kill pays nothing,
+    // and players still alive when the game is ended manually keep their heads),
+    // so the money never silently fails to add up.
+    // ─────────────────────────────────────────────────────────────────────────
+    function toggleSettlement() {
+      const box = document.getElementById('bountySettlement');
+      const btn = document.getElementById('settlementToggle');
+      const open = box.style.display === 'block';
+      box.style.display = open ? 'none' : 'block';
+      btn.textContent = open ? 'Show settlement ▾' : 'Hide settlement ▴';
+      if (!open) renderSettlement();
+    }
+
+    function showSettlement() {
+      const box = document.getElementById('bountySettlement');
+      if (!box || !gameIsBounty) return;
+      box.style.display = 'block';
+      document.getElementById('settlementToggle').textContent = 'Hide settlement ▴';
+      renderSettlement();
+    }
+
+    // Signed money: "+£5", "−£10", "£0".
+    function fmtNet(n) {
+      if (n === 0) return '£0';
+      return (n > 0 ? '+£' : '−£') + fmtMoney(Math.abs(n));
+    }
+
+    function renderSettlement() {
+      const body = document.getElementById('settlementBody');
+      const foot = document.getElementById('settlementFoot');
+      if (!body || !foot) return;
+
+      const rows = players
+        .map(p => ({
+          name: p.name,
+          out:  p.eliminated,
+          kos:  p.killCount    || 0,
+          won:  p.bountyEarned || 0,
+          paid: p.bountyPaidIn || 0,
+        }))
+        .sort((a, b) => (b.won - a.won) || (b.kos - a.kos) || a.name.localeCompare(b.name));
+
+      body.innerHTML = rows.map(r => {
+        const net = r.won - r.paid;
+        const cls = net > 0 ? 'st-up' : (net < 0 ? 'st-down' : 'st-flat');
+        return `<tr>
+          <td>${r.name}${r.out ? ' <span class="st-out">(out)</span>' : ''}</td>
+          <td>${r.kos}</td>
+          <td>£${fmtMoney(r.won)}</td>
+          <td>£${fmtMoney(r.paid)}</td>
+          <td class="${cls}">${fmtNet(net)}</td>
+        </tr>`;
+      }).join('');
+
+      const pool      = rows.reduce((s, r) => s + r.paid, 0);
+      const paidOut   = rows.reduce((s, r) => s + r.won,  0);
+      const unclaimed = pool - paidOut;
+      foot.innerHTML = `
+        <tr>
+          <td>Bounty pool</td>
+          <td>${rows.reduce((s, r) => s + r.kos, 0)}</td>
+          <td>£${fmtMoney(paidOut)}</td>
+          <td>£${fmtMoney(pool)}</td>
+          <td>${unclaimed === 0 ? '✓ balanced' : ''}</td>
+        </tr>
+        ${unclaimed !== 0 ? `<tr class="st-unclaimed">
+          <td colspan="4">Unclaimed heads (still in play, or a God Mode kill)</td>
+          <td>£${fmtMoney(unclaimed)}</td>
+        </tr>` : ''}`;
+    }
+
     function renderBountyTracker() {
       const box = document.getElementById('bountyTracker');
       if (!box) return;
@@ -1909,6 +2046,8 @@
       document.getElementById('btBossStat').textContent = boss ? boss.stat : 'no knockouts yet';
       document.getElementById('btRunnerName').innerHTML = runner ? runner.names : '—';
       document.getElementById('btRunnerStat').textContent = runner ? runner.stat : '—';
+      // Keep the tally current while it is open.
+      if (document.getElementById('bountySettlement').style.display === 'block') renderSettlement();
     }
 
     // Finishing positions: the lone survivor is 1st, then most-recently
@@ -1997,6 +2136,7 @@
         showMessage(`🏆 ${active[0].name} Wins! Killer bonus: ${killerBonus}`);
         showWinnerOverlay(active[0].name, killerBonus, boss);
         updateBountyPanels();
+        showSettlement();
       }
     }
 
@@ -2051,6 +2191,12 @@
       // be switched on or off mid-game.
       document.getElementById('tournamentNameSelect').disabled = true;
       finalTableAlerted = false;
+      // Start a fresh night with last game's settlement tally closed.
+      const settleBox = document.getElementById('bountySettlement');
+      if (settleBox) {
+        settleBox.style.display = 'none';
+        document.getElementById('settlementToggle').textContent = 'Show settlement ▾';
+      }
       players.sort((a,b) => a.name.localeCompare(b.name));
       renderTable();
       killFeedAdd('start', gameIsBounty
@@ -2078,6 +2224,7 @@
       downloadBackup('manual-end');
       stopAutoSave(); clearAutoSave();
       showMessage("Tournament Ended Manually!");
+      showSettlement();
     }
 
     // FIX: calculatePot now uses Math.round to nearest £5 — same as updatePrizeInfo —
