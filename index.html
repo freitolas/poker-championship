@@ -2644,8 +2644,10 @@
           // more kills than any other. Ties award nothing for this tournament.
           if (tied.length === 1) {
             const w = tied[0];
-            // Killer Bonus is worth 1 point, doubled to 2 on a Major.
-            if (stats[w.name]) { stats[w.name].points += 1*mult; stats[w.name].killerWins++; }
+            // Killer Bonus is worth 2 points, doubled to 4 on a Major. This has
+            // been the value since the championship started — do not change it
+            // mid-season, past awards were made at this rate.
+            if (stats[w.name]) { stats[w.name].points += 2*mult; stats[w.name].killerWins++; }
           }
         }
       });
