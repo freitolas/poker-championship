@@ -1451,6 +1451,13 @@
       updatePrizeInfo();
       document.getElementById('startBtn').disabled = tournamentStarted;
       document.getElementById('endBtn').disabled   = !tournamentStarted || tournamentEnded;
+      // Undoing a declared winner puts the game back in play, so re-apply the
+      // format lock. Without this the tournament name and Major toggle stay
+      // editable mid-game, and changing either would silently rewrite the
+      // buy-in and the whole bounty/prize split.
+      document.getElementById('majorToggle').disabled          = tournamentStarted;
+      document.getElementById('tournamentNameSelect').disabled = tournamentStarted;
+      updateBountyPanels();
       showMessage("Undo Successful");
     }
 
