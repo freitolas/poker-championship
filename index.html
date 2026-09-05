@@ -2198,6 +2198,7 @@
       // be switched on or off mid-game.
       document.getElementById('tournamentNameSelect').disabled = true;
       finalTableAlerted = false;
+      exportedTournId = null; exportedAt = null; reflectExportState();
       // Start a fresh night with last game's settlement tally closed.
       const settleBox = document.getElementById('bountySettlement');
       if (settleBox) {
@@ -2578,7 +2579,41 @@
       gapi.load('client', () => gapi.client.init({ discoveryDocs: ["https://sheets.googleapis.com/$discovery/rest?version=v4"] }));
     }
 
-    function signInAndExport()         { window.pendingAction = 'export';    if (googleApiReady && gapi.client.sheets) exportData();    else tokenClient.requestAccessToken(); }
+    // ── DOUBLE-SAVE GUARD ─────────────────────────────────────────────────────
+    // Clicking "Save Tournament Data" before signing in kicks off the Google
+    // login, and the callback then runs the export. It is easy to click Save a
+    // second time after logging in and write the whole tournament to the sheet
+    // twice. Once a game has exported successfully we say so, and require an
+    // explicit confirmation before writing it again.
+    // ─────────────────────────────────────────────────────────────────────────
+    let exportedTournId = null;
+    let exportedAt      = null;
+
+    function reflectExportState() {
+      const btn = document.getElementById('exportBtn');
+      if (!btn) return;
+      if (exportedTournId) {
+        btn.textContent = '✅ Saved to Sheets';
+        btn.title = `Already saved at ${exportedAt ? exportedAt.toLocaleTimeString() : ''}. Click again only if you need a second copy.`;
+      } else {
+        btn.textContent = 'Save Tournament Data';
+        btn.title = '';
+      }
+    }
+
+    // True when the operator has been warned and still wants to write again.
+    function confirmReExport() {
+      if (!exportedTournId) return true;
+      const when = exportedAt ? exportedAt.toLocaleTimeString() : 'earlier';
+      return confirm(
+        `This tournament was already saved to the spreadsheet at ${when}.\n\n` +
+        `Saving again will add a SECOND copy of every player row and every ` +
+        `narrative event, which will double-count the night on the dashboard.\n\n` +
+        `Save it again anyway?`
+      );
+    }
+
+    function signInAndExport()         { if (!confirmReExport()) { showMessage('Already saved — nothing written.'); return; } window.pendingAction = 'export';    if (googleApiReady && gapi.client.sheets) exportData();    else tokenClient.requestAccessToken(); }
     function signInAndLoadDashboard()  { window.pendingAction = 'dashboard'; if (googleApiReady && gapi.client.sheets) loadDashboard(); else tokenClient.requestAccessToken(); }
 
     // Create the named tab on the spreadsheet if it doesn't exist yet, and
@@ -2723,6 +2758,11 @@
           });
         }
 
+        // Remember this game is safely in the sheet, so a second click can warn
+        // instead of silently writing a duplicate set of rows.
+        exportedTournId = tournId;
+        exportedAt      = new Date();
+        reflectExportState();
         alert("Data Exported to Google Sheets!");
       } catch (err) {
         console.error('Export failed:', err);
