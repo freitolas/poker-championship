@@ -2870,14 +2870,32 @@
         }
       });
       if (returnRaw) return s;
+      // Shark % requires 50% attendance. This used to DILUTE instead of exclude:
+      // it divided wins by max(played, threshold), so someone who played 2 of 20
+      // games and won once still showed 10% and ranked among the regulars.
+      // Below the threshold a player is simply not eligible and shows "—".
       const pen = Math.ceil(total * 0.5);
       return Object.entries(s).map(([name,d]) => {
-        const eff = Math.max(d.played, pen);
-        d.sharkRateVal = (d.wins/eff)*100; d.sharkRate = d.sharkRateVal.toFixed(0)+'%';
-        d.cashRateVal  = d.played > 0 ? ((d.wins+d.sec)/d.played)*100 : 0;
-        d.cashRate     = d.cashRateVal.toFixed(0)+'%';
+        d.seasonGames   = total;
+        d.sharkMin      = pen;
+        d.sharkEligible = d.played >= pen;
+        // For an eligible player max(played, pen) === played, so their number is
+        // unchanged by this fix.
+        d.sharkRateVal  = d.sharkEligible && d.played > 0 ? (d.wins/d.played)*100 : 0;
+        d.sharkRate     = d.sharkEligible ? d.sharkRateVal.toFixed(0)+'%' : '—';
+        d.cashRateVal   = d.played > 0 ? ((d.wins+d.sec)/d.played)*100 : 0;
+        d.cashRate      = d.cashRateVal.toFixed(0)+'%';
         return { name, ...d };
-      }).sort((a,b) => b.sharkRateVal - a.sharkRateVal);
+      }).sort(compareShark(false));
+    }
+
+    // Ineligible players sort to the bottom in BOTH directions - they have no
+    // Shark % to rank, so they should never head the table on an ascending sort.
+    function compareShark(asc) {
+      return (a, b) => {
+        if (a.sharkEligible !== b.sharkEligible) return a.sharkEligible ? -1 : 1;
+        return asc ? a.sharkRateVal - b.sharkRateVal : b.sharkRateVal - a.sharkRateVal;
+      };
     }
 
     window.sortDetailed = function(col) {
@@ -2887,7 +2905,7 @@
       if (!data) return;
       data.sort((a,b) => {
         if (col==='name')  return detailedSort.asc ? a.name.localeCompare(b.name)       : b.name.localeCompare(a.name);
-        if (col==='shark') return detailedSort.asc ? a.sharkRateVal - b.sharkRateVal    : b.sharkRateVal - a.sharkRateVal;
+        if (col==='shark') return compareShark(detailedSort.asc)(a, b);
         if (col==='cash')  return detailedSort.asc ? a.cashRateVal  - b.cashRateVal     : b.cashRateVal  - a.cashRateVal;
         return detailedSort.asc ? a[col]-b[col] : b[col]-a[col];
       });
@@ -2896,7 +2914,10 @@
 
     function renderDetailedTable(data) {
       return `
-      <div style="font-size:0.8rem;color:#666;margin-bottom:5px;">Click headers to sort. Shark % requires 50% attendance.</div>
+      <div style="font-size:0.8rem;color:#666;margin-bottom:5px;">Click headers to sort.
+        Shark % requires 50% attendance${data.length && data[0].sharkMin
+          ? ` — at least <strong>${data[0].sharkMin}</strong> of this season's ${data[0].seasonGames} games`
+          : ''}. Players below that show &mdash;.</div>
       <table><thead><tr>
         <th class="sortable" onclick="sortDetailed('name')">Player</th>
         <th class="sortable" onclick="sortDetailed('played')">Games</th>
@@ -2913,7 +2934,8 @@
       ${data.map(p => `<tr>
         <td><strong>${p.name}</strong></td><td>${p.played}</td><td>${p.wins}</td><td>${p.sec}</td><td>${p.third}</td>
         <td>${p.kills}</td><td>${p.deaths}</td><td>${p.rebuys}</td><td>${p.addons}</td>
-        <td style="background:#fff3e0;font-weight:bold;">${p.sharkRate}</td><td>${p.cashRate}</td>
+        <td style="background:#fff3e0;font-weight:bold;${p.sharkEligible ? '' : 'color:#999;'}"
+            ${p.sharkEligible ? '' : `title="Not eligible — played ${p.played} of ${p.seasonGames} games, needs ${p.sharkMin}."`}>${p.sharkRate}</td><td>${p.cashRate}</td>
       </tr>`).join('')}
       </tbody></table>`;
     }
