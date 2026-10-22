@@ -976,6 +976,10 @@
     const BOUNTY_MAIN  = 10; // …of which £10 goes to the main prize pool
     const BOUNTY_HEAD  =  5; // …and £5 becomes that player's head price
     let   gameIsBounty = false;
+    // The format this game was actually played under, frozen at start time so a
+    // post-game change to the UI can never rewrite history on export.
+    let   lockedTournamentName = null;
+    let   lockedIsMajor        = null;
 
     function unitCost() {
       if (gameIsBounty) return BOUNTY_BUYIN;
@@ -1112,8 +1116,8 @@
         tournamentStarted,
         tournamentEnded,
         killFeedLog:       JSON.parse(JSON.stringify(killFeedLog)),
-        tournamentName:    document.getElementById('tournamentNameSelect').value,
-        isMajor:           gameIsMajor,
+        tournamentName:    lockedTournamentName || document.getElementById('tournamentNameSelect').value,
+        isMajor:           lockedIsMajor !== null ? lockedIsMajor : gameIsMajor,
         savedAt:           new Date().toISOString()
       };
     }
@@ -1188,6 +1192,10 @@
         // Restore UI selects
         document.getElementById('tournamentNameSelect').value = snap.tournamentName || 'Regular Game';
         document.getElementById('majorToggle').checked        = snap.isMajor || false;
+        // Re-freeze from the snapshot, so a recovered game exports the format it
+        // was played under rather than whatever the UI shows now.
+        lockedTournamentName = snap.tournamentName || null;
+        lockedIsMajor        = typeof snap.isMajor === 'boolean' ? snap.isMajor : null;
 
         document.getElementById('startBtn').disabled    = tournamentStarted;
         document.getElementById('endBtn').disabled      = !tournamentStarted || tournamentEnded;
@@ -2198,6 +2206,12 @@
       // be switched on or off mid-game.
       document.getElementById('tournamentNameSelect').disabled = true;
       finalTableAlerted = false;
+      // Freeze the format the game is actually played under. The export used to
+      // read the live dropdown and Major toggle, both of which are re-enabled
+      // the moment the game ends — so touching them before clicking Save wrote
+      // the WRONG format to the sheet and silently halved a Major's points.
+      lockedTournamentName = document.getElementById('tournamentNameSelect').value;
+      lockedIsMajor        = gameIsMajor;
       exportedTournId = null; exportedAt = null; reflectExportState();
       // Start a fresh night with last game's settlement tally closed.
       const settleBox = document.getElementById('bountySettlement');
@@ -2646,8 +2660,9 @@
       const dateStr  = ts.split(' ')[0];
       const timeStr  = ts.split(' ')[1];
       const tournId  = `${dateStr}_${timeStr.replace(/:/g,'-')}`;
-      const isMajor  = gameIsMajor;
-      const tournamentName = document.getElementById('tournamentNameSelect').value;
+      const isMajor  = lockedIsMajor !== null ? lockedIsMajor : gameIsMajor;
+      const tournamentName = lockedTournamentName
+                          || document.getElementById('tournamentNameSelect').value;
       let rows = [];
       const activePlayers   = players.filter(p => !p.eliminated);
       const elimPlayers     = players.filter(p =>  p.eliminated).sort((a,b) => b.eliminationTime - a.eliminationTime);
