@@ -1780,7 +1780,19 @@
     function godRevive(name) {
       saveState();
       const p = players.find(x => x.name === name);
+      const wrongKiller = (p.eliminatedBy && p.eliminatedBy !== 'N/A'
+                           && p.eliminatedBy !== 'Split Pot') ? p.eliminatedBy : null;
       p.eliminated = false; p.eliminationTime = null;
+      // A revive undoes the kill, so the killer must stop being credited with it.
+      // This used to be left in place on a normal game: the player came back but
+      // eliminatedBy still named the wrong killer, and that is what got exported.
+      p.eliminatedBy = null;
+      // The Live Feed is the only record of the night the table can see, so say
+      // the kill was undone. Without this the feed kept showing the elimination
+      // and there was no way to tell whether the revive had taken effect.
+      killFeedAdd('elim', wrongKiller
+        ? `⚡ Revive: ${name} is back in — kill by ${wrongKiller} undone`
+        : `⚡ Revive: ${name} is back in`);
       // On bounty nights a revive is a true undo: claw the head back off
       // whoever was credited with it, so a mis-assigned killer can be fixed by
       // reviving and re-eliminating with the right name(s).
@@ -1800,7 +1812,6 @@
         p.bountyValue   = claimed || p.bountyValue || BOUNTY_HEAD;
         p.bountyKillers = null;
         p.bountyClaimed = 0;
-        p.eliminatedBy  = null;
       }
       renderTable();
       updateBountyPanels();
