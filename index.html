@@ -115,6 +115,15 @@
     .elim-btn, .btn-red    { background: var(--danger)  !important; color: white !important; border-color: var(--danger-dark)  !important; }
     .btn-blue              { background: #0277bd       !important; color: white !important; border-color: var(--info-dark)    !important; }
     .rebuy-closed          { color: #999; font-size: 0.8rem; font-style: italic; letter-spacing: 0.5px; }
+    /* Short-stack rebuy: offered to live players during the break only */
+    .action-stack { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+    .topup-btn {
+      background: #fff3e0 !important; color: var(--gold-dark) !important;
+      border: 2px dashed var(--gold-dark) !important;
+      padding: 5px 10px; font-size: 0.8rem; line-height: 1.2;
+    }
+    .topup-btn small { display: block; font-size: 0.68rem; font-weight: 600; opacity: 0.85; }
+    .topup-used { color: #999; font-size: 0.72rem; font-style: italic; }
 
     /* Stack +/- controls */
     .stack-ctrl { display: flex; align-items: center; justify-content: center; gap: 5px; }
@@ -1530,7 +1539,14 @@
         const addonHtml  = `<input type="checkbox" ${p.hasAddon?'checked':''} onchange="toggleAddon('${p.name}')">`;
         const paidHtml   = `<span class="editable-cost" onclick="manualEditPaid('${p.name}')">£${p.totalPaid}</span>`;
         let actionHtml;
-        if (!p.eliminated) {
+        if (!p.eliminated && inBreak()) {
+          // During the break a live player on a short stack may also rebuy.
+          const topup = p.shortStackRebuyUsed
+            ? `<span class="topup-used" title="One short-stack rebuy per player. God Mode to override">short-stack rebuy used</span>`
+            : `<button class="topup-btn" onclick="shortStackRebuy('${p.name}')">Short-stack rebuy<small>under 500 chips only</small></button>`;
+          actionHtml = `<div class="action-stack">
+              <button class="elim-btn" onclick="initEliminate('${p.name}')">Eliminate</button>${topup}</div>`;
+        } else if (!p.eliminated) {
           actionHtml = `<button class="elim-btn" onclick="initEliminate('${p.name}')">Eliminate</button>`;
         } else if (rebuyWindowClosed()) {
           actionHtml = `<span class="rebuy-closed" title="Rebuy window closed — play resumed after the break. God Mode to override">— closed —</span>`;
@@ -1605,6 +1621,44 @@
         if (rounds[i] && rounds[i].isBreak) return true;
       }
       return false;
+    }
+
+    // True while the break round is the current round of a live game.
+    function inBreak() {
+      const r = rounds[currentRound];
+      return !!(r && r.isBreak && tournamentStarted && !tournamentEnded);
+    }
+
+    // House rule: during the break a player who is still alive but holds under
+    // 25% of a starting stack (under 500 chips) may rebuy without busting first.
+    // The app cannot see chips, so the operator confirms the count. One per
+    // player per game; God Mode can grant another.
+    function shortStackRebuy(name) {
+      if (blockedAfterEnd('rebuy')) return;
+      const p = players.find(x => x.name === name);
+      if (!p || p.eliminated) return;
+      if (!inBreak()) { showMessage('Short-stack rebuys are only available during the break.'); return; }
+      if (p.shortStackRebuyUsed && !godModeEnabled) {
+        showMessage(`${name} has already taken a short-stack rebuy — God Mode to override.`);
+        return;
+      }
+      if (!confirm(`Confirm ${name} has UNDER 500 chips?\n\nShort-stack rebuy: £${unitCost()}, +1 stack.`)) return;
+      saveState();
+      p.stacks += 1;
+      p.totalPaid += unitCost();
+      p.shortStackRebuyUsed = true;
+      // Bounty night: the player is still alive and already has a head, so the
+      // new £5 is added to that head instead of minting a second one. Whoever
+      // busts them now collects the bigger bounty, and the pool stays balanced.
+      if (gameIsBounty) {
+        p.bountyPaidIn = (p.bountyPaidIn || 0) + BOUNTY_HEAD;
+        p.bountyValue  = (p.bountyValue  || 0) + BOUNTY_HEAD;
+      }
+      killFeedAdd('rebuy', gameIsBounty
+        ? `${name} took a short-stack rebuy (under 500) — head now worth £${fmtMoney(p.bountyValue)}`
+        : `${name} took a short-stack rebuy (under 500)`);
+      renderTable(); showMessage(`${name} short-stack rebuy done.`);
+      updateBountyPanels();
     }
 
     function rebuy(name) {
@@ -2320,6 +2374,9 @@
       document.getElementById('roundInfo').innerHTML = html;
       if (!timerRunning) timeLeft = r.duration * (r.isTest ? 5 : 60);
       displayTime();
+      // Row actions depend on the round (short-stack rebuy shows only during
+      // the break), so refresh the table whenever the round changes.
+      if (players.length) renderTable();
     }
 
     function displayTime() {
