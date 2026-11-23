@@ -203,6 +203,19 @@ Numbers come from the results sheet after 14 games in 2026, using the same rules
 
 ---
 
+## New for 2027: 📈 Bigger nights, bigger points
+
+*🔒 Host notes: the new 2027 points rule (not built into the app yet; it goes in after tonight, so 2026 points are untouched). Regular games with more than 6 players add 1 point to 1st, 2nd and 3rd for every 2 players above 6, up to +4. Majors don't get it; they're already double. Examples: 8 players +1, 10 players +2, 12 players +3, 14 or more +4. So the best possible regular-night win is 15 points, against 22 for a Major win. Everything else stays the same: 1 point for turning up, 10 / 7 / 4 for the podium, Killer Bonus, double points on Majors.*
+
+> One more change for next year. Some of you have noticed that winning a six-handed game on a quiet Friday is worth exactly the same as surviving a fourteen-player bloodbath.
+> Not any more.
+> From 2027, the bigger the night, the bigger the prize. For every two extra players above six, first, second and third each get an extra point, up to four extra points.
+> So a full house is worth fighting for. And the best way to make every night a big night?
+> Bring a mate. Turn up. Fill the table.
+> The Majors stay exactly as they are: double points, and still the best shot for anyone who can't make every Friday.
+
+---
+
 ## Closing
 
 > That's the season, folks. Thank you for the chips, the chats, the bad beats and the worse bluffs.
