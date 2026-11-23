@@ -2735,6 +2735,7 @@
     // already in the sheet (or null if that read failed).
     function buildNarrativeExtras(rows, seasonBefore, meta) {
       const out  = [];
+      const major = meta.isMajor === true || meta.isMajor === 'TRUE';
       const now  = new Date();
       const hhmm = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
       const elapsed = tournamentStartTime ? Math.round((now.getTime() - tournamentStartTime) / 60000) : '';
@@ -2784,7 +2785,7 @@
         const gap = after.length > 1 ? after[0][1].points - after[1][1].points : 0;
         push('STANDINGS',
           `League table after game ${gameNo} of the ${meta.year} season` +
-          `${meta.isMajor ? ' (tonight was a Major, double points)' : ''}: ` +
+          `${major ? ' (tonight was a Major, double points)' : ''}: ` +
           lines.join(' | ') +
           (after.length > 1 ? ` | Gap between 1st and 2nd: ${gap} pts.` : ''));
 
