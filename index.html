@@ -3230,10 +3230,11 @@
     // Players who joined at least 50% of this season's nights earn a seat in
     // "Curupira's Commentators" for next season (the perk: sending live table
     // talk to the Telegram group that the narrator weaves into the story).
-    // Uses the same 50% attendance threshold as Shark %.
+    // Threshold rounds down on odd seasons (unlike Shark %, which rounds up).
     function renderCommentators(detail, seasonGames) {
       if (!seasonGames) return '';
-      const need  = Math.ceil(seasonGames * 0.5);
+      // Half the season's nights, rounded DOWN (15 nights -> 7), per Rafa.
+      const need  = Math.max(1, Math.floor(seasonGames * 0.5));
       const year  = new Date().getFullYear();
       const esc   = t => String(t).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
       const inn   = detail.filter(d => d.played >= need).sort((a, b) => b.played - a.played || a.name.localeCompare(b.name));
