@@ -180,6 +180,15 @@
     .title-card-name { font-family: var(--f-display); font-size: 1rem; letter-spacing: 1px; color: var(--gold-dark); margin-bottom: 5px; }
     .title-card-holder { font-size: 1.4rem; font-weight: 800; color: var(--ink-strong); margin-bottom: 5px; line-height: 1.2; }
     .title-card-stat { color: var(--ink-soft); font-weight: 600; }
+    /* Curupira's Commentators: players with 50%+ attendance earn the right to
+       send live table talk (Telegram notes) next season. Full-width box. */
+    .commentators-card { margin-top: 20px; background: linear-gradient(135deg, #1a1208 0%, #3a2408 100%); border: 3px solid var(--gold); border-radius: var(--r-lg); padding: 24px; text-align: center; color: #ffecb3; }
+    .commentators-card .cc-title { font-family: var(--f-display); font-size: 1.6rem; letter-spacing: 2px; color: var(--gold-soft); margin: 4px 0; }
+    .commentators-card .cc-sub { font-size: 0.95rem; color: #e0c48a; margin-bottom: 16px; }
+    .commentators-card .cc-names { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+    .commentators-card .cc-name { background: rgba(255,193,7,0.15); border: 1px solid var(--gold); border-radius: 999px; padding: 6px 14px; font-weight: 800; font-size: 1.05rem; color: #fff3cd; }
+    .commentators-card .cc-name small { font-weight: 600; color: #e0c48a; margin-left: 4px; }
+    .commentators-card .cc-near { margin-top: 16px; font-size: 0.9rem; color: #e0c48a; }
 
     .status-message { background: #e8f5e8; border: 2px solid #4caf50; color: #2e7d32; padding: 12px; border-radius: 8px; margin: 15px 0; text-align: center; font-weight: 600; opacity: 0; transition: opacity 0.3s ease; }
     .status-message.show { opacity: 1; }
@@ -3020,7 +3029,7 @@
         const allTime  = calculateAllTime(allRows);
 
         document.getElementById('p2026Content').innerHTML  = render2026Leaderboard(stats);
-        document.getElementById('titlesContent').innerHTML = renderTitles(titles);
+        document.getElementById('titlesContent').innerHTML = renderCommentators(detail, uniq) + renderTitles(titles);
         window.detailedDataCache = detail;
         document.getElementById('detailedContent').innerHTML = renderDetailedTable(detail);
         document.getElementById('allTimeContent').innerHTML  = renderAllTime(allTime);
@@ -3216,6 +3225,29 @@
       if (!names.length) return '-';
       if (names.length > 3) return 'Many';
       return names.join(', ');
+    }
+
+    // Players who joined at least 50% of this season's nights earn a seat in
+    // "Curupira's Commentators" for next season (the perk: sending live table
+    // talk to the Telegram group that the narrator weaves into the story).
+    // Uses the same 50% attendance threshold as Shark %.
+    function renderCommentators(detail, seasonGames) {
+      if (!seasonGames) return '';
+      const need  = Math.ceil(seasonGames * 0.5);
+      const year  = new Date().getFullYear();
+      const esc   = t => String(t).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+      const inn   = detail.filter(d => d.played >= need).sort((a, b) => b.played - a.played || a.name.localeCompare(b.name));
+      const near  = detail.filter(d => d.played === need - 1).map(d => esc(d.name));
+      const names = inn.length
+        ? inn.map(d => `<span class="cc-name">${esc(d.name)}<small>${d.played}/${seasonGames}</small></span>`).join('')
+        : '<span class="cc-sub">Nobody has qualified yet.</span>';
+      return `<div class="commentators-card">
+        <span class="title-card-emoji">🎙️</span>
+        <div class="cc-title">CURUPIRA'S COMMENTATORS</div>
+        <div class="cc-sub">Played at least half the nights this season (${need} of ${seasonGames}), so they've earned the mic for ${year + 1}: their live table talk makes it into the story.</div>
+        <div class="cc-names">${names}</div>
+        ${near.length ? `<div class="cc-near">One more night to qualify: ${near.join(', ')}</div>` : ''}
+      </div>`;
     }
 
     function renderTitles(t) {
