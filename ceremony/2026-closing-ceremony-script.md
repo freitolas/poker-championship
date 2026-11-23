@@ -175,9 +175,9 @@ Numbers come from the results sheet after 14 games in 2026, using the same rules
 
 *🔒 Host notes: this is the new rule the app shows on the Titles tab. Anyone who played at least half the season's nights gets into the Telegram group for 2027. Their live table talk goes into the story the narrator writes.*
 
-*With the Grand Finale, the season has 15 games, so the bar is **8 nights**.*
-- *Already safe: Rafa 14, Elton 12, James 10, Andre 9, Luciano 8.*
-- *Need to play on 4 December to qualify: Lachy, Malzo and Roberto, all on 7.*
+*With the Grand Finale, the season has 15 games. Half is 7.5, and the rule rounds down, so the bar is **7 nights**.*
+- *Already safe: Rafa 14, Elton 12, James 10, Andre 9, Luciano 8, Lachy 7, Malzo 7, Roberto 7.*
+- *Can still qualify by playing on 4 December: Craig and Nick, both on 6.*
 
 *Check the Curupira's Commentators box on the Titles tab after the game, then fill in the names below. Read them slowly, one at a time, for drama.*
 
@@ -185,10 +185,10 @@ Numbers come from the results sheet after 14 games in 2026, using the same rules
 > This year you've had a narrator telling the story of every night. Next year, some of you get to help write it.
 > We're opening a private Telegram group: Curupira's Commentators. Live table talk, trash talk, bad-beat stories. The best of it goes straight into the story of the night.
 > But not everyone gets in. This is a members' club, and the membership fee is *showing up*.
-> If you played at least half of this season's nights, you're in. If you didn't… well, you can read about it like everyone else.
+> If you played at least half of this season's nights, that's seven of them, you're in. If you didn't… well, you can read about it like everyone else.
 > So, the founding members of Curupira's Commentators are…
 > **______, ______, ______, ______, ______…**
-> *(If Lachy, Malzo or Roberto made it by playing tonight:)* …and getting in by the skin of their teeth, thanks to tonight… **______!**
+> *(If Craig or Nick made it by playing tonight:)* …and getting in by the skin of their teeth, thanks to tonight… **______!**
 > Everyone else: the 2027 season starts in January. The door's open. Just turn up.
 
 ---
