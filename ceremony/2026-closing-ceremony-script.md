@@ -158,6 +158,16 @@ Numbers come from the results sheet after 14 games in 2026, using the same rules
 
 ---
 
+## If the championship is tied: the tie-break
+
+*🔒 Host notes: tie-break rule, announced before the Grand Finale: if two players finish on the same points, **most wins** takes the title (then most 2nds if still level). The app's league table already sorts this way. The tie that can actually happen: Elton wins tonight and Rafa finishes exactly 3rd, so both end on 87 points. Elton would then have 4 wins to Rafa's 3, so Elton is champion. Only read this block if there's a tie at the top.*
+
+> Fifteen games. Hundreds of hands. And after all that… a dead heat on points.
+> So we go to the tie-break, the one we agreed before tonight's first card was dealt: most wins takes it.
+> And with more wins this season, your 2026 champion is… **______!**
+
+---
+
 ## Bonus: if Rafa wins the championship
 
 *🔒 Host notes: use this if Rafa finishes top of the points table. Rafa played all 14 games, which is 17 attendance points (Majors count double). Elton played 12, which is 15. So the "home advantage" is only worth about 2 points, and it doesn't change who finishes where.*

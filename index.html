@@ -3104,7 +3104,9 @@
           }
         }
       });
-      return Object.entries(stats).sort((a,b) => b[1].points - a[1].points);
+      // Tie-break (agreed before the 2026 Grand Finale): most wins, then most 2nds.
+      return Object.entries(stats).sort((a,b) =>
+        b[1].points - a[1].points || b[1].wins - a[1].wins || b[1].seconds - a[1].seconds);
     }
 
     function calculateDetailedStats(rows, total, returnRaw=false) {
