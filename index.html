@@ -163,6 +163,10 @@
     .dashboard-tab.active { background: var(--flame); color: white; }
     .dashboard-tab-content { background: var(--paper); padding: 25px; border-radius: 0 0 var(--r-md) var(--r-md); min-height: 400px; display: none; }
     .dashboard-tab-content.active { display: block; }
+    .story-card { border: 1px solid #ddd; border-radius: 8px; padding: 10px 14px; margin-bottom: 10px; background: #fff; }
+    .story-card summary { cursor: pointer; font-size: 1rem; }
+    .story-card .story-date { color: #888; font-size: 0.85rem; margin-left: 6px; }
+    .story-card p { line-height: 1.55; margin: 10px 0 0; }
 
     .titles-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
     .title-card { background: linear-gradient(135deg, var(--paper) 0%, #ffecb3 100%); border: 3px solid var(--gold); border-radius: var(--r-lg); padding: 20px; text-align: center; }
@@ -793,11 +797,13 @@
         <button class="dashboard-tab" onclick="switchTab(event,'titles')">🏆 Titles</button>
         <button class="dashboard-tab" onclick="switchTab(event,'detailed')">📈 Detailed Stats</button>
         <button class="dashboard-tab" onclick="switchTab(event,'alltime')">📅 All-Time</button>
+        <button class="dashboard-tab" onclick="switchTab(event,'stories')">📖 Stories</button>
       </div>
       <div id="tab-p2026" class="dashboard-tab-content active"><div id="p2026Content"></div></div>
       <div id="tab-titles" class="dashboard-tab-content"><div id="titlesContent"></div></div>
       <div id="tab-detailed" class="dashboard-tab-content"><div id="detailedContent"></div></div>
       <div id="tab-alltime" class="dashboard-tab-content"><div id="allTimeContent"></div></div>
+      <div id="tab-stories" class="dashboard-tab-content"><div id="storiesContent"></div></div>
     </div>
   </div>
 
@@ -2721,6 +2727,76 @@
       return true;
     }
 
+    // ── Narrative extras ────────────────────────────────────────────────
+    // Builds NarrativeEvents rows that give the AI narrator the facts it
+    // otherwise has to guess: final placings, prize money, knockouts, and the
+    // season league table before/after tonight. `rows` are this game's
+    // PlayerResults rows; `seasonBefore` is this year's PlayerResults rows
+    // already in the sheet (or null if that read failed).
+    function buildNarrativeExtras(rows, seasonBefore, meta) {
+      const out  = [];
+      const now  = new Date();
+      const hhmm = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+      const elapsed = tournamentStartTime ? Math.round((now.getTime() - tournamentStartTime) / 60000) : '';
+      const push = (type, text) => out.push([meta.tournId, meta.tournamentName, meta.isMajor,
+                                             type, text, hhmm, now.toISOString(), elapsed]);
+      const ord = n => { const s = ['th','st','nd','rd'], v = n % 100; return n + (s[(v-20)%10] || s[v] || s[0]); };
+
+      // Knockouts tonight, counted from every row's "killer" column.
+      const kos = {};
+      rows.forEach(r => { const k = r[11]; if (k && k !== 'N/A' && k !== 'Split Pot') kos[k] = (kos[k] || 0) + 1; });
+
+      // One RESULT line per player, winner first.
+      rows.filter(r => parseInt(r[4]) > 0)
+          .sort((a, b) => parseInt(a[4]) - parseInt(b[4]))
+          .forEach(r => {
+            const [, , , name, rank, , paid, prize, rebuys, addon, , killer] = r;
+            const parts = [`${name} finished ${ord(parseInt(rank))} of ${meta.totalP}`];
+            parts.push(prize > 0 ? `won £${fmtMoney(Number(prize))}` : 'won nothing');
+            parts.push(`paid in £${fmtMoney(Number(paid))}`);
+            const rb = parseInt(rebuys) || 0;
+            if (rb > 0) parts.push(`${rb} rebuy${rb === 1 ? '' : 's'}`);
+            parts.push(addon ? 'took the add-on' : 'no add-on');
+            parts.push(`${kos[name] || 0} knockout${kos[name] === 1 ? '' : 's'}`);
+            if (killer && killer !== 'N/A') parts.push(`knocked out by ${killer}`);
+            if (gameIsBounty && r[15]) parts.push(`£${fmtMoney(Number(r[15]))} in bounties`);
+            push('RESULT', parts.join(', '));
+          });
+
+      // League table, before and after tonight.
+      if (seasonBefore) {
+        const toSheetShape = r => r.slice(0, 14).map((v, i) =>
+          i === 13 ? (v === true || v === 'TRUE' ? 'TRUE' : 'FALSE') : String(v));
+        const tonight = rows.map(toSheetShape);
+        const before  = calculate2026Points(seasonBefore);
+        const after   = calculate2026Points(seasonBefore.concat(tonight));
+        const posBefore = {}, ptsBefore = {};
+        before.forEach(([n, s], i) => { posBefore[n] = i + 1; ptsBefore[n] = s.points; });
+        const gameNo = new Set(seasonBefore.concat(tonight).map(r => r[2])).size;
+        const isFinale = /grand\s*finale/i.test(meta.tournamentName);
+
+        const lines = after.slice(0, 12).map(([n, s], i) => {
+          const gained = s.points - (ptsBefore[n] || 0);
+          const was    = posBefore[n];
+          const move   = !was ? 'new entry' : was === i + 1 ? 'no change' : was > i + 1 ? `up from ${ord(was)}` : `down from ${ord(was)}`;
+          return `${i + 1}. ${n} ${s.points} pts (+${gained} tonight, ${move}; ${s.wins} wins, ${s.seconds} seconds, ${s.thirds} thirds, ${s.att} games)`;
+        });
+        const gap = after.length > 1 ? after[0][1].points - after[1][1].points : 0;
+        push('STANDINGS',
+          `League table after game ${gameNo} of the ${meta.year} season` +
+          `${meta.isMajor ? ' (tonight was a Major, double points)' : ''}: ` +
+          lines.join(' | ') +
+          (after.length > 1 ? ` | Gap between 1st and 2nd: ${gap} pts.` : ''));
+
+        if (isFinale && after.length) {
+          const champ = after[0];
+          push('SEASON', `This was the FINAL game of the season. ${champ[0]} is the ${meta.year} champion with ${champ[1].points} points.` +
+            (after.length > 2 ? ` Runner-up: ${after[1][0]} (${after[1][1].points}). Third: ${after[2][0]} (${after[2][1].points}).` : ''));
+        }
+      }
+      return out;
+    }
+
     async function exportData() {
       if (!tournamentEnded && !confirm("Tournament hasn't officially ended. Save anyway?")) return;
 
@@ -2814,6 +2890,18 @@
           if (!proceed) { showMessage('Export cancelled.'); return; }
         }
 
+        // ── 0c. Season so far (read BEFORE this game is appended) so the
+        //        narrator can be told the league table and who moved where.
+        //        Best-effort: a failure here must never block the export.
+        let seasonRowsBefore = null;
+        try {
+          const season = await gapi.client.sheets.spreadsheets.values.get({
+            spreadsheetId: SPREADSHEET_ID, range: 'PlayerResults!A2:N'
+          });
+          const yr = dateStr.slice(0, 4);
+          seasonRowsBefore = (season.result.values || []).filter(r => (r[0] || '').startsWith(yr));
+        } catch (e) { console.warn('Season read for narrative failed:', e); }
+
         // ── 1. Player results ──────────────────────────────────────────────
         await gapi.client.sheets.spreadsheets.values.append({
           spreadsheetId: SPREADSHEET_ID, range: 'PlayerResults!A:R',
@@ -2827,12 +2915,19 @@
           tournId,
           tournamentName,
           isMajor,
-          e.type.toUpperCase(),     // TOURNAMENT_START | ELIMINATION | REBUY | ADDON | FIRE | BREAK | WIN
+          e.type.toUpperCase(),     // START | ELIM | REBUY | ADDON | FIRE | BREAK | WIN
           e.text,                   // human-readable description
           e.time,                   // HH:MM display
           e.iso  || '',             // full ISO timestamp
           e.elapsed != null ? e.elapsed : '' // minutes since tournament start
         ]);
+        // Extra context for the narrator, written only to the sheet (never to
+        // the live feed): every player's final result, then the league table.
+        // Types RESULT / STANDINGS / SEASON are new; the Make.com bot still
+        // triggers on WIN, so these rows don't start a narrative by themselves.
+        narrativeRows.push(...buildNarrativeExtras(rows, seasonRowsBefore, {
+          tournId, tournamentName, isMajor, totalP, year: dateStr.slice(0, 4)
+        }));
 
         if (narrativeRows.length > 0) {
           await gapi.client.sheets.spreadsheets.values.append({
@@ -2888,7 +2983,37 @@
         document.getElementById('detailedContent').innerHTML = renderDetailedTable(detail);
         document.getElementById('allTimeContent').innerHTML  = renderAllTime(allTime);
         updateRecordPot(allRows); // ← Biggest pot record
+        loadStories();            // ← Narratives tab (best-effort, never blocks)
       } catch (err) { console.error(err); alert("Error loading dashboard data."); }
+    }
+
+    // ── Stories tab: the AI-written narrative for each game ─────────────
+    // Reads the Narratives tab the Make.com bot writes to. Skips the player
+    // background row (it isn't a game story) and shows one story per game:
+    // if a game has more than one, the most recently written one wins.
+    async function loadStories() {
+      const box = document.getElementById('storiesContent');
+      box.innerHTML = 'Loading stories…';
+      try {
+        const res  = await gapi.client.sheets.spreadsheets.values.get({ spreadsheetId: SPREADSHEET_ID, range: 'Narratives!A2:D' });
+        const byGame = new Map();
+        (res.result.values || []).forEach(r => {
+          const [tid, name, date, text] = r;
+          if (!tid || !text || /^\s*gemini[.,]/i.test(text)) return;
+          byGame.set(`${name}|${date}`, { tid, name, date, text });   // later rows overwrite earlier
+        });
+        const stories = [...byGame.values()].sort((a, b) => String(b.date).localeCompare(String(a.date)));
+        if (!stories.length) { box.innerHTML = 'No stories yet.'; return; }
+        const esc = t => String(t).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+        box.innerHTML = stories.map((st, i) => `
+          <details class="story-card"${i === 0 ? ' open' : ''}>
+            <summary><strong>${esc(st.name)}</strong> <span class="story-date">${esc(st.date)}</span></summary>
+            ${String(st.text).split(/\n\s*\n/).map(p => `<p>${esc(p.trim())}</p>`).join('')}
+          </details>`).join('');
+      } catch (err) {
+        console.error('Stories failed to load:', err);
+        box.innerHTML = 'Could not load the stories right now.';
+      }
     }
 
     function calculate2026Points(rows) {
