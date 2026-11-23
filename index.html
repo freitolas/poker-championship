@@ -66,7 +66,13 @@
       font-family: var(--f-body);
       color: var(--ink); display: flex; min-height: 100vh;
     }
-    .main-content { flex: 3; padding: 20px; min-width: 500px; overflow-y: auto; position: relative; }
+    .main-content { flex: 1 1 0; padding: 20px; min-width: 500px; overflow-y: auto; position: relative; }
+    /* Drag handle between the main area and the timer column. Drag to resize;
+       double-click to go back to the default width. Width is remembered. */
+    .timer-resizer { flex: 0 0 10px; height: 100vh; position: sticky; top: 0; cursor: col-resize; background: transparent; touch-action: none; z-index: 5; }
+    .timer-resizer::after { content: ''; position: absolute; top: 50%; left: 3px; width: 4px; height: 48px; margin-top: -24px; border-radius: 2px; background: var(--gold); opacity: 0.45; }
+    .timer-resizer:hover::after, .timer-resizer.dragging::after { opacity: 1; }
+    body.resizing { cursor: col-resize; user-select: none; }
 
     /* ══════════════════════════════════════════
        HERO HEADER — centred logo, blended with theme
@@ -153,7 +159,7 @@
     /* Tabular numbers for stacks / counts so they don't jitter */
     td { font-variant-numeric: tabular-nums; }
 
-    .timer-panel { flex: 1; background: linear-gradient(135deg, #ffecb3 0%, #ffd54f 100%); border-left: 7px solid var(--gold); padding: 25px; display: flex; flex-direction: column; align-items: center; height: 100vh; position: sticky; top: 0; overflow-y: auto; }
+    .timer-panel { flex: 0 0 var(--timer-w, 32.5%); min-width: 260px; max-width: 70vw; background: linear-gradient(135deg, #ffecb3 0%, #ffd54f 100%); border-left: 7px solid var(--gold); padding: 25px; display: flex; flex-direction: column; align-items: center; height: 100vh; position: sticky; top: 0; overflow-y: auto; }
     .timer-header { font-family: var(--f-display); font-size: 2.4rem; font-weight: 400; color: var(--gold-dark); margin-bottom: 20px; text-shadow: 2px 2px 4px rgba(0,0,0,0.1); letter-spacing: 1px; }
     .round-info { width: 100%; background: var(--cream-2); border-radius: var(--r-lg); padding: 20px; font-size: 1.4rem; font-weight: 700; text-align: center; color: var(--gold-dark); margin-bottom: 25px; font-family: var(--f-display); letter-spacing: 0.5px; }
     .time-remaining { font-family: var(--f-body); font-size: 3.8rem; font-weight: 800; background: #ffd54f; color: var(--gold-dark); border-radius: var(--r-lg); padding: 20px 35px; box-shadow: var(--sh-md); margin: 20px 0 30px; text-align: center; min-width: 200px; font-variant-numeric: tabular-nums; letter-spacing: 2px; }
@@ -413,20 +419,20 @@
       background: linear-gradient(180deg, var(--feed-bg-1) 0%, var(--feed-bg-2) 100%);
       border: 1px solid #2a1f0c;
       border-radius: var(--r-md); padding: 10px 12px;
-      max-height: 180px; overflow-y: auto;
+      max-height: 380px; overflow-y: auto;
       display: none; /* hidden until first event */
       box-shadow: inset 0 0 20px rgba(255,152,0,0.08);
     }
     #killFeed .kf-title {
       font-family: var(--f-display);
-      font-size: 0.75rem; letter-spacing: 3px;
+      font-size: 0.85rem; letter-spacing: 3px;
       background: linear-gradient(180deg, var(--gold-soft) 0%, var(--fire-2) 100%);
       -webkit-background-clip: text; background-clip: text;
       -webkit-text-fill-color: transparent; color: var(--gold-soft);
       text-transform: uppercase; margin-bottom: 8px;
     }
     .kf-entry {
-      font-size: 0.82rem; color: var(--feed-text); padding: 4px 8px;
+      font-size: 0.95rem; color: var(--feed-text); padding: 5px 8px;
       margin-bottom: 2px;
       border-left: 4px solid #333;
       background: rgba(255,255,255,0.02);
@@ -435,7 +441,7 @@
       transition: background 0.2s ease;
     }
     .kf-entry:hover { background: rgba(255,255,255,0.05); }
-    .kf-entry .kf-time { color: var(--gold); font-size: 0.7rem; font-weight: 700; flex-shrink: 0; margin-left: 8px; font-variant-numeric: tabular-nums; }
+    .kf-entry .kf-time { color: var(--gold); font-size: 0.8rem; font-weight: 700; flex-shrink: 0; margin-left: 8px; font-variant-numeric: tabular-nums; }
     .kf-entry .kf-icon { margin-right: 6px; }
     /* Event-type left borders + icons */
     .kf-entry.kf-elim  { border-left-color: var(--danger-dark); }
@@ -807,6 +813,7 @@
     </div>
   </div>
 
+  <div class="timer-resizer" id="timerResizer" title="Drag to resize the timer column (double-click to reset)"></div>
   <div class="timer-panel">
     <div class="timer-header">ROUND TIMER</div>
     <div id="roundInfo" class="round-info"></div>
@@ -1091,6 +1098,40 @@
         n.onclick = () => { window.focus(); n.close(); };
       } catch (e) { /* notification construction can throw on some platforms — ignore */ }
     }
+
+    // ══════════════════════════════════════════
+    // TIMER COLUMN RESIZE (drag the gold handle; double-click resets)
+    // ══════════════════════════════════════════
+    (function setupTimerResizer() {
+      const handle = document.getElementById('timerResizer');
+      if (!handle) return;
+      const KEY = 'timerColumnWidthPx';
+      const apply = px => document.documentElement.style.setProperty('--timer-w', px + 'px');
+      const saved = parseInt(localStorage.getItem(KEY));
+      if (saved > 0) apply(saved);
+      let dragging = false;
+      handle.addEventListener('pointerdown', e => {
+        dragging = true; handle.setPointerCapture(e.pointerId);
+        handle.classList.add('dragging'); document.body.classList.add('resizing');
+      });
+      handle.addEventListener('pointermove', e => {
+        if (!dragging) return;
+        const px = Math.round(Math.min(window.innerWidth * 0.7, Math.max(260, window.innerWidth - e.clientX - 5)));
+        apply(px);
+      });
+      const stop = () => {
+        if (!dragging) return;
+        dragging = false; handle.classList.remove('dragging'); document.body.classList.remove('resizing');
+        const w = Math.round(document.querySelector('.timer-panel').getBoundingClientRect().width);
+        localStorage.setItem(KEY, w);
+      };
+      handle.addEventListener('pointerup', stop);
+      handle.addEventListener('pointercancel', stop);
+      handle.addEventListener('dblclick', () => {
+        localStorage.removeItem(KEY);
+        document.documentElement.style.removeProperty('--timer-w');
+      });
+    })();
 
     // ══════════════════════════════════════════
     // KILL FEED
